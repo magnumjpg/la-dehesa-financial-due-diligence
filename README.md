@@ -249,9 +249,6 @@ proyecto-dehesa-del-castrillo/
 │   └── figure_4_cash_flow_waterfall.png  # VAT correction & solvency bridge
 ├── data/                                 # Institutional Excel deliverables
 │   └── La_Dehesa_del_Castrillo_Financial_Model.xlsx # 5-Tab Structured Model
-├── docs/                                 # Technical documentation & memory
-│   ├── context.md                        # Project scope & underwriting guidelines
-│   └── memory.md                         # Persistent memory and lessons learned
 ├── raw_data/                             # Original source Excel files
 │   ├── La_Dehesa_de_Castrillo_Proyecto.xlsx
 │   └── Presentacion_La_Dehesa.xlsx
@@ -273,8 +270,8 @@ proyecto-dehesa-del-castrillo/
 
 ```bash
 # Clone the repository
-git clone https://github.com/jaime/proyecto-dehesa-del-castrillo.git
-cd proyecto-dehesa-del-castrillo
+git clone https://github.com/magnumjpg/hospitality-credit-underwriting-model.git
+cd hospitality-credit-underwriting-model
 
 # Install Python dependencies
 pip install pandas numpy openpyxl matplotlib seaborn pytest
@@ -299,4 +296,4 @@ python -m pytest tests/
 ## Author
 **Jaime Pérez**  
 *Real Estate Private Equity | Quantitative Financial Modeling | Corporate Credit Analysis*  
-GitHub Portfolio: [github.com/jaime](https://github.com/jaime)
+GitHub Portfolio: [github.com/magnumjpg](https://github.com/magnumjpg)

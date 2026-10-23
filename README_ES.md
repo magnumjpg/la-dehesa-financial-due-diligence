@@ -226,8 +226,8 @@ Para garantizar máxima trazabilidad entre los documentos preliminares y el moto
 
 ```bash
 # Clonar el repositorio
-git clone https://github.com/jaime/proyecto-dehesa-del-castrillo.git
-cd proyecto-dehesa-del-castrillo
+git clone https://github.com/magnumjpg/hospitality-credit-underwriting-model.git
+cd hospitality-credit-underwriting-model
 
 # Instalar dependencias requeridas
 pip install pandas numpy openpyxl matplotlib seaborn pytest
@@ -252,4 +252,4 @@ python -m pytest tests/
 ## Autor
 **Jaime Pérez**  
 *Real Estate Private Equity | Quantitative Financial Modeling | Corporate Credit Analysis*  
-GitHub Portfolio: [github.com/jaime](https://github.com/jaime)
+GitHub Portfolio: [github.com/magnumjpg](https://github.com/magnumjpg)
