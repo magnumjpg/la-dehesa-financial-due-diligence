@@ -3,15 +3,15 @@
 
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Tests: Pytest Passed](https://img.shields.io/badge/tests-16%20passed-brightgreen.svg)](https://docs.pytest.org/)
-[![Deliverable: Excel Model](https://img.shields.io/badge/Modelo%20Excel-5%20Pestañas%20.XLSX-success.svg)](data/La_Dehesa_del_Castrillo_Financial_Model.xlsx)
+[![Tests: Pytest Passed](https://img.shields.io/badge/tests-21%20passed-brightgreen.svg)](https://docs.pytest.org/)
+[![Deliverable: Excel Model](https://img.shields.io/badge/Modelo%20Excel-6%20Pestañas%20.XLSX-success.svg)](data/La_Dehesa_del_Castrillo_Financial_Model.xlsx)
 
 [English](README.md) | [Español](README_ES.md)
 
 **Autor:** Jaime Pérez  
 **Especialidad:** Real Estate Private Equity, Due Diligence Operativa y Análisis de Crédito Bancario  
 **Alcance del Proyecto:** Finca Rural de 25 Hectáreas | Segovia, España | Inversión: 729.000 € | Financiación 70/30 Deuda/Capital  
-**Entregables Principales:** Motor Financiero Modular en Python (`/src`), Figuras Institucionales de Alta Resolución (`/assets`), Batería de Tests Unitarios (`/tests`) y Modelo Financiero Multicapa en Excel (`data/La_Dehesa_del_Castrillo_Financial_Model.xlsx`).
+**Entregables Principales:** Motor Financiero Modular en Python (`/src`), Motor de Cópulas Multivariables (`copula_engine.py`), Memorando para Comité de Riesgos (`credit_committee.py`), Figuras Institucionales de Alta Resolución (`/assets`), Batería de Tests Unitarios (`/tests`) y Modelo Financiero en Excel de 6 pestañas (`data/La_Dehesa_del_Castrillo_Financial_Model.xlsx`).
 
 ```
 +----------------------------------------------------------------------------------------------------+
@@ -214,7 +214,41 @@ Simulación estocástica que analiza la volatilidad conjunta de:
 
 ---
 
-## 10. Doble Calibración Operativa: Modelo LEADER vs. Benchmark INE
+## 10. Riesgo de Crédito Cuantitativo: Dependencia de Colas con Cópulas Multivariables y Dimensionamiento del DSRA
+
+Los modelos estándar de riesgo de crédito en banca minorista suelen asumir independencia estocástica o correlación lineal Gaussiana. En una cópula Gaussiana, los shocks extremos presentan independencia asintótica en colas ($\lambda_L = \lambda_U = 0$). Sin embargo, en recesiones macroeconómicas severas, la caída de demanda, la presión sobre el precio de habitación (ADR), la subida de tipos de interés (Euríbor) y la inflación de costes ocurren de manera simultánea.
+
+Para capturar esta realidad sistémica, el proyecto incorpora un **motor de cópulas multivariables vectorizado** (`src/simulation/copula_engine.py`) que ejecuta 50.000 iteraciones comparando tres estructuras de dependencia conjunta:
+1. **Cópula Gaussiana (Benchmark):** Supuesto tradicional de colas delgadas sin agrupamiento conjunto.
+2. **Cópula Student-t ($\nu=4$):** Captura colas pesadas simétricas ($\lambda_L = \lambda_U = 0,18$).
+3. **Cópula Clayton ($\theta=1,8$):** Cópula arquimediana con fuerte dependencia asimétrica en la cola inferior ($\lambda_L = 2^{-1/\theta} \approx 0,68$, $\lambda_U = 0$). Modela cómo los peores escenarios de cada variable convergen simultáneamente en situaciones de estrés económico.
+
+![Riesgo de Cola y Cópulas Multivariables](assets/figure_5_copula_tail_risk.png)
+
+### Comparativa Cuantitativa de Riesgo en Colas (50.000 Iteraciones)
+
+| Métrica de Riesgo | Cópula Gaussiana (Benchmark) | Cópula Student-t (nu=4) | Cópula Clayton (theta=1,8) | Evaluación de Riesgos Bancarios |
+| :--- | :---: | :---: | :---: | :--- |
+| **Dependencia en Cola Inferior ($\lambda_L$)** | 0,00 (Independiente) | 0,18 (Simétrica) | **0,68 (Asimétrica Inferior)** | Fuerte agrupamiento en estrés conjunto |
+| **DSCR Medio Esperado** | 1,36x | 1,36x | 1,36x | Idéntica tendencia central |
+| **VaR 95% (Percentil 5)** | 0,64x | 0,64x | **0,49x** | -0,15x de erosión en colas |
+| **VaR 99% (Percentil 1)** | 0,37x | 0,35x | **0,17x** | -0,20x de severidad adicional |
+| **CVaR 99% (Expected Shortfall)** | 0,26x | 0,21x | **0,04x** | Agotamiento casi total de la caja operativa |
+| **P(Ruptura Covenant) [DSCR < 1,25x]** | 42,3% | 42,1% | 40,4% | Sensibilidad del primer año de rampa |
+| **P(Insolvencia / Default) [DSCR < 1,00x]** | 21,6% | 21,2% | **23,2%** | +1,6 pp mayor riesgo de impago |
+| **Déficit Anual en Cola CVaR 99%** | 33.906 € | 36.735 € | **47.597 €** | **+40,4% mayor necesidad de liquidez** |
+
+### Recomendación del Comité de Riesgos y Dimensionamiento del DSRA
+El análisis demuestra que los covenants bancarios estándar (que típicamente exigen una cuenta de reserva para el servicio de la deuda, DSRA, de 6 meses: 21.775 €) dejan un **déficit no cubierto de 25.822 €** en situaciones de estrés sistémico extremo.
+
+Conforme al memorando formal generado por `src/core/credit_committee.py`:
+- **DSRA Recomendado:** **47.597 €** (equivalente a ~13,1 meses de servicio de la deuda sénior), dimensionado para absorber íntegramente el Expected Shortfall al 99% de confianza (CVaR 99%).
+- **Colchón de Financiación:** Dotado en el cierre financiero mediante el buffer inicial de liquidez (56.750 €) y pignorado de forma irrevocable contra la ayuda a fondo perdido LEADER (163.000 €).
+- **Dictamen del Comité de Riesgos:** **Aprobación Condicionada** sujeta a hipoteca de 1er rango sobre la finca de 25 ha y depósito en custodia del DSRA calibrado por cópulas.
+
+---
+
+## 11. Doble Calibración Operativa: Modelo LEADER vs. Benchmark INE
 
 Para garantizar máxima trazabilidad entre los documentos preliminares y el motor de mercado, el repositorio soporta dos modos conmutables:
 1. **Modo LEADER Consolidado (`calibration_mode='leader_excel'`):** Replica las cifras de la presentación original `Presentacion_La_Dehesa.xlsx` (Año 1: 96.628 € ventas, Año 2: 126.855 €, Año 3: 159.863 €, caja acumulada: 60.750 €).
@@ -222,7 +256,7 @@ Para garantizar máxima trazabilidad entre los documentos preliminares y el moto
 
 ---
 
-## 11. Estructura del Repositorio y Ejecución
+## 12. Estructura del Repositorio y Ejecución
 
 ```bash
 # Clonar el repositorio
@@ -230,18 +264,18 @@ git clone https://github.com/magnumjpg/la-dehesa-financial-due-diligence.git
 cd la-dehesa-financial-due-diligence
 
 # Instalar dependencias requeridas
-pip install pandas numpy openpyxl matplotlib seaborn pytest
+pip install pandas numpy scipy openpyxl matplotlib seaborn pytest
 
 # Ejecutar el pipeline financiero completo
 python main.py
 
-# Ejecutar la batería de tests automatizados (16 tests de cuadre financiero)
+# Ejecutar la batería de tests automatizados (21 tests de cuadre financiero y cópulas)
 python -m pytest tests/
 ```
 
 ---
 
-## 12. Referencias Regulatorias y Metodológicas
+## 13. Referencias Regulatorias y Metodológicas
 - **IVA:** *Ley 37/1992, de 28 de diciembre, del Impuesto sobre el Valor Añadido* (Art. 90, Art. 91.Uno.2.2º).
 - **Impuesto sobre Sociedades:** *Ley 27/2014, de 27 de noviembre, del Impuesto sobre Sociedades* (Art. 12, Art. 26 - BINs).
 - **Convenio Colectivo:** *Convenio Colectivo Provincial de Hostelería de Segovia* (BOP Segovia).
@@ -253,3 +287,4 @@ python -m pytest tests/
 **Jaime Pérez**  
 *Real Estate Private Equity | Quantitative Financial Modeling | Corporate Credit Analysis*  
 GitHub Portfolio: [github.com/magnumjpg](https://github.com/magnumjpg)
+

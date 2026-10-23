@@ -101,7 +101,7 @@ def run_executive_pipeline(generate_charts: bool = True):
     print()
 
     # Step 4: Monte Carlo Credit Risk Simulation
-    print("[4/4] MONTE CARLO SIMULATION (N=1,000 ITERATIONS) - STOCHASTIC CREDIT RISK")
+    print("[4/6] NAIVE GAUSSIAN MONTE CARLO SIMULATION (N=1,000 ITERATIONS)")
     print("-" * 88)
     sim = MonteCarloSimulator(iterations=1000, random_seed=42)
     _, summary = sim.run_simulation()
@@ -112,19 +112,36 @@ def run_executive_pipeline(generate_charts: bool = True):
     print(f"VaR 95% DSCR (5th percentile):   {summary.p5_dscr_y1:.2f}x")
     print(f"P(Covenant Breach) [DSCR < 1.25]: {summary.prob_covenant_breach_y1*100:.1f}%")
     print(f"P(Insolvency Default) [DSCR < 1]: {summary.prob_cash_insolvency_y1*100:.1f}%")
-    print(f"Mean Equity IRR:                 {summary.mean_equity_irr*100:.1f}%")
-    print(f"Mean Ending Cash (Year 1):       {summary.mean_ending_cash_y1:,.2f} €")
+    print()
+
+    # Step 5: Multivariate Copula Tail Risk Engine (50,000 draws)
+    print("[5/6] MULTIVARIATE COPULA TAIL RISK ENGINE (50,000 DRAWS: GAUSSIAN vs. STUDENT-T vs. CLAYTON)")
+    print("-" * 88)
+    from src.simulation.copula_engine import CopulaSimulationEngine
+    from src.core.credit_committee import CreditCommitteeMemo
+
+    copula_sim = CopulaSimulationEngine(n_simulations=50_000, random_seed=42)
+    copula_results = copula_sim.run_comparative_analysis()
+    df_copula_summary = copula_results.to_dataframe()
+    print(df_copula_summary.to_string(index=False))
+    print()
+
+    # Step 6: Bank Credit Committee Underwriting Memorandum & DSRA Sizing
+    print("[6/6] BANK CREDIT COMMITTEE UNDERWRITING MEMORANDUM & DSRA SIZING")
+    print("-" * 88)
+    memo = CreditCommitteeMemo(copula_results=copula_results)
+    memo.print_terminal_summary()
     print()
 
     # Visual Assets & Deliverables
     if generate_charts:
-        print("-> Generating Institutional Charts in /assets...")
+        print("-> Generating Institutional Charts in /assets (Figures 1 to 5)...")
         figs = generate_all_figures()
         for f in figs:
             print(f"   [OK] {f.name} ({f.stat().st_size / 1024:.1f} KB)")
         print()
 
-    print("-> Exporting Institutional Multi-Tab Excel Model in /data...")
+    print("-> Exporting Institutional 6-Tab Excel Model in /data...")
     excel_path = export_institutional_excel()
     print(f"   [OK] {excel_path.name} ({excel_path.stat().st_size / 1024:.1f} KB)")
     print()
