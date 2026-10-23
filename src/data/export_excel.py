@@ -28,6 +28,8 @@ from src.core.metrics import CreditMetricsEngine
 from src.config.assumptions import SCENARIOS, RevenueModelConfig
 from src.scenarios.scenario_analysis import ScenarioEngine
 from src.simulation.monte_carlo import MonteCarloSimulator
+from src.simulation.copula_engine import CopulaSimulationEngine
+from src.core.credit_committee import CreditCommitteeMemo
 
 
 def get_data_dir() -> Path:
@@ -195,6 +197,63 @@ def export_institutional_excel(filename: str = "La_Dehesa_del_Castrillo_Financia
     for r_idx, (kpi, val) in enumerate(mc_kpis, start=4):
         c1 = ws5.cell(row=r_idx, column=1, value=kpi)
         c2 = ws5.cell(row=r_idx, column=2, value=val)
+        c1.font = regular_font
+        c2.font = bold_font
+        c1.border = thin_border
+        c2.border = thin_border
+
+    # Tab 6: Multivariate Copula & Credit Committee Underwriting
+    ws6 = wb.create_sheet(title="Credit Risk & Copula")
+    ws6.views.sheetView[0].showGridLines = True
+    ws6["A1"] = "MULTIVARIATE COPULA TAIL RISK & CREDIT COMMITTEE UNDERWRITING"
+    ws6["A1"].font = title_font
+
+    copula_engine = CopulaSimulationEngine(n_simulations=50_000, random_seed=42)
+    copula_res = copula_engine.run_comparative_analysis()
+    df_copula = copula_res.to_dataframe()
+
+    # Section 1: Comparative Copula Table
+    ws6["A3"] = "1. MULTIVARIATE COPULA RISK COMPARISON (50,000 SIMULATIONS)"
+    ws6["A3"].font = bold_font
+
+    for col_idx, col_name in enumerate(df_copula.columns, start=1):
+        cell = ws6.cell(row=4, column=col_idx, value=col_name)
+        cell.fill = navy_fill
+        cell.font = header_font
+
+    for r_idx, (_, r) in enumerate(df_copula.iterrows(), start=5):
+        for c_idx, val in enumerate(r, start=1):
+            cell = ws6.cell(row=r_idx, column=c_idx, value=val)
+            cell.font = regular_font
+            cell.border = thin_border
+
+    # Section 2: Underwriting Scorecard & DSRA Recommendation
+    ws6["A9"] = "2. UNDERWRITING SCORECARD & DSRA SIZING"
+    ws6["A9"].font = bold_font
+
+    memo_obj = CreditCommitteeMemo(copula_results=copula_res)
+    underwriting_kpis = [
+        ("Facility Requested (Senior Mortgage)", f"{copula_engine.P:,.2f} EUR"),
+        ("Total Project CapEx", f"{copula_engine.capex.total_capex:,.2f} EUR"),
+        ("Senior Loan-to-Value (Total CapEx)", f"{(copula_engine.P / copula_engine.capex.total_capex)*100:.1f}%"),
+        ("Baseline Year 1 DSCR", f"{float(memo_obj.df_kpis.iloc[0]['dscr']):.2f}x"),
+        ("Mature Year 3 DSCR", f"{float(memo_obj.df_kpis.iloc[2]['dscr']):.2f}x"),
+        ("Operating Break-Even Occupancy", f"{memo_obj.breakeven['operating_breakeven_occupancy']:.1%}"),
+        ("Debt Service Break-Even Occupancy", f"{memo_obj.breakeven['debt_service_breakeven_occupancy']:.1%}"),
+        ("Standard Covenant DSRA (6 Months)", f"{copula_res.dsra_standard_6m:,.2f} EUR"),
+        ("Recommended Copula Tail DSRA (CVaR 99%)", f"{copula_res.dsra_recommended_tail:,.2f} EUR"),
+        ("Unhedged Deficit under 6-Month DSRA", f"{copula_res.dsra_recommended_tail - copula_res.dsra_standard_6m:,.2f} EUR"),
+        ("Credit Committee Recommendation", "CONDITIONAL APPROVAL (Escrow DSRA + LEADER Grant Pledge)"),
+    ]
+
+    ws6.cell(row=10, column=1, value="Underwriting Parameter").fill = navy_fill
+    ws6.cell(row=10, column=1).font = header_font
+    ws6.cell(row=10, column=2, value="Credit Committee Benchmark").fill = navy_fill
+    ws6.cell(row=10, column=2).font = header_font
+
+    for r_idx, (kpi, val) in enumerate(underwriting_kpis, start=11):
+        c1 = ws6.cell(row=r_idx, column=1, value=kpi)
+        c2 = ws6.cell(row=r_idx, column=2, value=val)
         c1.font = regular_font
         c2.font = bold_font
         c1.border = thin_border

@@ -258,13 +258,152 @@ def generate_cash_flow_waterfall(save_path: Optional[Path] = None) -> Path:
     return save_path
 
 
+def generate_copula_tail_risk_chart(output_path: Optional[Path] = None) -> Path:
+    """
+    Figure 5: Institutional 2-panel chart demonstrating multivariate copula tail risk.
+    Panel A: Scatter comparison of Gaussian vs. Clayton lower-tail clustering.
+    Panel B: Empirical tail probability density of DSCR with VaR 99% and CVaR 99% shortfall.
+    Uses strictly the unified institutional palette.
+    """
+    set_institutional_style()
+    save_path = output_path or (get_assets_dir() / "figure_5_copula_tail_risk.png")
+
+    from src.simulation.copula_engine import CopulaSimulationEngine
+
+    engine = CopulaSimulationEngine(n_simulations=50_000, random_seed=42)
+    results = engine.run_comparative_analysis()
+
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 6.2))
+
+    # --- Panel A: Joint Tail Dependency Scatter ---
+    # Subsample 2,500 points for clarity and high visual definition
+    idx = np.random.default_rng(42).choice(50_000, size=2500, replace=False)
+    occ_g_sub = results.occ_gaussian[idx] * 0.3136 * 0.90 * 100  # Occupancy %
+    dscr_g_sub = results.dscr_gaussian[idx]
+
+    occ_c_sub = results.occ_clayton[idx] * 0.3136 * 0.90 * 100
+    dscr_c_sub = results.dscr_clayton[idx]
+
+    ax1.scatter(
+        occ_g_sub,
+        dscr_g_sub,
+        color=PALETTE["slate_benchmark"],
+        alpha=0.35,
+        s=16,
+        label="Gaussian Copula (Thin Tail, lambda_L=0)",
+        edgecolors="none",
+    )
+    ax1.scatter(
+        occ_c_sub,
+        dscr_c_sub,
+        color=PALETTE["rose_negative"],
+        alpha=0.45,
+        s=18,
+        label="Clayton Copula (Asymmetric Tail, lambda_L=0.68)",
+        edgecolors="none",
+    )
+
+    # Threshold lines
+    ax1.axhline(1.25, color=PALETTE["amber_warning"], linestyle="--", linewidth=1.4, label="Target Covenant (DSCR 1.25x)")
+    ax1.axhline(1.00, color=PALETTE["slate_dark"], linestyle="-", linewidth=1.5, label="Default Threshold (DSCR 1.00x)")
+
+    # Distress zone annotation
+    ax1.axhspan(-0.5, 1.0, color=PALETTE["rose_negative"], alpha=0.06)
+    ax1.text(
+        15.5,
+        0.10,
+        "Systemic Distress Zone\n(Clayton lower-tail clustering)",
+        color=PALETTE["rose_negative"],
+        fontsize=8.5,
+        fontweight="bold",
+        bbox=dict(boxstyle="round,pad=0.3", facecolor="white", edgecolor=PALETTE["rose_negative"], alpha=0.9),
+    )
+
+    ax1.set_xlim(12, 42)
+    ax1.set_ylim(-0.3, 2.7)
+    ax1.set_xlabel("Year 1 Effective Occupancy Rate (%)", color=PALETTE["slate_dark"])
+    ax1.set_ylabel("Year 1 Debt Service Coverage Ratio (DSCR)", color=PALETTE["slate_dark"])
+    ax1.set_title("(A) Joint Tail Dependency: Clayton Clustering vs. Gaussian Model", pad=12, fontweight="bold", color=PALETTE["slate_dark"])
+    ax1.legend(loc="upper left", frameon=True, facecolor="white", framealpha=0.95, edgecolor=PALETTE["slate_border"], fontsize=8)
+
+    # --- Panel B: Empirical Tail Density & CVaR ---
+    # Kernel Density Estimation of Year 1 DSCR
+    bins = np.linspace(-0.5, 2.8, 120)
+    sns.kdeplot(
+        results.dscr_gaussian,
+        ax=ax2,
+        color=PALETTE["slate_benchmark"],
+        linestyle="--",
+        linewidth=1.8,
+        label=f"Gaussian (VaR 99%: {results.gaussian.var_99:.2f}x, CVaR: {results.gaussian.cvar_99:.2f}x)",
+    )
+    sns.kdeplot(
+        results.dscr_student_t,
+        ax=ax2,
+        color=PALETTE["navy_primary"],
+        linestyle="-",
+        linewidth=1.6,
+        label=f"Student-t nu=4 (VaR 99%: {results.student_t.var_99:.2f}x, CVaR: {results.student_t.cvar_99:.2f}x)",
+    )
+    sns.kdeplot(
+        results.dscr_clayton,
+        ax=ax2,
+        color=PALETTE["rose_negative"],
+        linestyle="-",
+        linewidth=2.2,
+        label=f"Clayton theta=1.8 (VaR 99%: {results.clayton.var_99:.2f}x, CVaR: {results.clayton.cvar_99:.2f}x)",
+    )
+
+    # Shaded CVaR 99% area for Clayton
+    var_99_clayton = results.clayton.var_99
+    kde_line = ax2.get_lines()[-1]
+    x_kde, y_kde = kde_line.get_data()
+    mask_cvar = x_kde <= var_99_clayton
+    ax2.fill_between(
+        x_kde[mask_cvar],
+        y_kde[mask_cvar],
+        color=PALETTE["rose_negative"],
+        alpha=0.25,
+        label=f"Clayton CVaR 99% Shortfall ({results.clayton.tail_deficit_cvar99_eur:,.0f} €)",
+    )
+
+    ax2.axvline(1.25, color=PALETTE["amber_warning"], linestyle="--", linewidth=1.4)
+    ax2.axvline(1.00, color=PALETTE["slate_dark"], linestyle="-", linewidth=1.5)
+    ax2.axvline(var_99_clayton, color=PALETTE["rose_negative"], linestyle=":", linewidth=1.6)
+
+    ax2.text(
+        var_99_clayton + 0.05,
+        0.55,
+        f"VaR 99% ({var_99_clayton:.2f}x)\nCVaR 99% ({results.clayton.cvar_99:.2f}x)",
+        color=PALETTE["rose_negative"],
+        fontsize=8.2,
+        fontweight="bold",
+        ha="left",
+        bbox=dict(boxstyle="round,pad=0.25", facecolor="white", edgecolor=PALETTE["rose_negative"], alpha=0.9),
+    )
+
+    ax2.set_xlim(-0.4, 2.7)
+    ax2.set_xlabel("Year 1 Debt Service Coverage Ratio (DSCR)", color=PALETTE["slate_dark"])
+    ax2.set_ylabel("Empirical Probability Density", color=PALETTE["slate_dark"])
+    ax2.set_title("(B) Downside Tail Distribution & Expected Shortfall (CVaR 99%)", pad=12, fontweight="bold", color=PALETTE["slate_dark"])
+    ax2.legend(loc="upper right", frameon=True, facecolor="white", framealpha=0.95, edgecolor=PALETTE["slate_border"], fontsize=8)
+
+    plt.suptitle("Figure 5: Multivariate Copula Tail Risk - Asymmetric Lower Tail Clustering vs. Naive Gaussian Model",
+                 fontsize=12, fontweight="bold", color=PALETTE["slate_dark"], y=0.99)
+    plt.tight_layout()
+    fig.savefig(save_path)
+    plt.close(fig)
+    return save_path
+
+
 def generate_all_figures():
-    """Generates all 4 institutional figures using the unified palette."""
+    """Generates all 5 institutional figures using the unified palette."""
     p1 = generate_seasonality_chart()
     p2 = generate_dscr_sensitivity_heatmap()
     p3 = generate_monte_carlo_distribution()
     p4 = generate_cash_flow_waterfall()
-    return [p1, p2, p3, p4]
+    p5 = generate_copula_tail_risk_chart()
+    return [p1, p2, p3, p4, p5]
 
 
 if __name__ == "__main__":
