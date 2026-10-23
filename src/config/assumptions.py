@@ -203,16 +203,23 @@ class FixedOpexStructure:
 @dataclass(frozen=True)
 class RevenueModelConfig:
     """
-    Inventory, room counts, and pricing assumptions.
+    Inventory, room counts, pricing assumptions, and launch penetration schedule.
     Units:
     - 7 Double Rooms (boutique rural hotel)
     - 1 Full Rural House (Casa Rural completa, 10-12 pax capacity)
     - Restaurant: 25 € average spend per diner, 30% Cost of Goods Sold (COGS).
+    
+    Launch Penetration Strategy (Market Penetration Index - MPI):
+    - Year 1: Introductory pricing (85% of standard ADR) and promotional ramp-up
+      (60% of market occupancy, ~18.8% real occupancy / ~68.7 days, matching the 
+      original Excel's conservative 66.3 days / 18.2%).
+    - Year 2: Stabilization (95% ADR, 85% market occupancy, ~26.7%).
+    - Year 3+: Mature asset at full market potential (100% ADR, 100% INE benchmark occupancy).
     """
     double_rooms_count: int = 7
-    double_room_adr: float = 85.0   # Average daily rate per room (net of VAT)
+    double_room_adr: float = 85.0   # Mature average daily rate per room (net of VAT)
     full_house_count: int = 1
-    full_house_adr: float = 380.0   # Average daily rate full house (net of VAT)
+    full_house_adr: float = 380.0   # Mature average daily rate full house (net of VAT)
 
     restaurant_average_ticket: float = 25.0
     restaurant_cogs_ratio: float = 0.30  # 30% food & beverage margin cost
@@ -220,7 +227,15 @@ class RevenueModelConfig:
     restaurant_diners_per_full_house: float = 7.0   # 7 diners per occupied house-night
 
     hospitality_vat_rate: float = 0.10  # 10% statutory rate (Ley 37/1992 art. 91.Uno.2.2º)
-    calibration_mode: str = "ine_market"  # 'ine_market' (empirical series) or 'leader_excel' (Excel exact)
+
+    # Realistic ramp-up parameters
+    mpi_year_1: float = 0.60        # 60% of mature market occupancy in Year 1
+    adr_factor_year_1: float = 0.85 # 15% promotional launch discount on rack rates
+    mpi_year_2: float = 0.85        # 85% of mature market occupancy in Year 2
+    adr_factor_year_2: float = 0.95 # 5% promotional discount in Year 2
+    mpi_year_3: float = 1.00        # 100% mature market occupancy
+    adr_factor_year_3: float = 1.00 # 100% mature rack rate
+    calibration_mode: str = "ine_market" # 'ine_market' or 'leader_excel'
 
 
 @dataclass(frozen=True)
