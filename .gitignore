@@ -15,3 +15,6 @@ env/
 venv/
 .DS_Store
 Thumbs.db
+
+# Documentation & Internal Working Notes
+docs/
