@@ -220,6 +220,7 @@ class RevenueModelConfig:
     restaurant_diners_per_full_house: float = 7.0   # 7 diners per occupied house-night
 
     hospitality_vat_rate: float = 0.10  # 10% statutory rate (Ley 37/1992 art. 91.Uno.2.2º)
+    calibration_mode: str = "ine_market"  # 'ine_market' (empirical series) or 'leader_excel' (Excel exact)
 
 
 @dataclass(frozen=True)

@@ -111,15 +111,38 @@ class FinancialModelEngine:
 
     def calculate_revenue_for_year(self, year: int) -> Dict[str, float]:
         """
-        Calculates annual revenue streams considering INE Segovia occupancy and ramp-up.
-        Ramp-up factor: Year 1 = 90% of steady state, Year 2 = 100%, Year 3+ = 105% (mature asset).
+        Calculates annual revenue streams.
+        Modes:
+        - 'leader_excel': Replicates the exact consolidated projection from Presentacion_La_Dehesa.xlsx
+                          (Y1: 96,628 €, Y2: 126,855 €, Y3: 159,863 €).
+        - 'ine_market': Dynamic monthly calibration based on INE Segovia Rural Tourism survey microdata.
         """
-        ramp_up = 0.90 if year == 1 else (1.00 if year == 2 else 1.05)
-        occ_mult = self.scenario.occupancy_multiplier * ramp_up
+        occ_mult = self.scenario.occupancy_multiplier
         adr_mult = self.scenario.adr_multiplier
 
-        # Weighted annual occupied days
-        base_occ = get_annual_weighted_occupancy(SEGOVIA_INE_MONTHLY) * occ_mult
+        if self.rev_cfg.calibration_mode == "leader_excel":
+            # Exact figures from Presentacion_La_Dehesa.xlsx (Tablas para PPT)
+            excel_rev_base = {1: 96_628.0, 2: 126_855.0, 3: 159_863.0, 4: 167_856.0, 5: 176_249.0}
+            base_rev = excel_rev_base.get(year, 159_863.0 * (1.05 ** (year - 3)))
+            tot_rev = round(base_rev * occ_mult * adr_mult, 2)
+            # Allocation: 40% rooms, 25% house, 35% restaurant
+            rev_rooms = round(tot_rev * 0.40, 2)
+            rev_house = round(tot_rev * 0.25, 2)
+            rev_restaurant = round(tot_rev - rev_rooms - rev_house, 2)
+            cogs_restaurant = round(rev_restaurant * self.rev_cfg.restaurant_cogs_ratio, 2)
+            return {
+                "rev_rooms": rev_rooms,
+                "rev_house": rev_house,
+                "rev_restaurant": rev_restaurant,
+                "total_revenue": tot_rev,
+                "cogs_restaurant": cogs_restaurant,
+            }
+
+        # Baseline: Empirical INE Segovia series
+        ramp_up = 0.90 if year == 1 else (1.00 if year == 2 else 1.05)
+        effective_occ_mult = occ_mult * ramp_up
+
+        base_occ = get_annual_weighted_occupancy(SEGOVIA_INE_MONTHLY) * effective_occ_mult
         annual_days = 365
         occupied_day_equivalents = base_occ * annual_days
 
