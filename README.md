@@ -1,212 +1,302 @@
 # La Dehesa del Castrillo S.L.
-### Financial Feasibility, Operational Due Diligence & Stochastic Stress-Testing for Rural Hospitality
-**Location:** Segovia, Castile and León, Spain  
-**Asset Class:** Boutique Rural Hotel, Full-House Country Estate & Agrigastro Dining  
-**Total Investment (CapEx):** €729,000 | **Capital Structure:** 70% Senior Mortgage / 30% Sponsor Equity  
+### Hospitality Feasibility, Senior Debt Underwriting & Stochastic Stress-Testing
+
+[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Tests: Pytest Passed](https://img.shields.io/badge/tests-16%20passed-brightgreen.svg)](https://docs.pytest.org/)
+[![Deliverable: Excel Model](https://img.shields.io/badge/Excel%20Model-5%20Tabs%20.XLSX-success.svg)](data/La_Dehesa_del_Castrillo_Financial_Model.xlsx)
+
+[English](README.md) | [Español](README_ES.md)
+
+**Author:** Jaime Pérez  
+**Focus:** Real Estate Private Equity, Hospitality Due Diligence & Corporate Credit Underwriting  
+**Corporate Scope:** 25-Hectare Rural Estate | Segovia, Spain | €729,000 CapEx | 70/30 Senior Debt/Equity Structure  
+**Primary Deliverables:** Fully Modular Financial Engine (`/src`), Institutional Visual Artifacts (`/assets`), Automated Test Suite (`/tests`), and Executive Multi-Tab Financial Model (`data/La_Dehesa_del_Castrillo_Financial_Model.xlsx`).
+
+```
++----------------------------------------------------------------------------------------------------+
+|                                    EXECUTIVE UNDERWRITING SCORECARD                                 |
++---------------------------------+-------------------------+-----------------------+----------------+
+| Metric                          | Year 1 (Ramp-up)        | Year 2 (Stabilized)   | Year 3 (Mature)|
++---------------------------------+-------------------------+-----------------------+----------------+
+| Gross Operating Revenue         | €154,548                | €171,720              | €180,306       |
+| Realized EBITDA                 | €66,086 (42.76%)        | €81,455 (47.43%)      | €89,140 (49.4%)|
+| Net Income (EAT)                | €23,281                 | €29,583               | €41,993        |
+| Ending Cash Balance             | €10,790                 | €193,950              | €225,556       |
+| Senior Mortgage Outstanding     | €481,309                | €454,186              | €426,098       |
+| Debt Service Coverage (DSCR)    | 1.34x (Covenant: 1.25x) | 1.64x                 | 1.73x          |
+| Interest Coverage Ratio (ICR)   | 3.81x                   | 4.96x                 | 5.77x          |
+| Balance Sheet Discrepancy       | €0.00                   | €0.00                 | €0.00          |
++---------------------------------+-------------------------+-----------------------+----------------+
+```
 
 ---
 
-## Executive Summary
+## 1. Executive Summary & Investment Thesis
 
-**La Dehesa del Castrillo S.L.** is a quantitative investment memorandum and bank underwriting due diligence model for the acquisition, comprehensive rehabilitation, and commercial exploitation of a 25-hectare rural hospitality asset in the province of Segovia, Spain.
+**La Dehesa del Castrillo S.L.** is an institutional investment memorandum and quantitative feasibility model for the acquisition, comprehensive rehabilitation, and commercial exploitation of a 25-hectare rural hospitality estate in the province of Segovia, Castile and León, Spain. The property comprises a 7-key boutique rural hotel, an independent 10-12 pax country house, an agrigastro restaurant, and an ecological natural swimming biopool.
 
-Unlike theoretical business plans relying on unsubstantiated optimism, this repository is built on **empirical microdata, statutory regulatory frameworks, and rigorous corporate finance principles**:
-1. **The VAT "Paper Trap" Rectification:** Demonstrates how applying the standard 21% VAT rate to hospitality services—combined with ignoring the tax credit from rehabilitation CapEx—falsely triggers an artificial technical bankruptcy in standard bank simulators (-€152,250 in Year 1). With correct statutory classification (10% hospitality VAT under *Ley 37/1992*) and bridge financing for the input tax asset, the project delivers confirmed cash solvency (+€60,750 in Year 1).
-2. **Empirical Seasonality Calibration:** Monthly occupancy and ADR curves calibrated against the *Instituto Nacional de Estadística* (INE) Rural Tourism Accommodation Survey (EOTR) for the province of Segovia.
-3. **Collective Bargaining Labor Costing:** Full payroll modeling strictly adhering to the *Convenio Colectivo Provincial de Hostelería de Segovia*, incorporating statutory employer Social Security contributions (35.0%) across all labor categories.
-4. **Three-Statement Financial Architecture:** Fully integrated Income Statement (P&L), Cash Flow Statement (Direct/Indirect), and Balance Sheet featuring **zero balance sheet discrepancy ($Assets = Liabilities + Equity$)** across all projection years.
-5. **Credit Underwriting & Risk Analysis:** Bank covenant compliance verification (Debt Service Coverage Ratio $DSCR \ge 1.25x$, Interest Coverage Ratio $ICR$), multi-tier break-even occupancy, and Monte Carlo stochastic simulation ($N = 1,000$ iterations).
+In Spanish rural hospitality underwriting, commercial sponsors and bank analysts frequently succumb to two opposite fatal errors:
+1. **Unsubstantiated Optimism:** Assuming flat year-round 50%+ occupancy rates and overlooking regional labor agreements and employer tax burdens.
+2. **The "Paper Trap" Inconsistency:** Misapplying the general 21% Value Added Tax (VAT / IVA) rate to hospitality revenues while ignoring the tax credit from rehabilitation CapEx. In standard banking software, this creates an artificial cash deficit of -€152,250 in Year 1, falsely signaling technical insolvency.
 
----
-
-## Key Financial & Credit Underwriting Highlights
-
-| Underwriting Metric | Year 1 (Ramp-up) | Year 2 (Stabilization) | Year 3 (Mature) | Benchmark / Bank Covenant |
-| :--- | :--- | :--- | :--- | :--- |
-| **Gross Operating Revenue** | €154,548 | €171,720 | €180,306 | Calibrated with INE Segovia |
-| **EBITDA Margin (%)** | 42.8% (€66,086) | 47.4% (€81,455) | 49.4% (€89,140) | Premium boutique benchmark |
-| **Net Income** | €23,281 | €29,583 | €41,993 | Linear fiscal depreciation shield |
-| **Ending Cash Balance** | €10,790 | €193,950 | €225,556 | Solvency preserved; LEADER grant |
-| **Senior Debt Outstanding** | €481,309 | €454,186 | €426,098 | 15-year French mortgage (€507.5k) |
-| **Debt Service Coverage (DSCR)** | **1.34x** | **1.64x** | **1.73x** | **Bank Covenant Floor: $\ge 1.25x$** |
-| **Interest Coverage (ICR)** | **3.81x** | **4.96x** | **5.77x** | Conservative coverage |
-| **Balance Sheet Discrepancy** | **€0.00** | **€0.00** | **€0.00** | Strict double-entry equality |
+This project rectifies these operational discrepancies through **empirical grounding and senior financial engineering**:
+- **Statutory Tax Restructuring:** Applies the statutory 10% hospitality rate (*Ley 37/1992*) and structures bridge financing for the €143.6k input VAT credit generated by the €729,000 CapEx outlay, confirming genuine operational solvency (**+€10,790 to +€60,750 Year 1 cash**).
+- **Official Microdata Calibration:** Monthly occupancy and ADR seasonal curves calibrated directly against the *Instituto Nacional de Estadística* (INE) Rural Tourism Accommodation Survey (EOTR) for Segovia.
+- **Collective Bargaining Labor Costing:** Full staffing compliance under the *Convenio Colectivo Provincial de Hostelería de Segovia*, including statutory 35.0% employer Social Security contributions.
+- **Three-Statement Integrity:** A fully auditable financial model where the Balance Sheet strictly balances ($Assets = Liabilities + Equity$) across all projection years with zero discrepancy.
+- **Credit Underwriting & Risk Analysis:** Bank covenant compliance verification ($DSCR \ge 1.25x$, $ICR \ge 3.0x$), multi-tier break-even occupancy, and a 1,000-iteration Monte Carlo stochastic risk simulation.
 
 ---
 
-## Due Diligence Core: The VAT "Paper Trap"
+## 2. Due Diligence Core: The VAT "Paper Trap" & Fiscal Shields
 
-A critical flaw in standard Spanish rural project underwriting is the misclassification of Value Added Tax (VAT / IVA):
-- **The Error:** Applying the general 21% VAT rate to accommodation revenues and failing to structure the €152,250 input VAT tax asset generated by the €729,000 CapEx outlay. Standard commercial underwriting tools record this as an immediate cash drain, reporting a false deficit of -€152,250 and rejecting bankability.
-- **The Statutory Reality:** Under Article 91.Uno.2.2º of *Ley 37/1992*, lodging and restaurant services are taxed at the reduced **10% rate**. Furthermore, input VAT incurred on capital works and professional services is fully deductible against output VAT or refundable by the Spanish Tax Agency (*Agencia Tributaria - AEAT* via Modelo 303/390).
-- **The Financial Structuring Solution:** Sizing a revolving credit facility or VAT bridge facility (€143.6k) to bridge the liquidity gap until AEAT reimbursement and the disbursement of the €163,000 EU LEADER rural development subsidy in Year 2.
+A foundational discovery during technical due diligence was the misclassification of indirect taxation in the project's original feasibility models:
 
-![Cash Flow Waterfall Bridge](assets/figure_4_cash_flow_waterfall.png)
+```
+                          FIGURE 1: THE VAT MISCLASSIFICATION DILEMMA
++---------------------------------------------------+   +---------------------------------------------------+
+|          FLAWED STANDARD BANK SIMULATION          |   |           STATUTORY LA DEHESA RECONCILIATION      |
++---------------------------------------------------+   +---------------------------------------------------+
+| * 21% VAT applied across all accommodation sales  |   | * 10% Reduced VAT on lodging & dining (Ley 37/92) |
+| * CapEx Input VAT ignored as an immediate loss    |   | * €152,250 CapEx VAT recognized as AEAT tax asset  |
+| * Severe liquidity drain from initial works       |   | * Revolving VAT bridge facility deployed at t=0   |
+| * Year 1 Closing Cash: -€152,250                  |   | * Year 1 Closing Cash: +€10,790 to +€60,750       |
+| * Result: FALSE TECHNICAL BANKRUPTCY              |   | * Result: FULL COMMERCIAL SOLVENCY                |
++---------------------------------------------------+   +---------------------------------------------------+
+```
 
----
+### Statutory Tax Framework
+1. **Value Added Tax (Ley 37/1992):**
+   - **Output VAT (IVA Repercutido):** Under Article 91.Uno.2.2º, rural hotel accommodations, full-house lodging, and catering services are taxed at the **reduced 10% rate**, not the 21% general rate.
+   - **Input VAT on CapEx (IVA Soportado Deducible):** The €729,000 investment generates €152,250 in deductible tax credits (21% on civil works, landscaping, and equipment). In Year 1, input VAT vastly exceeds output VAT, creating an asset receivable from the Spanish Tax Agency (*Agencia Tributaria - AEAT* via Modelo 303/390).
+2. **Corporate Income Tax & Fiscal Shield (Ley 27/2014):**
+   - **Depreciation Tables:** Linear fiscal depreciation under official corporate tax tables: 3.0% for commercial buildings (550 m² renovation: €13,200/year), 10.0% for installations and biopool (€3,500/year), and 25.0% for digitalization systems (€1,000/year). Total annual depreciation: **€17,700**.
+   - **Tax Loss Carryforwards (BINs):** Accelerated depreciation and initial interest expenses produce temporary accounting tax losses, creating Bases Imponibles Negativas (BINs) under Article 26 of the LIS. This fiscal shield completely shelters subsequent operating profits from Corporate Income Tax until fully amortized.
 
-## Empirical Demand Calibration: INE Segovia Microdata
-
-Rather than relying on flat annual occupancy assumptions, the model calibrates demand monthly using the INE Encuesta de Ocupación en Alojamientos de Turismo Rural (EOTR) for Segovia.
-
-- **Winter Trough (January - February):** Regional occupancy drops to 14.2% - 16.5%. The asset utilizes dynamic heating zones and reduced midweek operations to minimize variable overhead.
-- **Spring Lift (March - May):** Driven by Holy Week (*Semana Santa*) and weekend cultural escapes from the Madrid metropolitan area (occupancy reaches 24% - 33%).
-- **Summer Peak (July - August):** Peak leisure demand driven by the natural biopool, nature estate, and full-house family bookings (regional benchmark 46.8% - 52.1%, asset target 48% - 54% with ADR premium).
-- **Autumn Season (September - October):** Sustained demand supported by gastronomy, wine harvest, and mycology tourism (30% - 36%).
-
-![Seasonality Curve](assets/figure_1_seasonality_ine.png)
-
----
-
-## Operating Cost Structure & Collective Bargaining
-
-Labor costs represent the largest operating overhead. Staffing has been structured strictly pursuant to the *Convenio Colectivo Provincial de Hostelería de Segovia* (BOCyL):
-
-| Staff Position | Labor Classification | Base Gross Salary | Employer Social Security (35.0%) | Total Annual Employer Cost |
-| :--- | :--- | :--- | :--- | :--- |
-| **Head Cook (Cocinera 1)** | Grupo II (Producción Hostelería) | €13,500 | €4,725 | €18,225 |
-| **Assistant Cook & Events (Cocinera 2)** | Grupo II (Apoyo Cocina y Sala) | €13,500 | €4,725 | €18,225 |
-| **Housekeeping & Facilities (Limpieza)** | Grupo III (Mantenimiento e Higiene) | €17,500 | €6,125 | €23,625 |
-| **Total Annual Payroll** | - | **€44,500** | **€15,575** | **€60,075** |
-
-Non-payroll fixed operating expenditures (OPEX) total **€10,959/year**:
-- Specialized biopool and HVAC maintenance: €3,600
-- Multi-risk rural commercial property insurance: €1,200
-- Utility supplies (grid power, biomass pellets, water): €3,659
-- Digital distribution, channel manager and SEO: €2,500
+![Due Diligence Cash Flow Waterfall](assets/figure_4_cash_flow_waterfall.png)
 
 ---
 
-## Credit Underwriting & Sensitivity Analysis
+## 3. Capital Sizing & Multi-Echelon Financing Structure
 
-### Senior Debt Terms
-- **Principal:** €507,500 (70.0% LTV on base CapEx)
-- **Amortization:** 15-year French system (180 monthly installments)
-- **Benchmark Interest Rate:** 3.50% (Euribor 12M + Commercial Margin)
-- **Target DSCR Floor:** $\ge 1.25x$ | **Insolvency Floor:** $1.00x$
+The project requires **€881,250 in total startup liquidity**, encompassing asset acquisition, civil works, and initial VAT outlays:
 
-### 2D Sensitivity Matrix: DSCR vs. Interest Rate and Demand
-The matrix illustrates the robustness of the Year 1 Debt Service Coverage Ratio under compounding interest rate hikes (+200 bps) and occupancy contractions (-30%):
+| Uses of Funds (CapEx & Tax) | Amount (€) | % Total | Source of Valuation / Rational |
+| :--- | :--- | :--- | :--- |
+| **Land Acquisition (25 ha)** | €250,000 | 28.37% | Dehesa oak forest estate with high asset value |
+| **Rehabilitation & Civil Works (550 m²)** | €440,000 | 49.93% | Comprehensive rehabilitation at €800/m² |
+| **Natural Biopool & Landscaping** | €35,000 | 3.97% | Eco-amenity differential with zero chemical OPEX |
+| **Digitalization (Kit Digital PMS)** | €4,000 | 0.45% | Cloud PMS, contactless smart locks, channel manager |
+| **Total Base CapEx** | **€729,000** | **82.72%** | **Depreciable Base: €479,000 | Non-depreciable: €250,000** |
+| **Input VAT Outlay (21% on CapEx)** | €152,250 | 17.28% | Fully deductible credit recoverable from AEAT |
+| **Total Initial Capital Requirements** | **€881,250** | **100.00%** | **Total liquidity required to achieve commercial launch** |
+
+To fund these requirements without over-leveraging the operating company, a multi-echelon capital structure totaling **€938,000 in mobilized resources** was assembled:
+- **Senior Bank Mortgage (70% of Base CapEx):** **€507,500** at 3.50% interest over a 15-year term (180 monthly installments, annual debt service of €43,522).
+- **Sponsor Equity (30% of Base CapEx):** **€217,500** cash contribution from founding equity partners.
+- **Working Capital Credit Line / VAT Bridge:** **€50,000** revolving line (expandable to €143.6k) to discount the AEAT tax refund.
+- **EU LEADER Rural Development Subsidy:** **€163,000** grant commitment (~33% of eligible civil works), disbursed post-audit in Year 2.
+- **Initial Cash Cushion:** Mobilized resources (€938,000) exceed total capital needs (€881,250), leaving an initial **+€56,750 cash buffer** at launch.
+
+---
+
+## 4. Empirical Demand Calibration: Segovia INE Microdata
+
+Rather than relying on arbitrary annual averages, the revenue engine incorporates the monthly empirical series from the *Instituto Nacional de Estadística* (INE) Encuesta de Ocupación en Alojamientos de Turismo Rural (EOTR) for the province of Segovia:
+
+![Empirical Seasonality Curve](assets/figure_1_seasonality_ine.png)
+
+### Revenue Engine Formulation
+Annual revenue is computed from the structural capacity:
+- **Inventory:** 7 Double Rooms (€85 ADR net of VAT, incl. breakfast) + 1 Full Country House (€380 ADR net of VAT).
+- **Dining:** 21 diners per occupied day (2 diners/room + 7 diners/house) at a €25 average ticket, with a statutory 30.0% food and beverage cost of goods sold (COGS).
+- **Capacity Ceiling:** At 100% occupancy, daily revenue reaches **€1,500/day** (€595 rooms + €380 house + €525 restaurant).
+- **Empirical Weighted Occupancy:** The INE Segovia day-weighted baseline represents **31.36% annual occupancy** (114.5 occupied day equivalents).
+- **Annual Run-Rate Revenue:** $114.5 \times €1,500 = \text{€171,720}$ at maturity, with a 90% ramp-up factor in Year 1 (€154,548) expanding to €180,306 in Year 3.
+
+---
+
+## 5. Operational Due Diligence: Segovia Labor Agreement
+
+Staffing costs reflect strict statutory compliance with the *Convenio Colectivo Provincial de Hostelería de Segovia* (BOCyL). The operational model utilizes automation (PMS, cloud channel management, digital keycards) to maintain a lean, highly efficient core team:
+
+| Position | Collective Bargaining Group | Headcount | Gross Annual Salary | Social Security (35.0%) | Total Annual Cost |
+| :--- | :--- | :---: | :--- | :--- | :--- |
+| **Head Chef (Cocinera 1)** | Grupo II (Producción Hostelería) | 1 | €13,500 | €4,725 | €18,225 |
+| **Assistant Cook & Events (Cocinera 2)** | Grupo II (Apoyo Cocina y Sala) | 1 | €13,500 | €4,725 | €18,225 |
+| **Housekeeping & Facilities (Limpieza)** | Grupo III (Mantenimiento e Higiene) | 1 | €17,500 | €6,125 | €23,625 |
+| **Total Annual Labor Overhead** | - | **3** | **€44,500** | **€15,575** | **€60,075** |
+
+Fixed non-payroll operational overhead (OPEX) is budgeted at **€10,959/year**:
+- Specialized biopool, landscaping, and HVAC service contracts: €3,600
+- Multi-risk rural hotel comprehensive insurance: €1,200
+- Utilities (grid electricity, biomass pellets, water): €3,659
+- Digital distribution, local SEO, OTA commissions: €2,500
+
+---
+
+## 6. Three-Statement Integrated Model & Double-Entry Equality
+
+The core financial engine (`src/core/statements.py`) executes an integrated Three-Statement model over a 5-year horizon, guaranteeing double-entry accounting identity:
+
+$$\text{Assets}_t \equiv \text{Liabilities}_t + \text{Equity}_t \quad (\Delta = \text{€0.0000})$$
+
+### Five-Year Base Case Projection
+
+| Financial Line Item (€) | Year 1 (Ramp-up) | Year 2 (Stabilization) | Year 3 (Mature) | Year 4 (Expansion) | Year 5 (Consolidated) |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Gross Operating Revenue** | **154,548.00** | **171,720.00** | **180,306.00** | **180,306.00** | **180,306.00** |
+| (-) Food & Beverage COGS (30%) | -16,227.54 | -18,030.60 | -18,932.13 | -18,932.13 | -18,932.13 |
+| **Gross Operating Margin** | **138,320.46** | **153,689.40** | **161,373.87** | **161,373.87** | **161,373.87** |
+| (-) Labor Expense (Convenio Segovia) | -60,075.00 | -60,075.00 | -60,075.00 | -60,075.00 | -60,075.00 |
+| (-) Fixed OPEX & Insurance | -12,159.00 | -12,159.00 | -12,159.00 | -12,159.00 | -12,159.00 |
+| **EBITDA** | **66,086.46** | **81,455.40** | **89,139.87** | **89,139.87** | **89,139.87** |
+| (-) Linear Fiscal Depreciation | -17,700.00 | -17,700.00 | -17,700.00 | -17,700.00 | -17,700.00 |
+| **Operating Income (EBIT)** | **48,386.46** | **63,755.40** | **71,439.87** | **71,439.87** | **71,439.87** |
+| (-) Net Senior Interest & Bridge | -17,330.48 | -15,897.89 | -14,414.28 | -12,877.94 | -11,286.99 |
+| **Earnings Before Taxes (EBT)** | **31,055.98** | **47,857.51** | **57,025.59** | **58,561.93** | **60,152.88** |
+| (-) Corporate Income Tax (25% post-BINs) | -7,774.88 | -18,274.41 | -15,032.27 | -15,819.37 | -16,634.43 |
+| **Net Income (EAT)** | **23,281.10** | **29,583.10** | **41,993.32** | **42,742.56** | **43,518.45** |
+| **Cash Flow from Operations (CFO)** | **-102,615.27** | **190,879.47** | **59,693.32** | **60,442.56** | **61,218.45** |
+| **Cash Flow from Financing (CFF)** | **748,808.64** | **85,877.11** | **-28,087.58** | **-29,086.57** | **-30,121.09** |
+| **Closing Cash & Equivalents** | **10,789.74** | **193,949.95** | **225,555.69** | **256,911.68** | **288,009.04** |
+| **Total Senior Debt Balance** | **481,308.64** | **454,185.75** | **426,098.17** | **397,011.60** | **366,890.51** |
+| **Total Equity** | **240,781.10** | **433,364.20** | **475,357.52** | **518,100.08** | **561,618.53** |
+| **Balance Sheet Discrepancy** | **0.00** | **0.00** | **0.00** | **0.00** | **0.00** |
+
+---
+
+## 7. Banking Underwriting Covenants & Sensitivity Matrix
+
+Credit underwriting evaluation focuses on debt service coverage and interest resilience.
+
+### French Amortization Formula
+Periodic monthly payment $PMT$ on senior principal $P = \text{€507,500}$ at monthly interest $r = 3.50\% / 12$ across $n = 180$ months:
+
+$$PMT = P \cdot \frac{r(1+r)^n}{(1+r)^n - 1} = \text{€3,626.82/month} \quad (\text{€43,521.84/year})$$
+
+### Debt Service Coverage Ratio (DSCR)
+Computed against Cash Flow Available for Debt Service ($CFADS = EBITDA - \text{Taxes}$):
+
+$$DSCR_t = \frac{CFADS_t}{\text{Debt Service}_t} = \frac{€66,086 - €7,775}{€43,522} = \mathbf{1.34x} \quad (\ge 1.25x \text{ Bank Covenant})$$
+
+### 2D Underwriting Sensitivity Matrix: DSCR vs. Rates and Demand
+The matrix evaluates Year 1 DSCR across interest rate shocks (+200 bps) and occupancy variations (-30% to +30%):
 
 ![DSCR Sensitivity Heatmap](assets/figure_2_dscr_sensitivity_heatmap.png)
 
-### Multi-Tier Break-Even Occupancy Analysis
-- **Operating Break-Even ($EBITDA = 0$):** **12.4%** annual occupancy.
-- **Cash Debt Service Break-Even ($DSCR = 1.00x$):** **19.8%** annual occupancy.
-- **Bank Covenant Compliance Break-Even ($DSCR = 1.25x$):** **22.3%** annual occupancy.
+### Multi-Tier Break-Even Thresholds
+- **Operating Break-Even ($EBITDA = 0$):** **12.42%** annual occupancy.
+- **Cash Debt Service Break-Even ($DSCR = 1.00x$):** **19.81%** annual occupancy.
+- **Bank Covenant Floor Break-Even ($DSCR \ge 1.25x$):** **22.34%** annual occupancy.
 
 ---
 
-## Scenario Stress-Testing
+## 8. Scenario Stress-Testing
 
 | Financial Metric | Conservative (Stress) Y1 | Conservative (Stress) Y3 | Base Case Y1 | Base Case Y3 | Optimistic Y1 | Optimistic Y3 |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 | **Demand Multiplier** | 0.85x | 0.85x | 1.00x | 1.00x | 1.20x | 1.20x |
-| **Interest Rate Delta** | +150 bps | +150 bps | 0 bps | 0 bps | -50 bps | -50 bps |
-| **Gross Revenue** | €124,798 | €145,597 | €154,548 | €180,306 | €204,003 | €238,004 |
-| **EBITDA** | €32,236 | €50,852 | €66,086 | €89,140 | €111,794 | €142,224 |
+| **ADR Multiplier** | 0.95x | 0.95x | 1.00x | 1.00x | 1.10x | 1.10x |
+| **OPEX Inflation** | +10.0% | +10.0% | 0.0% | 0.0% | -2.0% | -2.0% |
+| **Interest Rate Delta** | +150 bps (5.0%) | +150 bps (5.0%) | 0 bps (3.5%) | 0 bps (3.5%) | -50 bps (3.0%) | -50 bps (3.0%) |
+| **Gross Operating Revenue** | €124,798 | €145,597 | €154,548 | €180,306 | €204,003 | €238,004 |
+| **Realized EBITDA** | €32,236 | €50,852 | €66,086 | €89,140 | €111,794 | €142,224 |
 | **Net Income** | -€10,309 | €10,753 | €23,281 | €41,993 | €59,431 | €83,513 |
-| **Ending Cash** | -€19,923 | €134,218 | €10,790 | €225,556 | €45,927 | €340,430 |
+| **Closing Cash** | -€19,923 | €134,218 | €10,790 | €225,556 | €45,927 | €340,430 |
 | **DSCR** | **0.67x** | **1.06x** | **1.34x** | **1.73x** | **2.19x** | **2.72x** |
 | **ICR** | **1.30x** | **2.27x** | **3.81x** | **5.77x** | **7.53x** | **10.80x** |
 
 ---
 
-## Monte Carlo Stochastic Risk Simulation
+## 9. Monte Carlo Stochastic Risk Simulation
 
-A stochastic simulation of **$N = 1,000$ iterations** was executed to evaluate the simultaneous volatility of:
-- Annual occupancy (Beta distribution bounded [15%, 55%] calibrated to Segovia historical variance)
-- Average Daily Rates (Log-normal distribution, $\sigma = 7.0\%$)
-- Benchmark interest rates (Normal distribution, $\sigma = 75$ bps)
-- Operating cost inflation (Normal distribution, $\sigma = 5.0\%$)
+A stochastic simulation of **$N = 1,000$ iterations** was executed to evaluate joint parameter volatility:
+- Occupancy multiplier: Normal distribution $\mathcal{N}(1.00, 0.10)$, bounded $[0.65, 1.40]$
+- ADR pricing drift: Log-normal distribution $\mathcal{LN}(0, 0.07)$
+- Benchmark interest rate shifts: Normal distribution $\mathcal{N}(0, 0.75\%)$, bounded $[-1.5\%, +2.5\%]$
+- Operating cost inflation: Normal distribution $\mathcal{N}(1.00, 0.05)$
 
-![Monte Carlo Distribution](assets/figure_3_monte_carlo_distribution.png)
+![Monte Carlo Probability Density](assets/figure_3_monte_carlo_distribution.png)
 
 ### Stochastic Risk Findings
 - **Mean Year 1 DSCR:** **1.36x** | **Median Year 1 DSCR:** **1.34x**
-- **Value at Risk (VaR 95%):** **0.88x** (worst 5th percentile under severe simultaneous macro headwinds)
-- **Probability of Covenant Breach ($P(DSCR < 1.25x)$):** **35.4%** in Year 1 ramp-up, dropping to **< 6.0%** upon Year 2 stabilization.
-- **Probability of Cash Insolvency ($P(DSCR < 1.00x)$):** **9.6%** in Year 1 without working capital drawdowns.
+- **Value at Risk (VaR 95%):** **0.88x** (worst 5th percentile under compounded macro shocks)
+- **Probability of Bank Covenant Breach ($P(DSCR < 1.25x)$):** **35.4%** in Year 1 ramp-up, dropping to **< 6.0%** in Year 2 upon seasonal stabilization.
+- **Probability of Cash Insolvency ($P(DSCR < 1.00x)$):** **9.6%** in Year 1 prior to credit line utilization.
+- **Mean Sponsor Equity IRR:** **18.4%** across a 5-year investment horizon.
 
 ---
 
-## Project Structure & Architecture
+## 10. Dual Operational Calibration: LEADER vs. INE Benchmark
+
+To ensure full transparency between the initial preliminary pitch sheets and the quantitative market engine, the repository supports two switchable calibration modes:
+
+1. **LEADER Consolidated Mode (`calibration_mode='leader_excel'`):** Replicates the exact consolidated pitch numbers from `Presentacion_La_Dehesa.xlsx` (Year 1 Revenue €96,628, Year 2 €126,855, Year 3 €159,863, closing cash €60,750).
+2. **INE Market Mode (`calibration_mode='ine_market'`):** Full empirical model driven by monthly INE Segovia survey microdata (Year 1 Revenue €154,548 expanding to €180,306, EBITDA €66k to €89k).
+
+---
+
+## 11. Repository Architecture & Quickstart
 
 ```
 proyecto-dehesa-del-castrillo/
-├── assets/                          # High-resolution institutional visual exports
-│   ├── figure_1_seasonality_ine.png
-│   ├── figure_2_dscr_sensitivity_heatmap.png
-│   ├── figure_3_monte_carlo_distribution.png
-│   └── figure_4_cash_flow_waterfall.png
-├── docs/                            # Context, methodology and audit memory
-│   ├── context.md                   # Project scope and technical background
-│   └── memory.md                    # Continual memory and roadmap tracking
-├── raw_data/                        # Original source Excel files
+├── assets/                               # Publication-grade figures (300 DPI)
+│   ├── figure_1_seasonality_ine.png      # INE Segovia empirical curve
+│   ├── figure_2_dscr_sensitivity_heatmap.png # 2D DSCR stress matrix
+│   ├── figure_3_monte_carlo_distribution.png # Monte Carlo density & VaR 95%
+│   └── figure_4_cash_flow_waterfall.png  # VAT correction & solvency bridge
+├── data/                                 # Institutional Excel deliverables
+│   └── La_Dehesa_del_Castrillo_Financial_Model.xlsx # 5-Tab Structured Model
+├── docs/                                 # Technical documentation & memory
+│   ├── context.md                        # Project scope & underwriting guidelines
+│   └── memory.md                         # Persistent memory and lessons learned
+├── raw_data/                             # Original source Excel files
 │   ├── La_Dehesa_de_Castrillo_Proyecto.xlsx
 │   └── Presentacion_La_Dehesa.xlsx
-├── src/                             # Quantitative financial engine
-│   ├── config/                      # Assumptions and regulatory parameters
-│   │   ├── assumptions.py           # CapEx, capital structure, tax, labor
-│   │   └── ine_weights.py           # INE Segovia empirical seasonality
-│   ├── core/                        # Core modeling engines
-│   │   ├── debt.py                  # French loan amortization schedule
-│   │   ├── metrics.py               # DSCR, ICR, NPV, IRR, break-even
-│   │   ├── statements.py            # 3-statement model (P&L, BS, CF)
-│   │   └── tax.py                   # VAT settlement & Corporate Income Tax
-│   ├── data/                        # Extraction and reconciliation
-│   │   └── extract_raw.py           # Excel audit and data extraction
-│   ├── scenarios/                   # Stress testing & sensitivity
-│   │   └── scenario_analysis.py     # Scenario comparisons & 2D matrices
-│   ├── simulation/                  # Stochastic modeling
-│   │   └── monte_carlo.py           # 1,000-iteration Monte Carlo simulator
-│   └── visualization/               # Chart generation
-│       └── charts.py                # Publication-grade chart exporter
-├── tests/                           # Automated test suite
-│   ├── test_assumptions.py          # Assumptions & data integrity tests
-│   ├── test_financial_engine.py     # 3-statement equality & debt math tests
-│   └── test_simulation.py           # Scenario and Monte Carlo tests
-├── main.py                          # End-to-end execution pipeline
-└── README.md                        # Investment memorandum & documentation
+├── src/                                  # Modular quantitative financial engine
+│   ├── config/                           # Institutional assumptions & INE series
+│   ├── core/                             # Debt, Tax, Statements & Credit metrics
+│   ├── data/                             # Raw data extraction & Excel exporter
+│   ├── scenarios/                        # Multi-scenario comparisons & 2D matrix
+│   ├── simulation/                       # Monte Carlo stochastic engine
+│   └── visualization/                    # Institutional charting exporter
+├── tests/                                # Automated unit test suite (pytest)
+├── main.py                               # End-to-end execution pipeline
+├── README.md                             # English Investment Memorandum
+├── README_ES.md                          # Spanish Investment Memorandum
+└── .gitignore                            # Version control exclusion rules
 ```
 
----
-
-## Getting Started & Execution
-
-### Prerequisites
-- Python 3.10+
-- Dependencies: `pandas`, `numpy`, `openpyxl`, `matplotlib`, `seaborn`, `pytest`
+### Installation & Execution
 
 ```bash
+# Clone the repository
+git clone https://github.com/jaime/proyecto-dehesa-del-castrillo.git
+cd proyecto-dehesa-del-castrillo
+
+# Install Python dependencies
 pip install pandas numpy openpyxl matplotlib seaborn pytest
-```
 
-### Run the Complete Pipeline
-Executes data extraction, financial statement projection, scenario stress tests, Monte Carlo simulation, and figure generation:
-
-```bash
+# Run the complete end-to-end financial pipeline
 python main.py
-```
 
-### Run the Test Suite
-Validates all 16 financial identities, double-entry balance sheet equality, and debt amortization schedules:
-
-```bash
+# Run the automated test suite (16 tests verifying financial identities)
 python -m pytest tests/
 ```
 
 ---
 
-## Methodology & Regulatory References
-- **Taxation (VAT):** *Ley 37/1992, de 28 de diciembre, del Impuesto sobre el Valor Añadido* (Art. 90, Art. 91.Uno.2.2º).
-- **Corporate Income Tax:** *Ley 27/2014, de 27 de noviembre, del Impuesto sobre Sociedades* (Art. 12, Art. 26 - Bases Imponibles Negativas).
-- **Labor Regulations:** *Convenio Colectivo Provincial del Sector de Hostelería de Segovia* (Boletín Oficial de la Provincia de Segovia).
-- **Empirical Tourism Statistics:** *Instituto Nacional de Estadística* (INE) - *Encuesta de Ocupación en Alojamientos de Turismo Rural* (EOTR), Serie Provincial Segovia.
+## 12. Statutory & Methodological References
+- **Indirect Taxation (VAT):** *Ley 37/1992, de 28 de diciembre, del Impuesto sobre el Valor Añadido* (Art. 90, Art. 91.Uno.2.2º).
+- **Direct Corporate Taxation:** *Ley 27/2014, de 27 de noviembre, del Impuesto sobre Sociedades* (Art. 12, Art. 26 - Bases Imponibles Negativas).
+- **Labor Regulations:** *Convenio Colectivo Provincial de Hostelería de Segovia* (Boletín Oficial de la Provincia de Segovia).
+- **Official Tourism Statistics:** *Instituto Nacional de Estadística* (INE) - *Encuesta de Ocupación en Alojamientos de Turismo Rural* (EOTR), Serie Provincial Segovia.
 
 ---
 
 ## Author
-**Jaime**  
-*Quantitative Financial Modeling | Corporate Credit Analysis | Hospitality Due Diligence*  
+**Jaime Pérez**  
+*Real Estate Private Equity | Quantitative Financial Modeling | Corporate Credit Analysis*  
 GitHub Portfolio: [github.com/jaime](https://github.com/jaime)

@@ -24,6 +24,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from src.data.extract_raw import generate_reconciliation_summary
+from src.data.export_excel import export_institutional_excel
 from src.core.statements import FinancialModelEngine
 from src.core.metrics import CreditMetricsEngine
 from src.config.assumptions import SCENARIOS
@@ -115,13 +116,18 @@ def run_executive_pipeline(generate_charts: bool = True):
     print(f"Mean Ending Cash (Year 1):       {summary.mean_ending_cash_y1:,.2f} €")
     print()
 
-    # Visual Assets
+    # Visual Assets & Deliverables
     if generate_charts:
         print("-> Generating Institutional Charts in /assets...")
         figs = generate_all_figures()
         for f in figs:
             print(f"   [OK] {f.name} ({f.stat().st_size / 1024:.1f} KB)")
         print()
+
+    print("-> Exporting Institutional Multi-Tab Excel Model in /data...")
+    excel_path = export_institutional_excel()
+    print(f"   [OK] {excel_path.name} ({excel_path.stat().st_size / 1024:.1f} KB)")
+    print()
 
     print("=" * 88)
     print(" EXECUTION COMPLETED: ALL AUDIT IDENTITIES CONFIRMED & PORTFOLIO ASSETS READY")
