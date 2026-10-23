@@ -270,8 +270,8 @@ proyecto-dehesa-del-castrillo/
 
 ```bash
 # Clone the repository
-git clone https://github.com/magnumjpg/hospitality-credit-underwriting-model.git
-cd hospitality-credit-underwriting-model
+git clone https://github.com/magnumjpg/la-dehesa-financial-due-diligence.git
+cd la-dehesa-financial-due-diligence
 
 # Install Python dependencies
 pip install pandas numpy openpyxl matplotlib seaborn pytest

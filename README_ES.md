@@ -226,8 +226,8 @@ Para garantizar máxima trazabilidad entre los documentos preliminares y el moto
 
 ```bash
 # Clonar el repositorio
-git clone https://github.com/magnumjpg/hospitality-credit-underwriting-model.git
-cd hospitality-credit-underwriting-model
+git clone https://github.com/magnumjpg/la-dehesa-financial-due-diligence.git
+cd la-dehesa-financial-due-diligence
 
 # Instalar dependencias requeridas
 pip install pandas numpy openpyxl matplotlib seaborn pytest
