@@ -3,7 +3,8 @@
 
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Tests: Pytest Passed](https://img.shields.io/badge/tests-21%20passed-brightgreen.svg)](https://docs.pytest.org/)
+[![Tests: Pytest Passed](https://img.shields.io/badge/tests-26%20passed-brightgreen.svg)](https://docs.pytest.org/)
+[![AI Ground-Truth: Verified](https://img.shields.io/badge/AI%20CFO%20Audit-7%2F7%20Passed-blue.svg)](data/ai_cfo_ground_truth.json)
 [![Deliverable: Excel Model](https://img.shields.io/badge/Modelo%20Excel-6%20Pestañas%20.XLSX-success.svg)](data/La_Dehesa_del_Castrillo_Financial_Model.xlsx)
 
 [English](README.md) | [Español](README_ES.md)
@@ -11,7 +12,8 @@
 **Autor:** Jaime Pérez  
 **Especialidad:** Real Estate Private Equity, Due Diligence Operativa y Análisis de Crédito Bancario  
 **Alcance del Proyecto:** Finca Rural de 25 Hectáreas | Segovia, España | Inversión: 729.000 € | Financiación 70/30 Deuda/Capital  
-**Entregables Principales:** Motor Financiero Modular en Python (`/src`), Motor de Cópulas Multivariables (`copula_engine.py`), Memorando para Comité de Riesgos (`credit_committee.py`), Figuras Institucionales de Alta Resolución (`/assets`), Batería de Tests Unitarios (`/tests`) y Modelo Financiero en Excel de 6 pestañas (`data/La_Dehesa_del_Castrillo_Financial_Model.xlsx`).
+**Entregables Principales:** Motor Financiero Modular en Python (`/src`), Motor de Unit Economics y Runway Mensual (`unit_economics.py`, `monthly_cash.py`), Capa de Ground-Truth y Guardrails para IA (`ai_cfo_ground_truth.json`), Motor de Cópulas Multivariables (`copula_engine.py`), Memorando para Comité de Riesgos (`credit_committee.py`), Figuras Institucionales de Alta Resolución (`/assets`), Batería de Tests Unitarios (`/tests`) y Modelo Financiero en Excel de 6 pestañas (`data/La_Dehesa_del_Castrillo_Financial_Model.xlsx`).
+
 
 ```
 +----------------------------------------------------------------------------------------------------+
@@ -111,7 +113,40 @@ En vez de supuestos lineales, el modelo incorpora la serie de estacionalidad men
 - **Ocupación Ponderada Provincial:** Media anual de **31,36%** (114,5 días ocupados equivalentes al año).
 - **Facturación Anual de Régimen:** $114,5 \times 1.500 € = \text{171.720 €}$ en régimen estabilizado (Año 2), con 154.548 € en el Año 1 (rampa del 90%) y 180.306 € en el Año 3.
 
+### Análisis de Unit Economics y Margen de Contribución (Marco askRIA CFO)
+Un principio fundamental en el análisis de compañías en etapas tempranas es que las cuentas de resultados anuales agregadas pueden esconder fragilidad operativa si los unit economics no demuestran apalancamiento operativo real (*"la métrica a vigilar es cómo se comporta el margen de contribución conforme escalas"*).
+
+A través del motor modular (`src/core/unit_economics.py`), cada día ocupado y noche de habitación se desagrega en ingresos brutos, costes variables de captación y contribución marginal neta:
+
+| Partida Operativa | Capacidad Diaria 100% (8 Unidades + 21 Comensales) | Por Noche de Habitación (Habitación + 2 Comensales) | Criterio y Supuesto Económico |
+| :--- | :---: | :---: | :--- |
+| **Ingresos Brutos Alojamiento** | 975,00 € | 85,00 € | 7 habitaciones @ 85 € + 1 casa @ 380 € (netos de IVA) |
+| **Ingresos Brutos Restauración** | 525,00 € | 50,00 € | 21 comensales (2 por hab., 7 por casa) @ 25 € ticket |
+| **Facturación Diaria Total** | **1.500,00 €** | **135,00 €** | **Régimen de Capacidad Estructural al 100%** |
+| (-) Coste de Producto Restaurante (30%) | -157,50 € | -15,00 € | Materias primas directas de alimentos y bebidas |
+| (-) Comisiones de Canal / OTAs | -87,75 € | -7,65 € | Mix ponderado: 60% OTAs (Booking/Airbnb @ 15%) vs 40% directa (0%) |
+| (-) Suministros Variables y Lavandería | -35,00 € | -4,00 € | Cambio de lencería, amenities ecológicos y toallas biopiscina |
+| **Costes Variables Totales** | **-280,25 € (18,68%)** | **-26,65 € (19,74%)** | **Coste marginal total por ciclo ocupado** |
+| **Margen de Contribución Unitario (€)** | **1.219,75 € / día** | **108,35 € / habitación** | **Caja limpia generada para cubrir costes fijos y deuda** |
+| **Margen de Contribución Unitario (%)** | **81,32%** | **80,26%** | **Estructura operativa de alto apalancamiento marginal** |
+
+#### Evolución de RevPAR, TRevPAR y Cobertura de Costes Fijos
+
+| Ejercicio Proyectado | Tasa de Ocupación | Días Ocupados | Ingresos Alojamiento | Facturación Total | RevPAR (8 Unidades) | TRevPAR (8 Unidades) | Margen Contribución Total | Cobertura Carga Fija |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **Año 1 (Rampa)** | 28,22% | 103,0 | 100.438 € | 154.548 € | **34,40 €** | **52,93 €** | **125.634 €** | **1,09x** |
+| **Año 2 (Estabilizado)** | 31,36% | 114,5 | 111.598 € | 171.720 € | **38,22 €** | **58,81 €** | **139.660 €** | **1,21x** |
+| **Año 3 (Maduro)** | 32,93% | 120,2 | 117.178 € | 180.306 € | **40,13 €** | **61,75 €** | **146.614 €** | **1,27x** |
+
+> [!NOTE]
+> **Umbral de Apalancamiento Operativo:** La carga fija total anual asciende a **115.756 €** (Personal fijo 60.075 € + OPEX fijo 12.159 € + Servicio de la deuda sénior 43.522 €). Como cada día ocupado genera **1.219,75 €** de margen limpio:
+> - **Punto Muerto Operativo ($EBITDA = 0$):** 59,2 días ocupados (16,23% de ocupación anual).
+> - **Punto Muerto de Deuda en Caja ($DSCR = 1,00x$):** 94,9 días ocupados (26,00% de ocupación anual).
+> - **Punto Muerto de Covenant Bancario ($DSCR \ge 1,25x$):** 103,8 días ocupados (28,44% de ocupación anual).
+> Incluso en el Año 1 de rampa, el activo registra 103,0 días equivalentes generando 125.634 € de margen de contribución, demostrando que los unit economics se fortalecen con la escala en lugar de degradarse.
+
 ---
+
 
 ## 5. Costes de Personal: Convenio Colectivo de Segovia
 
@@ -159,7 +194,45 @@ $$\text{Activo}_t \equiv \text{Pasivo}_t + \text{Patrimonio Neto}_t \quad (\Delt
 
 ---
 
-## 7. Covenants Bancarios y Matriz de Sensibilidad
+## 7. Flujo de Caja Mensual, Trough de Liquidez y Puente de Circulante (Años 1 y 2)
+
+Como se señala habitualmente en el ecosistema fintech e inversión institucional, *"la contabilidad se diseña para verse limpia, pero el comportamiento por debajo rara vez lo es. La caja a corto plazo te mantiene vivo, pero la calidad estructural del sistema determina el desenlace final"*.
+
+En hostelería rural, las cifras anuales enmascaran el mayor riesgo de liquidez: **la estacionalidad invernal**. Aunque el Año 1 facture 154.548 €, enero y febrero presentan históricamente ocupaciones inferiores al 16% en Segovia, generando apenas ~5.650 €/mes en ventas mientras las nóminas (5.006 €/mes), el OPEX fijo (1.013 €/mes) y la cuota hipotecaria (3.627 €/mes) exigen un drenaje continuo de **9.646 €/mes**. Asimismo, la Agencia Tributaria (*AEAT*) demora entre 6 y 10 meses tras el cierre fiscal en auditar y abonar los **152.250 € del IVA soportado en la reforma**.
+
+Para garantizar solvencia ininterrumpida, el motor financiero ejecuta una simulación mensual a 24 meses (`src/core/monthly_cash.py`):
+
+![Flujo de Caja Mensual y Puente de Solvencia](assets/figure_6_monthly_cash_runway.png)
+
+### Trayectoria Mensual Empírica y Detección del Punto Mínimo de Caja (Trough)
+
+| Mes | Etapa Estacional | Ocupación Objetivo | Facturación Mensual | Margen Contribución | Salidas Fijas (Personal + OPEX + Cuota) | Flujo Operativo Neto | Póliza de Crédito Dispuesto | Saldo Final de Tesorería |
+| :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **Inicio (t=0)** | Cierre Financiero | - | - | - | - | - | 0,00 € | **56.750,00 €** |
+| **M1 (Ene)** | Valle Invernal | 13,50% | 5.649,75 € | 4.579,54 € | 9.646,32 € | -5.067,99 € | 0,00 € | 51.682,01 € |
+| **M2 (Feb)** | Valle Invernal | 15,30% | 5.783,40 € | 4.687,87 € | 9.646,32 € | -4.959,65 € | 0,00 € | 46.722,36 € |
+| **M3 (Mar)** | **Trough de Caja** | **21,60%** | **9.541,80 €** | **7.747,36 €** | **9.646,32 €** | **-1.900,17 €** | **0,00 €** | **44.822,18 €** |
+| **M4 (Abr)** | Despegue Primavera | 27,90% | 13.182,75 € | 10.734,42 € | 9.646,32 € | +1.086,89 € | 0,00 € | 45.909,08 € |
+| **M5 (May)** | Primavera Alta | 29,70% | 13.810,50 € | 11.230,24 € | 9.646,32 € | +1.582,71 € | 0,00 € | 47.491,78 € |
+| **M6 (Jun)** | Arranque Verano | 33,30% | 15.734,25 € | 12.812,05 € | 9.646,32 € | +3.164,52 € | 0,00 € | 50.656,31 € |
+| **M7 (Jul)** | Temporada Alta | 43,20% | 23.101,20 € | 18.855,43 € | 9.646,32 € | +9.207,90 € | 0,00 € | 59.864,21 € |
+| **M8 (Ago)** | Pico de Demanda | 48,60% | 27.118,80 € | 22.157,57 € | 9.646,32 € | +12.510,04 € | 0,00 € | 72.374,25 € |
+| **M9 (Sep)** | Vendimia y Senderismo | 32,40% | 15.309,00 € | 12.465,78 € | 9.646,32 € | +2.818,25 € | 0,00 € | 75.192,50 € |
+| **M10 (Oct)** | Otoño Micológico | 27,00% | 12.555,00 € | 10.209,31 € | 9.646,32 € | +561,78 € | 0,00 € | 75.754,28 € |
+| **M11 (Nov)** | Final de Otoño | 19,80% | 8.464,50 € | 6.872,65 € | 9.646,32 € | -2.774,87 € | 0,00 € | 72.979,40 € |
+| **M12 (Dic)** | Puentes Navideños | 25,20% | 12.889,80 € | 10.508,90 € | 9.646,32 € | +861,37 € | 0,00 € | **73.840,77 €** |
+
+### Arquitectura de Cobertura de Liquidez
+1. **Punto Mínimo de Caja (Trough):** La caja acumulada toca suelo en el **Mes 3 (Marzo) con 44.822,18 €**. Gracias al colchón inicial de 56.750 €, la tesorería nunca vulnera la política de liquidez mínima de 10.000 €.
+2. **Póliza de Crédito Disponible:** La póliza de crédito de 50.000 € permanece sin disponer (0,00 €) en el caso base, proporcionando **94.822 € de liquidez total accesible** en el momento de mayor tensión.
+3. **Inflexión de Liquidez en Año 2:**
+   - **Mes 14:** Abono de la subvención a fondo perdido LEADER (+163.000 €).
+   - **Mes 18:** Liquidación y devolución del IVA de CapEx por la AEAT (+152.250 €).
+   - La caja acumulada al cierre del Año 2 alcanza **421.784 €** (o 193.950 € tras cancelar el puente fiscal), blindando estructuralmente el proyecto.
+
+---
+
+## 8. Covenants Bancarios y Matriz de Sensibilidad
 
 ### Cobertura de Deuda (DSCR)
 Calculado sobre el Flujo de Caja Disponible para el Servicio de la Deuda ($CFADS = EBITDA - \text{Impuestos}$):
@@ -178,7 +251,7 @@ Evaluación del DSCR del Año 1 ante shocks simultáneos de tipos (+200 pb) y ca
 
 ---
 
-## 8. Análisis de Escenarios
+## 9. Análisis de Escenarios
 
 | Métrica Financiera | Conservador (Estrés) Y1 | Conservador (Estrés) Y3 | Caso Base Y1 | Caso Base Y3 | Optimista Y1 | Optimista Y3 |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
@@ -195,7 +268,7 @@ Evaluación del DSCR del Año 1 ante shocks simultáneos de tipos (+200 pb) y ca
 
 ---
 
-## 9. Simulación Estocástica Monte Carlo ($N=1.000$)
+## 10. Simulación Estocástica Monte Carlo ($N=1.000$)
 
 Simulación estocástica que analiza la volatilidad conjunta de:
 - Ocupación anual: Distribución Normal $\mathcal{N}(1,00; 0,10)$, acotada en $[0,65; 1,40]$
@@ -214,7 +287,7 @@ Simulación estocástica que analiza la volatilidad conjunta de:
 
 ---
 
-## 10. Riesgo de Crédito Cuantitativo: Dependencia de Colas con Cópulas Multivariables y Dimensionamiento del DSRA
+## 11. Riesgo de Crédito Cuantitativo: Dependencia de Colas con Cópulas Multivariables y Dimensionamiento del DSRA
 
 Los modelos estándar de riesgo de crédito en banca minorista suelen asumir independencia estocástica o correlación lineal Gaussiana. En una cópula Gaussiana, los shocks extremos presentan independencia asintótica en colas ($\lambda_L = \lambda_U = 0$). Sin embargo, en recesiones macroeconómicas severas, la caída de demanda, la presión sobre el precio de habitación (ADR), la subida de tipos de interés (Euríbor) y la inflación de costes ocurren de manera simultánea.
 
@@ -248,7 +321,30 @@ Conforme al memorando formal generado por `src/core/credit_committee.py`:
 
 ---
 
-## 11. Doble Calibración Operativa: Modelo LEADER vs. Benchmark INE
+## 12. Capa de Preparación para IA: Ground-Truth Estructurado y Reglas de Auditoría (askRIA Specification)
+
+Uno de los mayores retos en la creación de herramientas de infraestructura autónoma y modelos de "AI CFO" radica en la **trazabilidad de datos y la eliminación de alucinaciones en modelos de lenguaje**:
+> *"¿Podemos confiar en las respuestas? ¿De dónde sale cada cifra? Las empresas no necesitan otra IA que produzca texto; necesitan sistemas que concilien evidencia, auditen riesgos y soporten un examen riguroso."*
+
+Para servir de entorno de pruebas y entrenamiento de agentes LLM CFO, el motor exporta un esquema institucional validado en [`data/ai_cfo_ground_truth.json`](data/ai_cfo_ground_truth.json) (`src/core/ai_cfo_export.py`).
+
+### Catálogo de Trazabilidad Regulatoria y Reglas de Control (Guardrails)
+
+| Identificador de Regla | Formulación Matemática / Lógica | Fuente Regulatoria / Origen | Resultado de Validación |
+| :--- | :--- | :--- | :---: |
+| `RULE_01_BALANCE_SHEET_EQUALITY` | $\|Activo_t - (Pasivo_t + PN_t)\| \le 0,01$ € | Plan General de Contabilidad (PGC) | **PASSED** (0,00 € max var) |
+| `RULE_02_HOSPITALITY_VAT_RATE` | IVA alojamiento y comidas al 10,0%, NO al 21,0% | Ley 37/1992 Art. 91.Uno.2.2º | **PASSED** (10,0% aplicado) |
+| `RULE_03_CAPEX_INPUT_VAT_ASSET` | 152.250 € de IVA CapEx activados como crédito fiscal | Ley 37/1992 Art. 92-114 (AEAT) | **PASSED** (152.250 € activo) |
+| `RULE_04_LABOR_COLLECTIVE_AGREEMENT` | Coste laboral calibrado con Convenio Hostelería Segovia + 35% SS | BOP Segovia Convenio Hostelería | **PASSED** (60.075,00 €/año) |
+| `RULE_05_BANK_COVENANT_DSCR_FLOOR` | DSCR Año 1 igual o superior al covenant bancario exigido | Hoja de Condiciones de Crédito | **PASSED** (1,34x $\ge$ 1,25x) |
+| `RULE_06_SEASONAL_LIQUIDITY_BUFFER` | Saldo de caja estrictamente positivo en el valle invernal | Gestión de Tesorería Operativa | **PASSED** (44.822 € caja mín.) |
+| `RULE_07_ASYMMETRIC_TAIL_DSRA` | DSRA dimensionado al CVaR 99% de cópula Clayton (47.597 €) | Motor Cuantitativo de Cópulas | **PASSED** (47.597 € DSRA) |
+
+Este entregable provee la verdad fundamental (*ground truth*) requerida para calibrar modelos de IA financiera, verificar la resiliencia ante errores de cálculo y ejecutar auditorías automáticas de riesgo de inversión.
+
+---
+
+## 13. Doble Calibración Operativa: Modelo LEADER vs. Benchmark INE
 
 Para garantizar máxima trazabilidad entre los documentos preliminares y el motor de mercado, el repositorio soporta dos modos conmutables:
 1. **Modo LEADER Consolidado (`calibration_mode='leader_excel'`):** Replica las cifras de la presentación original `Presentacion_La_Dehesa.xlsx` (Año 1: 96.628 € ventas, Año 2: 126.855 €, Año 3: 159.863 €, caja acumulada: 60.750 €).
@@ -256,7 +352,58 @@ Para garantizar máxima trazabilidad entre los documentos preliminares y el moto
 
 ---
 
-## 12. Estructura del Repositorio y Ejecución
+## 14. Estructura del Repositorio
+
+```
+proyecto-dehesa-del-castrillo/
+├── assets/                               # Figuras institucionales de alta resolución (300 DPI)
+│   ├── figure_1_seasonality_ine.png      # Curva empírica INE Segovia
+│   ├── figure_2_dscr_sensitivity_heatmap.png # Matriz de estrés 2D DSCR
+│   ├── figure_3_monte_carlo_distribution.png # Densidad Monte Carlo y VaR 95%
+│   ├── figure_4_cash_flow_waterfall.png  # Conciliación fiscal de IVA y puente de liquidez
+│   ├── figure_5_copula_tail_risk.png     # Dependencia de colas con cópulas y CVaR
+│   └── figure_6_monthly_cash_runway.png  # Runway de tesorería mensual a 24 meses y trough
+├── data/                                 # Entregables cuantitativos
+│   ├── La_Dehesa_del_Castrillo_Financial_Model.xlsx # Modelo estructurado en 6 pestañas
+│   └── ai_cfo_ground_truth.json          # Capa de Ground-Truth y Guardrails para IA
+├── raw_data/                             # Archivos Excel originales de origen
+│   ├── La_Dehesa_de_Castrillo_Proyecto.xlsx
+│   └── Presentacion_La_Dehesa.xlsx
+├── src/                                  # Motor financiero cuantitativo modular
+│   ├── config/                           # Parámetros institucionales y microdatos INE
+│   │   ├── assumptions.py
+│   │   └── ine_weights.py
+│   ├── core/                             # Deuda, Fiscalidad, Estados, Unit Economics y Capa IA
+│   │   ├── ai_cfo_export.py              # Exportador de ground-truth y guardrails
+│   │   ├── credit_committee.py           # Memorando automatizado de comité de crédito
+│   │   ├── debt.py                       # Cuadro de amortización francés
+│   │   ├── metrics.py                    # Covenants, puntos muertos y TIR/VAN
+│   │   ├── monthly_cash.py               # Simulación mensual de tesorería y trough
+│   │   ├── statements.py                 # Modelo integrado de 3 estados contables
+│   │   ├── tax.py                        # Motor de IVA e Impuesto sobre Sociedades
+│   │   └── unit_economics.py             # RevPAR, TRevPAR y margen de contribución
+│   ├── data/                             # Extracción de datos y exportador Excel
+│   ├── scenarios/                        # Análisis de escenarios y matriz 2D
+│   ├── simulation/                       # Motores estocásticos de Monte Carlo y Cópulas
+│   │   ├── copula_engine.py              # Cópulas Gaussiana, Student-t y Clayton
+│   │   └── monte_carlo.py                # Simulación de 1.000 iteraciones
+│   └── visualization/                    # Exportador de gráficos institucionales
+├── tests/                                # Suite de tests automatizados (pytest)
+│   ├── test_ai_cfo.py                    # Tests de validación de esquema y guardrails
+│   ├── test_assumptions.py
+│   ├── test_copula.py                    # Tests de marginales, orden y DSRA
+│   ├── test_financial_engine.py
+│   ├── test_simulation.py
+│   └── test_unit_economics_monthly.py    # Tests de unit economics y runway mensual
+├── main.py                               # Pipeline integral de ejecución
+├── README.md                             # Memorando de inversión en inglés
+├── README_ES.md                          # Memorando de inversión en español
+└── .gitignore                            # Reglas de exclusión de Git
+```
+
+---
+
+## 15. Instalación y Ejecución
 
 ```bash
 # Clonar el repositorio
@@ -269,22 +416,17 @@ pip install pandas numpy scipy openpyxl matplotlib seaborn pytest
 # Ejecutar el pipeline financiero completo
 python main.py
 
-# Ejecutar la batería de tests automatizados (21 tests de cuadre financiero y cópulas)
+# Ejecutar la batería de tests automatizados (26 tests de cuadre financiero, cópulas y guardrails de IA)
 python -m pytest tests/
 ```
 
 ---
 
-## 13. Referencias Regulatorias y Metodológicas
+## 16. Referencias Regulatorias y Metodológicas
 - **IVA:** *Ley 37/1992, de 28 de diciembre, del Impuesto sobre el Valor Añadido* (Art. 90, Art. 91.Uno.2.2º).
 - **Impuesto sobre Sociedades:** *Ley 27/2014, de 27 de noviembre, del Impuesto sobre Sociedades* (Art. 12, Art. 26 - BINs).
 - **Convenio Colectivo:** *Convenio Colectivo Provincial de Hostelería de Segovia* (BOP Segovia).
-- **Estadísticas de Turismo:** *Instituto Nacional de Estadística* (INE) - *Encuesta de Ocupación en Alojamientos de Turismo Rural* (EOTR), Serie Provincial Segovia.
+- **Official Tourism Statistics:** *Instituto Nacional de Estadística* (INE) - *Encuesta de Ocupación en Alojamientos de Turismo Rural* (EOTR), Serie Provincial Segovia.
 
----
 
-## Autor
-**Jaime Pérez**  
-*Real Estate Private Equity | Quantitative Financial Modeling | Corporate Credit Analysis*  
-GitHub Portfolio: [github.com/magnumjpg](https://github.com/magnumjpg)
 

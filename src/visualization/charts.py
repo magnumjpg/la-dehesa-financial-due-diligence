@@ -396,17 +396,102 @@ def generate_copula_tail_risk_chart(output_path: Optional[Path] = None) -> Path:
     return save_path
 
 
+def generate_monthly_cash_runway_chart(save_path: Optional[Path] = None) -> Path:
+    """Figure 6: 24-Month Cash Runway, Cash Trough & Liquidity Safety Buffer."""
+    set_institutional_style()
+    save_path = save_path or (get_assets_dir() / "figure_6_monthly_cash_runway.png")
+
+    from src.core.monthly_cash import MonthlyCashEngine
+
+    mc = MonthlyCashEngine()
+    df_monthly = mc.run_monthly_schedule(horizon_months=24)
+    summary = mc.get_runway_summary(df_monthly)
+
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5.5), dpi=300)
+
+    # Panel A: Year 1 Monthly Operating Cash Flows
+    df_y1 = df_monthly[df_monthly["year"] == 1]
+    months_y1 = [m[:3] for m in df_y1["month_name"]]
+    x_y1 = np.arange(len(months_y1))
+
+    colors_cf = [PALETTE["teal_positive"] if v >= 0 else PALETTE["rose_negative"] for v in df_y1["net_operating_cash_flow"]]
+    ax1.bar(x_y1, df_y1["net_operating_cash_flow"] / 1000, color=colors_cf, width=0.55, edgecolor=PALETTE["slate_border"], label="Net Operating Cash Flow")
+
+    ax1.plot(x_y1, df_y1["gross_revenue"] / 1000, color=PALETTE["navy_primary"], marker="o", markersize=4, linewidth=1.8, label="Gross Revenue (k€)")
+    fixed_burden_k = (df_y1["fixed_payroll"].iloc[0] + df_y1["fixed_opex"].iloc[0] + df_y1["senior_debt_service"].iloc[0]) / 1000
+    ax1.axhline(fixed_burden_k, color=PALETTE["amber_warning"], linestyle="--", linewidth=1.4, label=f"Fixed Burden ({fixed_burden_k:.1f}k€/mo)")
+    ax1.axhline(0, color=PALETTE["slate_dark"], linestyle="-", linewidth=0.8)
+
+    ax1.set_xticks(x_y1)
+    ax1.set_xticklabels(months_y1)
+    ax1.set_ylabel("Thousand EUR (€k)", color=PALETTE["slate_dark"])
+    ax1.set_title("(A) Year 1 Monthly Operating Cash Flow & Seasonality", pad=12, fontweight="bold", color=PALETTE["slate_dark"])
+    ax1.legend(loc="upper left", frameon=True, facecolor="white", framealpha=0.95, edgecolor=PALETTE["slate_border"], fontsize=8)
+
+    trough_val = df_y1.iloc[1]["net_operating_cash_flow"] / 1000
+    ax1.annotate(f"Winter Trough\n({trough_val:.1f}k€ burn)", xy=(1, trough_val), xytext=(1, trough_val - 4),
+                 arrowprops=dict(arrowstyle="->", color=PALETTE["rose_negative"]),
+                 fontsize=8, fontweight="bold", ha="center", color=PALETTE["rose_negative"])
+
+    peak_idx = 7
+    peak_val = df_y1.iloc[peak_idx]["net_operating_cash_flow"] / 1000
+    ax1.annotate(f"Summer Peak\n(+{peak_val:.1f}k€ surplus)", xy=(peak_idx, peak_val), xytext=(peak_idx, peak_val + 3),
+                 arrowprops=dict(arrowstyle="->", color=PALETTE["teal_positive"]),
+                 fontsize=8, fontweight="bold", ha="center", color=PALETTE["teal_positive"])
+
+    # Panel B: 24-Month Cumulative Cash & Liquidity Buffer
+    m_indices = df_monthly["month_index"].values
+    cash_k = df_monthly["ending_cash_balance"].values / 1000
+    total_liq_k = df_monthly["liquidity_buffer_total"].values / 1000
+
+    ax2.plot(m_indices, cash_k, color=PALETTE["navy_primary"], marker="s", markersize=3.5, linewidth=2.0, label="Ending Cash Balance (k€)")
+    ax2.fill_between(m_indices, cash_k, color=PALETTE["navy_light"], alpha=0.15)
+    ax2.plot(m_indices, total_liq_k, color=PALETTE["teal_positive"], linestyle=":", linewidth=1.8, label="Total Available Liquidity (Cash + Credit Line)")
+
+    ax2.axvline(summary.year1_trough_month_index, color=PALETTE["rose_negative"], linestyle="--", linewidth=1.2)
+    ax2.annotate(f"Cash Trough: {summary.year1_trough_month}\n(€{summary.year1_trough_cash_balance:,.0f} min cash)",
+                 xy=(summary.year1_trough_month_index, summary.year1_trough_cash_balance / 1000),
+                 xytext=(summary.year1_trough_month_index + 1.2, summary.year1_trough_cash_balance / 1000 - 8),
+                 arrowprops=dict(arrowstyle="->", color=PALETTE["rose_negative"]),
+                 fontsize=8, fontweight="bold", color=PALETTE["rose_negative"],
+                 bbox=dict(boxstyle="round,pad=0.2", facecolor="white", edgecolor=PALETTE["rose_negative"], alpha=0.9))
+
+    ax2.axvline(14, color=PALETTE["amber_warning"], linestyle="--", linewidth=1.2)
+    ax2.annotate("LEADER Grant\n(+€163k)", xy=(14, cash_k[13]), xytext=(11.5, cash_k[13] + 15),
+                 arrowprops=dict(arrowstyle="->", color=PALETTE["amber_warning"]),
+                 fontsize=8, fontweight="bold", color=PALETTE["amber_warning"])
+
+    ax2.axvline(18, color=PALETTE["teal_positive"], linestyle="--", linewidth=1.2)
+    ax2.annotate("AEAT VAT Refund\n(+€152k)", xy=(18, cash_k[17]), xytext=(15.5, cash_k[17] + 18),
+                 arrowprops=dict(arrowstyle="->", color=PALETTE["teal_positive"]),
+                 fontsize=8, fontweight="bold", color=PALETTE["teal_positive"])
+
+    ax2.set_xlabel("Operational Month (1 to 24)", color=PALETTE["slate_dark"])
+    ax2.set_ylabel("Liquidity Cushion (€k)", color=PALETTE["slate_dark"])
+    ax2.set_title("(B) 24-Month Cumulative Cash Runway & Solvency Bridge", pad=12, fontweight="bold", color=PALETTE["slate_dark"])
+    ax2.legend(loc="upper left", frameon=True, facecolor="white", framealpha=0.95, edgecolor=PALETTE["slate_border"], fontsize=8)
+
+    plt.suptitle("Figure 6: Monthly Cash Runway, Winter Cash Trough & Working Capital Bridge",
+                 fontsize=12, fontweight="bold", color=PALETTE["slate_dark"], y=0.99)
+    plt.tight_layout()
+    fig.savefig(save_path)
+    plt.close(fig)
+    return save_path
+
+
 def generate_all_figures():
-    """Generates all 5 institutional figures using the unified palette."""
+    """Generates all 6 institutional figures using the unified palette."""
     p1 = generate_seasonality_chart()
     p2 = generate_dscr_sensitivity_heatmap()
     p3 = generate_monte_carlo_distribution()
     p4 = generate_cash_flow_waterfall()
     p5 = generate_copula_tail_risk_chart()
-    return [p1, p2, p3, p4, p5]
+    p6 = generate_monthly_cash_runway_chart()
+    return [p1, p2, p3, p4, p5, p6]
 
 
 if __name__ == "__main__":
     figs = generate_all_figures()
     for f in figs:
         print(f"Generated unified figure: {f.name} ({f.stat().st_size / 1024:.1f} KB)")
+
