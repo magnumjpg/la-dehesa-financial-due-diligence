@@ -3,6 +3,9 @@ from src.core.debt import DebtAmortizationEngine, LoanPeriod
 from src.core.tax import VATEngine, CorporateTaxEngine
 from src.core.statements import FinancialModelEngine, AnnualStatementRecord
 from src.core.metrics import CreditMetricsEngine, calculate_npv, calculate_irr
+from src.core.unit_economics import UnitEconomicsEngine, UnitEconomicsMetrics
+from src.core.monthly_cash import MonthlyCashEngine, MonthlyCashRecord, MonthlyRunwaySummary
+from src.core.ai_cfo_export import AICFOGroundTruthExporter
 
 __all__ = [
     "DebtAmortizationEngine",
@@ -14,4 +17,11 @@ __all__ = [
     "CreditMetricsEngine",
     "calculate_npv",
     "calculate_irr",
+    "UnitEconomicsEngine",
+    "UnitEconomicsMetrics",
+    "MonthlyCashEngine",
+    "MonthlyCashRecord",
+    "MonthlyRunwaySummary",
+    "AICFOGroundTruthExporter",
 ]
+

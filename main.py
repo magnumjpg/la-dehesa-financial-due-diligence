@@ -92,16 +92,32 @@ def run_executive_pipeline(generate_charts: bool = True):
     print(f"-> Balance Sheet Strict Equality Test (Assets == Liab + Equity): PASSED (Max variance: {max_bs_diff:.4f} €)")
     print()
 
-    # Step 3: Scenario Stress-Testing
-    print("[3/4] SCENARIO STRESS-TESTING (CONSERVATIVE vs. BASE vs. OPTIMISTIC)")
+    # Step 3: Unit Economics & Contribution Margin Audit
+    print("[3/9] UNIT ECONOMICS & CONTRIBUTION MARGIN AUDIT (askRIA CFO SPECIFICATION)")
+    print("-" * 88)
+    from src.core.unit_economics import UnitEconomicsEngine
+    ue_engine = UnitEconomicsEngine()
+    ue_engine.print_terminal_summary()
+    print()
+
+    # Step 4: Monthly Cash Flow, Runway & Cash Trough Audit
+    print("[4/9] YEAR 1 & 2 MONTHLY CASH FLOW, RUNWAY & CASH TROUGH AUDIT")
+    print("-" * 88)
+    from src.core.monthly_cash import MonthlyCashEngine
+    mc_engine = MonthlyCashEngine()
+    mc_engine.print_terminal_summary()
+    print()
+
+    # Step 5: Scenario Stress-Testing
+    print("[5/9] SCENARIO STRESS-TESTING (CONSERVATIVE vs. BASE vs. OPTIMISTIC)")
     print("-" * 88)
     sc_engine = ScenarioEngine(target_dscr=1.25, projection_years=3)
     df_scenarios = sc_engine.generate_scenario_comparison_table()
     print(df_scenarios.to_string(index=False))
     print()
 
-    # Step 4: Monte Carlo Credit Risk Simulation
-    print("[4/6] NAIVE GAUSSIAN MONTE CARLO SIMULATION (N=1,000 ITERATIONS)")
+    # Step 6: Monte Carlo Credit Risk Simulation
+    print("[6/9] NAIVE GAUSSIAN MONTE CARLO SIMULATION (N=1,000 ITERATIONS)")
     print("-" * 88)
     sim = MonteCarloSimulator(iterations=1000, random_seed=42)
     _, summary = sim.run_simulation()
@@ -114,8 +130,8 @@ def run_executive_pipeline(generate_charts: bool = True):
     print(f"P(Insolvency Default) [DSCR < 1]: {summary.prob_cash_insolvency_y1*100:.1f}%")
     print()
 
-    # Step 5: Multivariate Copula Tail Risk Engine (50,000 draws)
-    print("[5/6] MULTIVARIATE COPULA TAIL RISK ENGINE (50,000 DRAWS: GAUSSIAN vs. STUDENT-T vs. CLAYTON)")
+    # Step 7: Multivariate Copula Tail Risk Engine (50,000 draws)
+    print("[7/9] MULTIVARIATE COPULA TAIL RISK ENGINE (50,000 DRAWS: GAUSSIAN vs. STUDENT-T vs. CLAYTON)")
     print("-" * 88)
     from src.simulation.copula_engine import CopulaSimulationEngine
     from src.core.credit_committee import CreditCommitteeMemo
@@ -126,16 +142,26 @@ def run_executive_pipeline(generate_charts: bool = True):
     print(df_copula_summary.to_string(index=False))
     print()
 
-    # Step 6: Bank Credit Committee Underwriting Memorandum & DSRA Sizing
-    print("[6/6] BANK CREDIT COMMITTEE UNDERWRITING MEMORANDUM & DSRA SIZING")
+    # Step 8: Bank Credit Committee Underwriting Memorandum & DSRA Sizing
+    print("[8/9] BANK CREDIT COMMITTEE UNDERWRITING MEMORANDUM & DSRA SIZING")
     print("-" * 88)
     memo = CreditCommitteeMemo(copula_results=copula_results)
     memo.print_terminal_summary()
     print()
 
+    # Step 9: AI CFO Ground-Truth & Audit Rules Export
+    print("[9/9] AI-READINESS: STRUCTURED GROUND-TRUTH & AUDIT LAYER EXPORT")
+    print("-" * 88)
+    from src.core.ai_cfo_export import AICFOGroundTruthExporter
+    ai_exporter = AICFOGroundTruthExporter()
+    ai_json_path = ai_exporter.export_json()
+    ai_exporter.print_terminal_summary()
+    print(f"-> Exported AI Ground-Truth JSON: {ai_json_path.name} ({ai_json_path.stat().st_size / 1024:.1f} KB)")
+    print()
+
     # Visual Assets & Deliverables
     if generate_charts:
-        print("-> Generating Institutional Charts in /assets (Figures 1 to 5)...")
+        print("-> Generating Institutional Charts in /assets (Figures 1 to 6)...")
         figs = generate_all_figures()
         for f in figs:
             print(f"   [OK] {f.name} ({f.stat().st_size / 1024:.1f} KB)")
@@ -149,6 +175,7 @@ def run_executive_pipeline(generate_charts: bool = True):
     print("=" * 88)
     print(" EXECUTION COMPLETED: ALL AUDIT IDENTITIES CONFIRMED & PORTFOLIO ASSETS READY")
     print("=" * 88)
+
 
 
 if __name__ == "__main__":

@@ -3,7 +3,8 @@
 
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Tests: Pytest Passed](https://img.shields.io/badge/tests-21%20passed-brightgreen.svg)](https://docs.pytest.org/)
+[![Tests: Pytest Passed](https://img.shields.io/badge/tests-26%20passed-brightgreen.svg)](https://docs.pytest.org/)
+[![AI Ground-Truth: Verified](https://img.shields.io/badge/AI%20CFO%20Audit-7%2F7%20Passed-blue.svg)](data/ai_cfo_ground_truth.json)
 [![Deliverable: Excel Model](https://img.shields.io/badge/Excel%20Model-6%20Tabs%20.XLSX-success.svg)](data/La_Dehesa_del_Castrillo_Financial_Model.xlsx)
 
 [English](README.md) | [Español](README_ES.md)
@@ -11,7 +12,8 @@
 **Author:** Jaime Pérez  
 **Focus:** Real Estate Private Equity, Hospitality Due Diligence & Corporate Credit Underwriting  
 **Corporate Scope:** 25-Hectare Rural Estate | Segovia, Spain | €729,000 CapEx | 70/30 Senior Debt/Equity Structure  
-**Primary Deliverables:** Fully Modular Financial Engine (`/src`), Multivariate Copula Tail Risk Engine (`copula_engine.py`), Credit Committee Underwriting Memorandum (`credit_committee.py`), Institutional Visual Artifacts (`/assets`), Automated Test Suite (`/tests`), and Executive 6-Tab Financial Model (`data/La_Dehesa_del_Castrillo_Financial_Model.xlsx`).
+**Primary Deliverables:** Fully Modular Financial Engine (`/src`), Unit Economics & Monthly Runway Engine (`unit_economics.py`, `monthly_cash.py`), AI Ground-Truth & Guardrail Layer (`ai_cfo_ground_truth.json`), Multivariate Copula Tail Risk Engine (`copula_engine.py`), Credit Committee Underwriting Memorandum (`credit_committee.py`), Institutional Visual Artifacts (`/assets`), Automated Test Suite (`/tests`), and Executive 6-Tab Financial Model (`data/La_Dehesa_del_Castrillo_Financial_Model.xlsx`).
+
 
 ```
 +----------------------------------------------------------------------------------------------------+
@@ -115,6 +117,39 @@ Annual revenue is computed from the structural capacity:
 - **Empirical Weighted Occupancy:** The INE Segovia day-weighted baseline represents **31.36% annual occupancy** (114.5 occupied day equivalents).
 - **Annual Run-Rate Revenue:** $114.5 \times €1,500 = \text{€171,720}$ at maturity, with a 90% ramp-up factor in Year 1 (€154,548) expanding to €180,306 in Year 3.
 
+### Unit Economics & Contribution Margin Analysis (askRIA CFO Framework)
+A fundamental tenet of institutional due diligence is that annual P&L statements can obscure operational fragility if unit economics do not demonstrate positive operating leverage. As highlighted in venture underwriting, *"the metric to watch is how your contribution margin behaves as you scale"*.
+
+Under the modular engine (`src/core/unit_economics.py`), every occupied day and room-night is decoupled into gross revenue, variable channel acquisition costs, and net contribution:
+
+| Line Item | 100% Daily Run-Rate (8 Keys + 21 Diners) | Per Occupied Room-Night (Room + 2 Diners) | Cost Behavior & Underlying Assumption |
+| :--- | :---: | :---: | :--- |
+| **Gross Accommodation Revenue** | €975.00 | €85.00 | 7 rooms @ €85 + 1 house @ €380 (net of VAT) |
+| **Gross Restaurant Revenue** | €525.00 | €50.00 | 21 covers (2 per room, 7 per house) @ €25 ticket |
+| **Gross Combined Revenue** | **€1,500.00** | **€135.00** | **100% Structural Daily Capacity Run-Rate** |
+| (-) Food & Beverage COGS (30%) | -€157.50 | -€15.00 | Direct raw ingredients and perishables cost |
+| (-) OTA Channel Commissions | -€87.75 | -€7.65 | Blended 60% OTA mix (Booking/Airbnb @ 15%) vs. 40% direct (0%) |
+| (-) Variable Supplies & Laundry | -€35.00 | -€4.00 | Linen turnaround, ecological amenities, biopool towels |
+| **Total Variable Cost Outlay** | **-€280.25 (18.68%)** | **-€26.65 (19.74%)** | **Total marginal cost per occupied cycle** |
+| **Unit Contribution Margin (€)** | **€1,219.75 / day** | **€108.35 / room-night** | **Net cash generated to cover fixed overhead & debt** |
+| **Unit Contribution Margin (%)** | **81.32%** | **80.26%** | **High-leverage marginal operating structure** |
+
+#### RevPAR, TRevPAR & Fixed Burden Coverage Expansion
+
+| Projection Stage | Occupancy Rate | Occupied Days | Lodging Revenue | Total Revenue | RevPAR (8 Keys) | TRevPAR (8 Keys) | Total Contribution Margin | Fixed Burden Coverage |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **Year 1 (Ramp-up)** | 28.22% | 103.0 | €100,438 | €154,548 | **€34.40** | **€52.93** | **€125,634** | **1.09x** |
+| **Year 2 (Stabilized)** | 31.36% | 114.5 | €111,598 | €171,720 | **€38.22** | **€58.81** | **€139,660** | **1.21x** |
+| **Year 3 (Mature)** | 32.93% | 120.2 | €117,178 | €180,306 | **€40.13** | **€61.75** | **€146,614** | **1.27x** |
+
+> [!NOTE]
+> **Operating Leverage Threshold:** The total annual fixed burden is **€115,756** (Fixed Labor €60,075 + Fixed OPEX €12,159 + Senior Debt Service €43,522). Because each occupied day yields **€1,219.75** in clean contribution margin, the project achieves:
+> - **Operating Break-Even ($EBITDA = 0$):** 59.2 occupied days (16.23% annual occupancy).
+> - **Cash Debt Service Break-Even ($DSCR = 1.00x$):** 94.9 occupied days (26.00% annual occupancy).
+> - **Bank Covenant Floor Break-Even ($DSCR \ge 1.25x$):** 103.8 occupied days (28.44% annual occupancy).
+> Even in Year 1 ramp-up, the asset generates 103.0 occupied days equivalents (€125,634 CM), demonstrating that unit economics strengthen with scale rather than collapsing under operational drag.
+
+
 ---
 
 ## 5. Operational Due Diligence: Segovia Labor Agreement
@@ -167,7 +202,45 @@ $$\text{Assets}_t \equiv \text{Liabilities}_t + \text{Equity}_t \quad (\Delta = 
 
 ---
 
-## 7. Banking Underwriting Covenants & Sensitivity Matrix
+## 7. Monthly Cash Runway, Winter Cash Trough & Working Capital Bridge (Year 1 & 2)
+
+As observed in fintech company building and venture underwriting, *"accounting looks clean because accounting is built to look clean; the behaviour underneath rarely is. Early cash flow keeps you alive, but system quality determines where you end up."*
+
+In Spanish rural hospitality, looking only at annual totals hides a severe liquidity challenge: **winter seasonality**. While annual revenue reaches €154,548 in Year 1, January and February suffer historical occupancies under 16% in Segovia, generating only ~€5,650/month in revenue while fixed payroll (€5,006/month), fixed OPEX (€1,013/month), and senior debt service (€3,627/month) demand a continuous fixed outflow of **€9,646/month**. Furthermore, the Spanish Tax Agency (*AEAT*) takes between 6 and 10 months following the annual corporate close to audit and refund the **€152,250 CapEx input VAT credit**.
+
+To prevent technical insolvency during ramp-up, the operational engine models an empirical 24-month liquidity schedule (`src/core/monthly_cash.py`):
+
+![Monthly Cash Runway & Solvency Bridge](assets/figure_6_monthly_cash_runway.png)
+
+### Year 1 Empirical Monthly Trajectory & Cash Trough Analysis
+
+| Month | Stage | Target Occupancy | Monthly Revenue | Contribution Margin | Fixed Outflows (Payroll + OPEX + PMT) | Net Operating Cash Flow | Revolving Facility Drawn | Ending Cash Balance |
+| :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **Launch (t=0)** | Financial Close | - | - | - | - | - | €0.00 | **€56,750.00** |
+| **M1 (Jan)** | Winter Valley | 13.50% | €5,649.75 | €4,579.54 | €9,646.32 | -€5,067.99 | €0.00 | €51,682.01 |
+| **M2 (Feb)** | Winter Valley | 15.30% | €5,783.40 | €4,687.87 | €9,646.32 | -€4,959.65 | €0.00 | €46,722.36 |
+| **M3 (Mar)** | **Cash Trough** | **21.60%** | **€9,541.80** | **€7,747.36** | **€9,646.32** | **-€1,900.17** | **€0.00** | **€44,822.18** |
+| **M4 (Apr)** | Spring Lift | 27.90% | €13,182.75 | €10,734.42 | €9,646.32 | +€1,086.89 | €0.00 | €45,909.08 |
+| **M5 (May)** | Spring Lift | 29.70% | €13,810.50 | €11,230.24 | €9,646.32 | +€1,582.71 | €0.00 | €47,491.78 |
+| **M6 (Jun)** | Early Summer | 33.30% | €15,734.25 | €12,812.05 | €9,646.32 | +€3,164.52 | €0.00 | €50,656.31 |
+| **M7 (Jul)** | High Summer | 43.20% | €23,101.20 | €18,855.43 | €9,646.32 | +€9,207.90 | €0.00 | €59,864.21 |
+| **M8 (Aug)** | Peak Summer | 48.60% | €27,118.80 | €22,157.57 | €9,646.32 | +€12,510.04 | €0.00 | €72,374.25 |
+| **M9 (Sep)** | Harvest Season | 32.40% | €15,309.00 | €12,465.78 | €9,646.32 | +€2,818.25 | €0.00 | €75,192.50 |
+| **M10 (Oct)** | Autumn Trekking| 27.00% | €12,555.00 | €10,209.31 | €9,646.32 | +€561.78 | €0.00 | €75,754.28 |
+| **M11 (Nov)** | Late Autumn | 19.80% | €8,464.50 | €6,872.65 | €9,646.32 | -€2,774.87 | €0.00 | €72,979.40 |
+| **M12 (Dec)** | Holiday Bridge | 25.20% | €12,889.80 | €10,508.90 | €9,646.32 | +€861.37 | €0.00 | **€73,840.77** |
+
+### Working Capital Liquidity Architecture
+1. **Cash Trough Identification:** Cumulative cash dips to its lowest point in **Month 3 (March) at €44,822.18**. Because the initial launch buffer was sized at €56,750, the treasury never breaches the €10,000 corporate minimum liquidity floor.
+2. **Revolving Credit Line Backstop:** The €50,000 credit facility remains 100% undrawn across the base case, providing **€94,822 in total available liquidity headroom** at the trough.
+3. **Year 2 Liquidity Inflection:** 
+   - **Month 14:** EU LEADER rural grant disbursed (+€163,000).
+   - **Month 18:** AEAT CapEx VAT refund audited and disbursed (+€152,250).
+   - Ending Year 2 cash expands to **€421,784** (or €193,950 net of tax debt bridge retirement), permanently insulating the operating company from liquidity distress.
+
+---
+
+## 8. Banking Underwriting Covenants & Sensitivity Matrix
 
 Credit underwriting evaluation focuses on debt service coverage and interest resilience.
 
@@ -193,7 +266,7 @@ The matrix evaluates Year 1 DSCR across interest rate shocks (+200 bps) and occu
 
 ---
 
-## 8. Scenario Stress-Testing
+## 9. Scenario Stress-Testing
 
 | Financial Metric | Conservative (Stress) Y1 | Conservative (Stress) Y3 | Base Case Y1 | Base Case Y3 | Optimistic Y1 | Optimistic Y3 |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
@@ -210,7 +283,7 @@ The matrix evaluates Year 1 DSCR across interest rate shocks (+200 bps) and occu
 
 ---
 
-## 9. Monte Carlo Stochastic Risk Simulation
+## 10. Monte Carlo Stochastic Risk Simulation
 
 A stochastic simulation of **$N = 1,000$ iterations** was executed to evaluate joint parameter volatility:
 - Occupancy multiplier: Normal distribution $\mathcal{N}(1.00, 0.10)$, bounded $[0.65, 1.40]$
@@ -229,7 +302,7 @@ A stochastic simulation of **$N = 1,000$ iterations** was executed to evaluate j
 
 ---
 
-## 10. Advanced Credit Risk: Multivariate Copula Tail Dependence & DSRA Sizing
+## 11. Advanced Credit Risk: Multivariate Copula Tail Dependence & DSRA Sizing
 
 Standard credit risk models typically rely on independent or Gaussian Monte Carlo simulations. Under a Gaussian copula, extreme shocks are assumed to have asymptotic tail independence ($\lambda_L = \lambda_U = 0$). In real macroeconomic downturns, however, operational demand contraction, ADR discounting, monetary tightening (Euribor hikes), and cost inflation occur simultaneously.
 
@@ -263,7 +336,30 @@ Under the underwriting memorandum generated by `src/core/credit_committee.py`:
 
 ---
 
-## 11. Dual Operational Calibration: LEADER vs. INE Benchmark
+## 12. AI-Readiness: Structured Ground-Truth & Audit Layer (askRIA LLM CFO Specification)
+
+A central challenge in building autonomous financial infrastructure and Digital CFO agents is **verifiable data lineage and hallucination prevention**. As articulated in AskRIA's infrastructure thesis:
+> *"Can we trust the outputs? Where did this answer come from? Enterprises have enough AI that produces output; what they don't have is AI that reconciles evidence, flags risk, and stands up to audit."*
+
+To directly support LLM-powered CFO evaluation and training pipelines, the financial engine automatically exports an institutional schema at [`data/ai_cfo_ground_truth.json`](data/ai_cfo_ground_truth.json) (`src/core/ai_cfo_export.py`).
+
+### Ground-Truth Data Lineage & Guardrails Catalog
+
+| Rule / Metric Identifier | Concept & Mathematical Formulation | Statutory Reference / Source | Evaluation Verdict |
+| :--- | :--- | :--- | :---: |
+| `RULE_01_BALANCE_SHEET_EQUALITY` | $\|Assets_t - (Liabilities_t + Equity_t)\| \le 0.01$ € | Plan General de Contabilidad (PGC) | **PASSED** (0.00 € max var) |
+| `RULE_02_HOSPITALITY_VAT_RATE` | Accommodation & restaurant sales taxed at 10.0%, NOT 21.0% | Ley 37/1992 Art. 91.Uno.2.2º | **PASSED** (10.0% applied) |
+| `RULE_03_CAPEX_INPUT_VAT_ASSET` | €152,250 CapEx VAT recognized as balance sheet tax asset | Ley 37/1992 Art. 92-114 (AEAT) | **PASSED** (€152,250 asset) |
+| `RULE_04_LABOR_COLLECTIVE_AGREEMENT` | 3 Headcount payroll strictly matches Group II & III + 35% SS | BOCyL Convenio Hostelería Segovia | **PASSED** (€60,075.00/yr) |
+| `RULE_05_BANK_COVENANT_DSCR_FLOOR` | Year 1 DSCR must meet or exceed institutional floor | Credit Committee Term Sheet | **PASSED** (1.34x $\ge$ 1.25x) |
+| `RULE_06_SEASONAL_LIQUIDITY_BUFFER` | Cash balance must remain positive at all times in winter trough | Treasury Management Standard | **PASSED** (€44,822 min cash) |
+| `RULE_07_ASYMMETRIC_TAIL_DSRA` | DSRA sized to Clayton copula CVaR 99% (€47,597), not 6-mo rule | Multivariate Clayton Copula Engine | **PASSED** (€47,597 DSRA) |
+
+This structured artifact provides the exact ground truth needed to fine-tune and benchmark LLM CFO agents, test prompt resilience against edge cases, and enforce programmatic guardrails in automated underwriting workflows.
+
+---
+
+## 13. Dual Operational Calibration: LEADER vs. INE Benchmark
 
 To ensure full transparency between the initial preliminary pitch sheets and the quantitative market engine, the repository supports two switchable calibration modes:
 
@@ -272,7 +368,7 @@ To ensure full transparency between the initial preliminary pitch sheets and the
 
 ---
 
-## 12. Repository Architecture & Quickstart
+## 14. Repository Architecture
 
 ```
 proyecto-dehesa-del-castrillo/
@@ -281,20 +377,27 @@ proyecto-dehesa-del-castrillo/
 │   ├── figure_2_dscr_sensitivity_heatmap.png # 2D DSCR stress matrix
 │   ├── figure_3_monte_carlo_distribution.png # Monte Carlo density & VaR 95%
 │   ├── figure_4_cash_flow_waterfall.png  # VAT correction & solvency bridge
-│   └── figure_5_copula_tail_risk.png     # Multivariate copula tail dependence & CVaR
-├── data/                                 # Institutional Excel deliverables
-│   └── La_Dehesa_del_Castrillo_Financial_Model.xlsx # 6-Tab Structured Model
+│   ├── figure_5_copula_tail_risk.png     # Multivariate copula tail dependence & CVaR
+│   └── figure_6_monthly_cash_runway.png  # 24-Month cash runway & winter cash trough
+├── data/                                 # Institutional deliverables
+│   ├── La_Dehesa_del_Castrillo_Financial_Model.xlsx # 6-Tab Structured Model
+│   └── ai_cfo_ground_truth.json          # AI CFO Ground-Truth & Guardrail Layer
 ├── raw_data/                             # Original source Excel files
 │   ├── La_Dehesa_de_Castrillo_Proyecto.xlsx
 │   └── Presentacion_La_Dehesa.xlsx
 ├── src/                                  # Modular quantitative financial engine
 │   ├── config/                           # Institutional assumptions & INE series
-│   ├── core/                             # Debt, Tax, Statements, Credit & Memo generator
+│   │   ├── assumptions.py
+│   │   └── ine_weights.py
+│   ├── core/                             # Debt, Tax, Statements, Unit Economics & AI Layer
+│   │   ├── ai_cfo_export.py              # askRIA LLM ground-truth & guardrails
 │   │   ├── credit_committee.py           # Automated bank committee memorandum
 │   │   ├── debt.py                       # French amortization schedule
 │   │   ├── metrics.py                    # Covenants, break-even & IRR/NPV
+│   │   ├── monthly_cash.py               # Monthly cash runway & trough simulation
 │   │   ├── statements.py                 # Integrated 3-statement forecast
-│   │   └── tax.py                        # VAT & corporate income tax engine
+│   │   ├── tax.py                        # VAT & corporate income tax engine
+│   │   └── unit_economics.py             # RevPAR, TRevPAR & contribution margin
 │   ├── data/                             # Raw data extraction & Excel exporter
 │   ├── scenarios/                        # Multi-scenario comparisons & 2D matrix
 │   ├── simulation/                       # Stochastic Monte Carlo & Copula engines
@@ -302,17 +405,21 @@ proyecto-dehesa-del-castrillo/
 │   │   └── monte_carlo.py                # 1,000-draw parameter simulation
 │   └── visualization/                    # Institutional charting exporter
 ├── tests/                                # Automated unit test suite (pytest)
+│   ├── test_ai_cfo.py                    # AI CFO schema & guardrail tests
 │   ├── test_assumptions.py
 │   ├── test_copula.py                    # Copula marginals, ordering & DSRA tests
 │   ├── test_financial_engine.py
-│   └── test_simulation.py
+│   ├── test_simulation.py
+│   └── test_unit_economics_monthly.py    # RevPAR, contribution margin & runway tests
 ├── main.py                               # End-to-end execution pipeline
 ├── README.md                             # English Investment Memorandum
 ├── README_ES.md                          # Spanish Investment Memorandum
 └── .gitignore                            # Version control exclusion rules
 ```
 
-### Installation & Execution
+---
+
+## 15. Installation & Execution
 
 ```bash
 # Clone the repository
@@ -325,14 +432,15 @@ pip install pandas numpy scipy openpyxl matplotlib seaborn pytest
 # Run the complete end-to-end financial pipeline
 python main.py
 
-# Run the automated test suite (21 tests verifying financial identities & copula tails)
+# Run the automated test suite (26 tests verifying financial identities, copula tails & AI guardrails)
 python -m pytest tests/
 ```
 
 ---
 
-## 12. Statutory & Methodological References
+## 16. Statutory & Methodological References
 - **Indirect Taxation (VAT):** *Ley 37/1992, de 28 de diciembre, del Impuesto sobre el Valor Añadido* (Art. 90, Art. 91.Uno.2.2º).
 - **Direct Corporate Taxation:** *Ley 27/2014, de 27 de noviembre, del Impuesto sobre Sociedades* (Art. 12, Art. 26 - Bases Imponibles Negativas).
 - **Labor Regulations:** *Convenio Colectivo Provincial de Hostelería de Segovia* (Boletín Oficial de la Provincia de Segovia).
 - **Official Tourism Statistics:** *Instituto Nacional de Estadística* (INE) - *Encuesta de Ocupación en Alojamientos de Turismo Rural* (EOTR), Serie Provincial Segovia.
+
