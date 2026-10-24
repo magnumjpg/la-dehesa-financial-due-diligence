@@ -74,13 +74,15 @@ class ScenarioEngine:
         interest_rate_deltas: List[float] = [-0.015, -0.010, -0.005, 0.000, 0.010, 0.015, 0.020],
     ) -> pd.DataFrame:
         """
-        Builds a 2D sensitivity matrix of Year 1 DSCR against Occupancy vs. Interest Rate hikes.
-        Identifies bank covenant breach zones (DSCR < 1.25x in red/amber).
+        Builds a 2D sensitivity matrix of Year-2 DSCR against Occupancy vs.
+        Interest Rate moves. Year 2 is the first amortising year, so it is the
+        binding covenant year. Identifies bank covenant breach zones (DSCR <
+        1.25x).
         """
         matrix_data = {}
 
         for delta_r in interest_rate_deltas:
-            col_label = f"{(0.035 + delta_r)*100:.1f}% Rate"
+            col_label = f"{(0.040 + delta_r)*100:.1f}% Rate"
             col_vals = []
             for occ_mult in occupancy_multipliers:
                 custom_scenario = ScenarioDrivers(
@@ -91,13 +93,13 @@ class ScenarioEngine:
                     interest_rate_delta=delta_r,
                 )
                 engine = FinancialModelEngine(scenario=custom_scenario)
-                df_proj = engine.run_projection(projection_years=1)
+                df_proj = engine.run_projection(projection_years=2)
                 debt_sched = engine.debt_engine.get_annual_schedule_df()
 
                 credit = CreditMetricsEngine(target_dscr=self.target_dscr)
                 df_kpi = credit.compute_credit_kpis(df_proj, debt_sched)
-                y1_dscr = df_kpi.iloc[0]["dscr"]
-                col_vals.append(y1_dscr)
+                y2_dscr = df_kpi.iloc[1]["dscr"]
+                col_vals.append(y2_dscr)
 
             matrix_data[col_label] = col_vals
 

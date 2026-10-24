@@ -1,22 +1,24 @@
 """
 Sources & Uses, funding-gap and phase-gate analysis.
 
-This module makes the funding structure explicit. The original Python engine
-booked a VAT bridge equal to the net VAT refund and treated the LEADER grant
-as a Year-2 inflow, but it did not show:
+The engine now books the close-day uses directly in the three-statement model
+(IDC, pre-opening costs, opening working capital, DSRA and the VAT bridge), so
+this module reconciles the *funded* capital structure rather than adding an
+off-model adjustment:
 
-1. The close-day cash uses: pre-opening costs, opening working capital and the
-   debt service reserve account (DSRA).
-2. The difference between the stated €50,000 credit line and the €143,596 VAT
-   bridge actually drawn by the model.
-3. That the LEADER grant and the VAT refund are already committed in Phase I
-   and cannot be spent again on Phase II.
-
-The result is a transparent funding gap and a phase-gate recommendation.
+1. Total uses at close = CapEx (land in kind + cash works) + IDC + input VAT +
+   pre-opening + working capital + DSRA + operating cash buffer.
+2. Total sources at close = senior debt (35% LTV) + VAT bridge + land in kind +
+   cash equity. The cash equity is the plug that closes the structure; it is
+   reported, not assumed, so the 30% equity assumption is tested rather than
+   asserted.
+3. The DSRA is sized on six months of the maximum annual senior debt service.
+4. The phase gate tests whether Phase I cash can fund Phase II without
+   double-counting the LEADER grant or the VAT refund.
 """
 
-from dataclasses import asdict, dataclass
-from typing import Any, Dict, Optional
+from dataclasses import asdict, dataclass, field
+from typing import Any, Dict, List, Optional
 
 from src.config.assumptions import (
     CapExStructure,
@@ -27,45 +29,67 @@ from src.config.assumptions import (
 from src.core.metrics import CreditMetricsEngine
 from src.core.statements import FinancialModelEngine
 
+PROJECTION_YEARS = 5
+
 
 @dataclass
 class SourcesUsesResult:
     case: str
+
     # Uses at close
-    capex_net: float
+    total_capex: float
+    land_in_kind: float
+    cash_capex: float
     input_vat: float
+    idc: float
     pre_opening_costs: float
     initial_working_capital: float
     dsra: float
+    operating_cash_buffer: float
     total_uses_at_close: float
+
     # Sources at close
     senior_debt: float
-    sponsor_equity: float
     vat_bridge: float
     credit_line_at_close: float
+    base_cash_equity: float
+    cash_equity_required: float
+    cash_equity_buffer: float
     total_sources_at_close: float
+
     # Post-close sources
     leader_grant: float
     total_sources_post_close: float
-    # Gaps
+
+    # Reconciliation
     funding_gap_at_close: float
     funding_gap_total: float
     recommended_equity_injection: float
-    recommended_debt_increase: float
+    equity_to_capex_pct: float
+    ltv_pct: float
+    total_equity_at_close: float
+    total_project_investment: float
+
+    # Debt sizing
+    dscr_cap_principal: float
+    binding_constraint: str
+    dscr_cap_ltv_pct: float
+
     # Credit consistency
     credit_line_limit: float
     vat_bridge_limit: float
     vat_bridge_excess: float
     credit_line_utilisation_pct: float
+    vat_bridge_drawn_y1: float
     model_credit_line_drawn_y1: float
+
     # Operating metrics
     dscr_y1: float
-    dscr_y3: float
-    cash_y1_model: float
-    cash_y2_model: float
-    cash_y1_adjusted: float
-    cash_y2_adjusted: float
-    minimum_adjusted_cash: float
+    dscr_min: float
+    dscr_by_year: List[float]
+    cfads_by_year: List[float]
+    cash_by_year: List[float]
+    min_cash: float
     funding_status: str
     notes: str
 
@@ -93,104 +117,132 @@ class SourcesUsesEngine:
         )
         self.capex = self.engine.capex
         self.financing = self.engine.financing
-        self.df = self.engine.run_projection(projection_years=5)
+        self.df = self.engine.run_projection(projection_years=PROJECTION_YEARS)
         self.debt_sched = self.engine.debt_engine.get_annual_schedule_df()
         self.credit = CreditMetricsEngine(target_dscr=self.financing.target_dscr)
         self.df_kpi = self.credit.compute_credit_kpis(self.df, self.debt_sched)
 
     def compute(self) -> SourcesUsesResult:
-        capex_net = float(self.capex.total_capex)
+        su = self.engine.sources_uses_at_close()
+        uses = su["uses"]
+        sources = su["sources"]
+
+        total_uses = float(uses["total_uses"])
+        total_sources = float(sources["total_sources"])
+        gap = round(total_sources - total_uses, 2)
+
         input_vat = float(self.capex.total_input_vat)
-        pre_opening = float(self.financing.pre_opening_costs)
-        initial_wc = float(self.financing.initial_working_capital)
-
-        # Six months of senior debt service as the DSRA.
-        annual_debt_service = float(self.debt_sched.iloc[0]["payment"])
-        dsra = round(annual_debt_service * self.financing.dsra_months / 12.0, 2)
-
-        total_uses = round(capex_net + input_vat + pre_opening + initial_wc + dsra, 2)
-
-        senior_debt = float(self.financing.senior_debt_principal)
-        sponsor_equity = float(self.financing.sponsor_equity)
-        # The bridge is sized on the gross input VAT, not on the net refund.
-        vat_bridge = round(input_vat, 2)
-        credit_line_at_close = float(self.financing.initial_credit_line_draw)
-        total_sources_close = round(
-            senior_debt + sponsor_equity + vat_bridge + credit_line_at_close, 2
+        vat_bridge = float(sources["vat_bridge"])
+        vat_bridge_excess = round(
+            max(0.0, vat_bridge - self.financing.vat_bridge_limit), 2
         )
 
-        leader_grant = float(self.financing.leader_subsidy_amount)
-        total_sources_post = round(total_sources_close + leader_grant, 2)
-
-        gap_close = round(total_sources_close - total_uses, 2)
-        gap_total = round(total_sources_post - total_uses, 2)
-
-        recommended_equity = round(max(0.0, -gap_close), 2)
-        recommended_debt = 0.0
-
-        vat_bridge_excess = round(max(0.0, vat_bridge - self.financing.vat_bridge_limit), 2)
-        # The model's Y1 credit-line line item includes the VAT bridge.
+        # The model's Year-1 bridge line is the VAT bridge (the revolving line
+        # is undrawn at close in the management and market cases).
         model_bridge_y1 = float(self.df.iloc[0]["credit_line_drawn"])
         credit_utilisation = (
             round(model_bridge_y1 / self.financing.credit_line_limit * 100.0, 2)
             if self.financing.credit_line_limit > 0 else 0.0
         )
 
-        y1 = self.df_kpi.iloc[0]
-        y3 = self.df_kpi.iloc[2]
-        cash_y1 = float(y1["ending_cash"])
-        cash_y2 = float(self.df_kpi.iloc[1]["ending_cash"])
+        dscr_by_year = [
+            round(float(cfads) / float(ds), 2) if ds else 999.0
+            for cfads, ds in zip(self.df["cfads"], self.df["debt_service"])
+        ]
+        cash_by_year = [round(float(c), 2) for c in self.df["ending_cash"]]
 
-        # The model's cash flow does not include the close-day uses. Adjust it.
-        cash_y1_adj = round(cash_y1 - pre_opening - initial_wc - dsra, 2)
-        cash_y2_adj = round(cash_y2 - pre_opening - initial_wc - dsra, 2)
-        min_adj = min(cash_y1_adj, cash_y2_adj)
-
-        if gap_close < 0:
+        if gap < -0.01:
             status = "UNDERFUNDED - additional equity required at close"
-        elif cash_y1_adj < 0:
-            status = "LIQUIDITY GAP - close-day funding covered but Year 1 cash negative"
+        elif min(cash_by_year) < 0:
+            status = "LIQUIDITY GAP - cash turns negative during the projection"
+        elif min(dscr_by_year) < self.financing.critical_dscr:
+            status = "FUNDED BUT BELOW 1.00x DSCR - sponsor support required"
         else:
-            status = "FUNDED - close-day and Year 1 liquidity covered"
+            status = "FUNDED - sources & uses close and cash stays positive"
 
-        notes = (
-            "The VAT bridge is a real financing source, but it is separate from the "
-            "€50,000 revolving credit line. The LEADER grant is a post-close inflow "
-            "(Month 14) and cannot fund close-day uses. The DSRA, pre-opening and "
-            "working-capital lines were omitted from the original Python cash flow."
-        )
+        if self.case == "promoter":
+            notes = (
+                "The promoter case replicates the original university Excel: EUR 507,500 of senior "
+                "debt (70% LTV) at 4.5% over 25 years, no grace period, no LEADER grant and land "
+                "purchased rather than contributed in kind. The EUR 99,750 input VAT exceeds the "
+                "EUR 20,000 line, so the close-day structure shows a EUR 20,000 gap and Year 1 cash "
+                "turns negative."
+            )
+        elif self.case == "market":
+            notes = (
+                "The requested EUR 367,535 facility is 35% of the all-in asset cost, but Year 1 "
+                "CFADS is negative at the official INE 21.24% occupancy, so no amount of debt can "
+                "satisfy a 1.25x DSCR. The cash equity plug also absorbs a EUR 35,374.83 operating "
+                "buffer. The land is contributed in kind and the VAT bridge is repaid with the AEAT "
+                "refund in Month 18; the LEADER grant is a post-close inflow (Month 14)."
+            )
+        else:
+            notes = (
+                "The requested EUR 367,535 facility is 35% of the all-in asset cost, but the binding "
+                "DSCR constraint caps debt at EUR 339,144.92 (32.3% LTV) at 1.25x CFADS. The senior "
+                "facility as requested breaches the covenant in Year 2 (1.15x). The land is "
+                "contributed in kind and the cash equity line is the plug that closes the structure. "
+                "The VAT bridge is repaid with the AEAT refund in Month 18; the LEADER grant is a "
+                "post-close inflow (Month 14) that cannot fund close-day uses."
+            )
+        sizing = self.engine.debt_sizing()
 
         return SourcesUsesResult(
             case=self.case,
-            capex_net=capex_net,
+            total_capex=float(self.capex.total_capex),
+            land_in_kind=float(uses["land_in_kind"]),
+            cash_capex=float(uses["cash_capex"]),
             input_vat=input_vat,
-            pre_opening_costs=pre_opening,
-            initial_working_capital=initial_wc,
-            dsra=dsra,
+            idc=float(uses["idc"]),
+            pre_opening_costs=float(uses["pre_opening_costs"]),
+            initial_working_capital=float(uses["initial_working_capital"]),
+            dsra=float(uses["dsra"]),
+            operating_cash_buffer=float(uses["operating_cash_buffer"]),
             total_uses_at_close=total_uses,
-            senior_debt=senior_debt,
-            sponsor_equity=sponsor_equity,
+            senior_debt=float(sources["senior_debt"]),
             vat_bridge=vat_bridge,
-            credit_line_at_close=credit_line_at_close,
-            total_sources_at_close=total_sources_close,
-            leader_grant=leader_grant,
-            total_sources_post_close=total_sources_post,
-            funding_gap_at_close=gap_close,
-            funding_gap_total=gap_total,
-            recommended_equity_injection=recommended_equity,
-            recommended_debt_increase=recommended_debt,
+            credit_line_at_close=float(sources["credit_line"]),
+            base_cash_equity=float(self.engine.base_cash_equity),
+            cash_equity_required=round(float(sources["cash_equity"]), 2),
+            cash_equity_buffer=round(self.engine.cash_equity_buffer, 2),
+            total_sources_at_close=total_sources,
+            leader_grant=float(self.financing.leader_subsidy_amount),
+            total_sources_post_close=round(
+                total_sources + float(self.financing.leader_subsidy_amount), 2
+            ),
+            funding_gap_at_close=gap,
+            funding_gap_total=round(
+                total_sources
+                + float(self.financing.leader_subsidy_amount)
+                - total_uses,
+                2,
+            ),
+            recommended_equity_injection=round(max(0.0, -gap), 2),
+            equity_to_capex_pct=(
+                round(self.engine.cash_equity / self.capex.total_capex * 100.0, 2)
+                if self.capex.total_capex else 0.0
+            ),
+            ltv_pct=(
+                round(self.financing.senior_debt_principal / self.capex.total_capex * 100.0, 2)
+                if self.capex.total_capex else 0.0
+            ),
+            total_equity_at_close=float(self.engine.total_equity_at_close),
+            total_project_investment=float(self.engine.total_project_investment),
+            dscr_cap_principal=float(sizing["principal_dscr_cap"]),
+            binding_constraint=str(sizing["binding_constraint"]),
+            dscr_cap_ltv_pct=float(sizing["implied_ltv_pct"]),
             credit_line_limit=float(self.financing.credit_line_limit),
             vat_bridge_limit=float(self.financing.vat_bridge_limit),
             vat_bridge_excess=vat_bridge_excess,
             credit_line_utilisation_pct=credit_utilisation,
+            vat_bridge_drawn_y1=model_bridge_y1,
             model_credit_line_drawn_y1=model_bridge_y1,
-            dscr_y1=float(y1["dscr"]),
-            dscr_y3=float(y3["dscr"]),
-            cash_y1_model=cash_y1,
-            cash_y2_model=cash_y2,
-            cash_y1_adjusted=cash_y1_adj,
-            cash_y2_adjusted=cash_y2_adj,
-            minimum_adjusted_cash=min_adj,
+            dscr_y1=dscr_by_year[0],
+            dscr_min=min(dscr_by_year),
+            dscr_by_year=dscr_by_year,
+            cfads_by_year=[round(float(c), 2) for c in self.df["cfads"]],
+            cash_by_year=cash_by_year,
+            min_cash=min(cash_by_year),
             funding_status=status,
             notes=notes,
         )
@@ -225,29 +277,34 @@ class SourcesUsesEngine:
     def print_terminal_summary(self) -> None:
         r = self.compute()
         print("=" * 88)
-        print(f" SOURCES & USES / FUNDING GAP - {r.case.upper()} CASE")
+        print(f" SOURCES & USES / FUNDING TEST - {r.case.upper()} CASE")
         print("=" * 88)
         print("USES AT CLOSE:")
-        print(f"  CapEx (net of VAT)              €{r.capex_net:>14,.2f}")
-        print(f"  Input VAT (21%)                 €{r.input_vat:>14,.2f}")
-        print(f"  Pre-opening costs               €{r.pre_opening_costs:>14,.2f}")
-        print(f"  Initial working capital         €{r.initial_working_capital:>14,.2f}")
-        print(f"  DSRA (6 months debt service)    €{r.dsra:>14,.2f}")
-        print(f"  TOTAL USES                      €{r.total_uses_at_close:>14,.2f}")
+        print(f"  Land contributed in kind       €{r.land_in_kind:>14,.2f}")
+        print(f"  Cash CapEx (works, FF&E, fees) €{r.cash_capex:>14,.2f}")
+        print(f"  Interest during construction   €{r.idc:>14,.2f}")
+        print(f"  Input VAT (21%, bridge-funded) €{r.input_vat:>14,.2f}")
+        print(f"  Pre-opening costs              €{r.pre_opening_costs:>14,.2f}")
+        print(f"  Initial working capital        €{r.initial_working_capital:>14,.2f}")
+        print(f"  DSRA (6 months debt service)   €{r.dsra:>14,.2f}")
+        print(f"  Operating cash buffer          €{r.operating_cash_buffer:>14,.2f}")
+        print(f"  TOTAL USES                     €{r.total_uses_at_close:>14,.2f}")
         print("SOURCES AT CLOSE:")
-        print(f"  Senior debt                     €{r.senior_debt:>14,.2f}")
-        print(f"  Sponsor equity                  €{r.sponsor_equity:>14,.2f}")
-        print(f"  VAT refund bridge               €{r.vat_bridge:>14,.2f}")
-        print(f"  Credit line drawn at close      €{r.credit_line_at_close:>14,.2f}")
-        print(f"  TOTAL SOURCES                   €{r.total_sources_at_close:>14,.2f}")
+        print(f"  Senior debt (35% LTV)          €{r.senior_debt:>14,.2f}")
+        print(f"  VAT refund bridge              €{r.vat_bridge:>14,.2f}")
+        print(f"  Credit line drawn              €{r.credit_line_at_close:>14,.2f}")
+        print(f"  Land in kind                   €{r.land_in_kind:>14,.2f}")
+        print(f"  Cash equity (required)         €{r.cash_equity_required:>14,.2f}")
+        print(f"  TOTAL SOURCES                  €{r.total_sources_at_close:>14,.2f}")
         print(f"  LEADER grant (Month 14, post-close) €{r.leader_grant:>10,.2f}")
-        print(f"  TOTAL SOURCES INCLUDING GRANT   €{r.total_sources_post_close:>14,.2f}")
         print("-" * 88)
-        print(f"  FUNDING GAP AT CLOSE            €{r.funding_gap_at_close:>14,.2f}")
-        print(f"  FUNDING GAP INCLUDING GRANT     €{r.funding_gap_total:>14,.2f}")
-        print(f"  Recommended equity injection    €{r.recommended_equity_injection:>14,.2f}")
-        print(f"  Model Year-1 cash               €{r.cash_y1_model:>14,.2f}")
-        print(f"  Adjusted Year-1 cash (with omitted uses) €{r.cash_y1_adjusted:>8,.2f}")
+        print(f"  RECONCILIATION GAP             €{r.funding_gap_at_close:>14,.2f}")
+        print(f"  Cash equity / total CapEx      {r.equity_to_capex_pct:>13.2f}%")
+        print(f"  Senior debt / total CapEx      {r.ltv_pct:>13.2f}%")
+        print(f"  Minimum DSCR (Years 1-5)       {r.dscr_min:>13.2f}x")
+        print(f"  Minimum cash (Years 1-5)       €{r.min_cash:>14,.2f}")
+        print(f"  DSCR-capped principal (1.25x)  €{r.dscr_cap_principal:>14,.2f} ({r.dscr_cap_ltv_pct:.1f}% LTV)")
+        print(f"  Binding constraint:            {r.binding_constraint}")
         print(f"  Status: {r.funding_status}")
         print("=" * 88)
 

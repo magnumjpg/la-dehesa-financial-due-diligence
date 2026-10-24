@@ -42,18 +42,26 @@ class DebtAmortizationEngine:
         principal: float = 507_500.0,
         annual_interest_rate: float = 0.035,
         tenure_years: int = 15,
+        grace_months: int = 0,
     ):
         self.principal = principal
         self.annual_interest_rate = annual_interest_rate
         self.tenure_years = tenure_years
         self.total_periods = tenure_years * 12
         self.monthly_rate = annual_interest_rate / 12.0
+        self.grace_months = max(0, min(int(grace_months), self.total_periods))
+        self.amortization_periods = self.total_periods - self.grace_months
+
+        if self.amortization_periods <= 0:
+            raise ValueError("grace_months must leave at least one amortization period")
 
         if self.monthly_rate > 0:
-            factor = (1.0 + self.monthly_rate) ** self.total_periods
-            self.monthly_payment = principal * (self.monthly_rate * factor) / (factor - 1.0)
+            factor = (1.0 + self.monthly_rate) ** self.amortization_periods
+            self.monthly_payment = (
+                principal * (self.monthly_rate * factor) / (factor - 1.0)
+            )
         else:
-            self.monthly_payment = principal / self.total_periods
+            self.monthly_payment = principal / self.amortization_periods
 
     def generate_monthly_schedule(self) -> List[LoanPeriod]:
         """Generates full monthly amortization table."""
@@ -63,16 +71,23 @@ class DebtAmortizationEngine:
         for month in range(1, self.total_periods + 1):
             year = (month - 1) // 12 + 1
             interest = round(balance * self.monthly_rate, 2)
-            payment = self.monthly_payment
 
-            # Handle last period precision
-            if month == self.total_periods or balance + interest <= payment:
-                principal = balance
-                payment = principal + interest
-                ending_balance = 0.0
+            if month <= self.grace_months:
+                # Interest-only construction / ramp-up period: the balance is
+                # unchanged and the payment covers interest only.
+                principal = 0.0
+                payment = interest
+                ending_balance = round(balance, 2)
             else:
-                principal = round(payment - interest, 2)
-                ending_balance = round(balance - principal, 2)
+                payment = self.monthly_payment
+                # Handle last period precision.
+                if month == self.total_periods or balance + interest <= payment:
+                    principal = balance
+                    payment = principal + interest
+                    ending_balance = 0.0
+                else:
+                    principal = round(payment - interest, 2)
+                    ending_balance = round(balance - principal, 2)
 
             schedule.append(
                 LoanPeriod(

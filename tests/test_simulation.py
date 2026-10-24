@@ -3,7 +3,7 @@ Unit tests for scenario stress-testing and Monte Carlo simulations.
 """
 
 import pytest
-import pandas as pd
+
 from src.scenarios.scenario_analysis import ScenarioEngine
 from src.simulation.monte_carlo import MonteCarloSimulator
 
@@ -19,7 +19,6 @@ def test_scenario_comparison_generation():
     df_comp = engine.generate_scenario_comparison_table()
     assert len(df_comp) == 6
 
-    # Base scenario Y1 revenue should exceed Conservative Y1 revenue
     base_rev = float(results["base"].iloc[0]["total_revenue"])
     cons_rev = float(results["conservative"].iloc[0]["total_revenue"])
     assert base_rev > cons_rev
@@ -30,8 +29,12 @@ def test_sensitivity_matrix_dscr():
     matrix = engine.generate_sensitivity_matrix_dscr()
 
     assert matrix.shape == (7, 7)
-    # Higher occupancy factor increases DSCR in every column
-    assert matrix.iloc[6, 0] > matrix.iloc[0, 0]
+    # The matrix is the Year-2 DSCR (first amortising year): at a 100% demand
+    # factor and a 4.0% rate it equals the model's 1.15x.
+    assert matrix.loc["100% Occ Factor", "4.0% Rate"] == pytest.approx(1.15, abs=0.01)
+    # Higher occupancy raises DSCR in every rate column.
+    assert matrix.iloc[6, 0] > matrix.iloc[3, 0]
+    assert matrix.iloc[3, 0] > matrix.iloc[0, 0]
 
 
 def test_monte_carlo_execution_and_statistics():
@@ -40,6 +43,12 @@ def test_monte_carlo_execution_and_statistics():
 
     assert len(df_sim) == 100
     assert summary.iterations == 100
-    assert summary.mean_dscr_y1 > 1.00
-    assert 0.0 <= summary.prob_covenant_breach_y1 <= 1.0
-    assert summary.p5_dscr_y1 < summary.median_dscr_y1 < summary.p95_dscr_y1
+    assert "sim_id" in df_sim.columns
+    assert {"dscr_y1", "dscr_y2", "min_dscr", "covenant_breach"} <= set(df_sim.columns)
+
+    assert 0.5 < summary.mean_min_dscr < 2.5
+    assert 0.0 <= summary.prob_covenant_breach <= 1.0
+    assert 0.0 <= summary.prob_cash_insolvency <= 1.0
+    assert summary.p5_min_dscr < summary.median_min_dscr < summary.p95_min_dscr
+    assert summary.cash_equity == pytest.approx(521_090.22, abs=0.01)
+    assert summary.total_equity_at_close == pytest.approx(771_090.22, abs=0.01)

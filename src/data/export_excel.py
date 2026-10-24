@@ -98,6 +98,12 @@ def export_institutional_excel(filename: str = "La_Dehesa_del_Castrillo_Financia
 
     credit = CreditMetricsEngine(target_dscr=1.25)
     df_kpi = credit.compute_credit_kpis(df_proj, debt_sched)
+    returns = credit.compute_returns_summary(
+        df_proj,
+        initial_equity=engine.total_equity_at_close,
+        initial_capex=engine.total_project_investment,
+        exit_cap_rate=0.085,
+    )
 
     sc_engine = ScenarioEngine(target_dscr=1.25, projection_years=3)
     df_scenarios = sc_engine.generate_scenario_comparison_table()
@@ -133,25 +139,35 @@ def export_institutional_excel(filename: str = "La_Dehesa_del_Castrillo_Financia
 
     ws1["A1"] = "LA DEHESA DEL CASTRILLO S.L. - MANAGEMENT (UPSIDE) CASE & UNDERWRITING SCORECARD"
     ws1["A1"].font = title_font
-    ws1["A2"] = "Location: Segovia, Spain | CapEx: 729,000 € | Capital Structure: 70% Senior Mortgage / 30% Sponsor Equity"
+    ws1["A2"] = (
+        "Location: Segovia, Spain | All-in CapEx: 1,050,100 EUR | Capital structure: 35% LTV senior debt "
+        "(20 years, 12-month grace) / cash equity plug + land in kind"
+    )
     ws1["A2"].font = Font(name="Calibri", size=10, italic=True, color="64748B")
 
-    summary_headers = ["Underwriting Metric", "Year 1 (Ramp-up)", "Year 2 (Stabilization)", "Year 3 (Mature)", "Benchmark / Covenant"]
+    summary_headers = ["Underwriting Metric", "Year 1 (Ramp-up)", "Year 2 (First Amortising Year)", "Year 3 (Mature)", "Benchmark / Covenant"]
     for col_idx, h in enumerate(summary_headers, start=1):
         cell = ws1.cell(row=4, column=col_idx, value=h)
         cell.fill = navy_fill
         cell.font = header_font
         cell.alignment = Alignment(horizontal="center", vertical="center")
 
+    project_irr = returns["project_irr_exit"]
+    equity_irr = returns["equity_irr_exit"]
+    project_irr_txt = f"{project_irr * 100:.2f}%" if project_irr is not None else "n/a"
+    equity_irr_txt = f"{equity_irr * 100:.2f}%" if equity_irr is not None else "n/a"
+
     summary_rows = [
-        ("Gross Revenue (€)", f"{df_kpi.iloc[0]['total_revenue']:,.2f}", f"{df_kpi.iloc[1]['total_revenue']:,.2f}", f"{df_kpi.iloc[2]['total_revenue']:,.2f}", "Management 31.36%; INE market 21.24%"),
-        ("EBITDA (€)", f"{df_kpi.iloc[0]['ebitda']:,.2f}", f"{df_kpi.iloc[1]['ebitda']:,.2f}", f"{df_kpi.iloc[2]['ebitda']:,.2f}", "Margin: 42.8% to 49.4%"),
-        ("Net Income (€)", f"{df_kpi.iloc[0]['net_income']:,.2f}", f"{df_kpi.iloc[1]['net_income']:,.2f}", f"{df_kpi.iloc[2]['net_income']:,.2f}", "25% tax; no BIN shield in this case"),
-        ("Ending Cash (€)", f"{df_kpi.iloc[0]['ending_cash']:,.2f}", f"{df_kpi.iloc[1]['ending_cash']:,.2f}", f"{df_kpi.iloc[2]['ending_cash']:,.2f}", "Before omitted close-day uses; see Funding & Audit"),
-        ("Senior Debt Balance (€)", f"{df_kpi.iloc[0]['total_debt']:,.2f}", f"{df_kpi.iloc[1]['total_debt']:,.2f}", f"{df_kpi.iloc[2]['total_debt']:,.2f}", "15-year French mortgage (€507.5k)"),
-        ("Debt Service Coverage (DSCR)", f"{df_kpi.iloc[0]['dscr']:.2f}x", f"{df_kpi.iloc[1]['dscr']:.2f}x", f"{df_kpi.iloc[2]['dscr']:.2f}x", "Bank Covenant Floor >= 1.25x"),
+        ("Gross Revenue (EUR)", f"{df_kpi.iloc[0]['total_revenue']:,.2f}", f"{df_kpi.iloc[1]['total_revenue']:,.2f}", f"{df_kpi.iloc[2]['total_revenue']:,.2f}", "Management 31.36%; INE market 21.24%"),
+        ("EBITDA (EUR)", f"{df_kpi.iloc[0]['ebitda']:,.2f}", f"{df_kpi.iloc[1]['ebitda']:,.2f}", f"{df_kpi.iloc[2]['ebitda']:,.2f}", f"Margin {df_kpi.iloc[0]['ebitda']/df_kpi.iloc[0]['total_revenue']*100:.1f}% to {df_kpi.iloc[2]['ebitda']/df_kpi.iloc[2]['total_revenue']*100:.1f}%"),
+        ("FF&E Reserve (3%) (EUR)", f"{df_proj.iloc[0]['ffe_reserve']:,.2f}", f"{df_proj.iloc[1]['ffe_reserve']:,.2f}", f"{df_proj.iloc[2]['ffe_reserve']:,.2f}", "Ranked ahead of debt service"),
+        ("CFADS (EBITDA - FF&E - tax) (EUR)", f"{df_proj.iloc[0]['cfads']:,.2f}", f"{df_proj.iloc[1]['cfads']:,.2f}", f"{df_proj.iloc[2]['cfads']:,.2f}", "Cash actually available to the lender"),
+        ("Net Income (EUR)", f"{df_kpi.iloc[0]['net_income']:,.2f}", f"{df_kpi.iloc[1]['net_income']:,.2f}", f"{df_kpi.iloc[2]['net_income']:,.2f}", "25% tax; Year-1 BINs shield later years"),
+        ("Ending Cash (EUR)", f"{df_kpi.iloc[0]['ending_cash']:,.2f}", f"{df_kpi.iloc[1]['ending_cash']:,.2f}", f"{df_kpi.iloc[2]['ending_cash']:,.2f}", "After close-day uses; see Funding & Audit"),
+        ("Senior Debt Balance (EUR)", f"{df_kpi.iloc[0]['total_debt']:,.2f}", f"{df_kpi.iloc[1]['total_debt']:,.2f}", f"{df_kpi.iloc[2]['total_debt']:,.2f}", "20-year French mortgage, 12-month grace (EUR 367.5k)"),
+        ("Debt Service Coverage (DSCR)", f"{df_kpi.iloc[0]['dscr']:.2f}x", f"{df_kpi.iloc[1]['dscr']:.2f}x", f"{df_kpi.iloc[2]['dscr']:.2f}x", "Bank covenant floor >= 1.25x"),
         ("Interest Coverage (ICR)", f"{df_kpi.iloc[0]['icr']:.2f}x", f"{df_kpi.iloc[1]['icr']:.2f}x", f"{df_kpi.iloc[2]['icr']:.2f}x", "Conservative interest coverage"),
-        ("Balance Sheet Discrepancy", "0.00 €", "0.00 €", "0.00 €", "Strict double-entry equality"),
+        ("Balance Sheet Discrepancy", "0.00", "0.00", "0.00", "Strict double-entry equality"),
     ]
 
     for row_idx, r_data in enumerate(summary_rows, start=5):
@@ -163,6 +179,35 @@ def export_institutional_excel(filename: str = "La_Dehesa_del_Castrillo_Financia
                 cell.alignment = Alignment(horizontal="right")
             if row_idx % 2 == 0:
                 cell.fill = slate_fill
+
+    # Capital structure and returns block.
+    ws1["A16"] = "CAPITAL STRUCTURE AND RETURNS (MANAGEMENT CASE)"
+    ws1["A16"].font = bold_font
+    ws1["A17"] = "Metric"
+    ws1["B17"] = "Value"
+    for c in ("A17", "B17"):
+        ws1[c].fill = navy_fill
+        ws1[c].font = header_font
+    capital_rows = [
+        ("All-in CapEx (EUR)", f"{engine.capex.total_capex:,.2f}"),
+        ("Senior debt (35% LTV) (EUR)", f"{engine.financing.senior_debt_principal:,.2f}"),
+        ("DSCR-capped principal at 1.25x (EUR)", f"{engine.debt_sizing()['principal_dscr_cap']:,.2f}"),
+        ("Cash equity plug (EUR)", f"{engine.cash_equity:,.2f}"),
+        ("Total equity at close (EUR)", f"{engine.total_equity_at_close:,.2f}"),
+        ("Total project investment (EUR)", f"{engine.total_project_investment:,.2f}"),
+        ("Cash equity / CapEx", f"{engine.cash_equity / engine.capex.total_capex * 100:.2f}%"),
+        ("Project IRR, 8.5% exit", project_irr_txt),
+        ("Equity IRR, 8.5% exit", equity_irr_txt),
+        ("Project IRR, no exit", f"{returns['project_irr'] * 100:.2f}%" if returns["project_irr"] is not None else "n/a"),
+        ("Equity IRR, no exit", f"{returns['equity_irr'] * 100:.2f}%" if returns["equity_irr"] is not None else "n/a"),
+    ]
+    for r_idx, (label, value) in enumerate(capital_rows, start=18):
+        c1 = ws1.cell(row=r_idx, column=1, value=label)
+        c2 = ws1.cell(row=r_idx, column=2, value=value)
+        c1.font = regular_font
+        c2.font = bold_font
+        c1.border = thin_border
+        c2.border = thin_border
 
     # Tab 2: 3-Statement Model
     ws2 = wb.create_sheet(title="3-Statement Model")
@@ -189,25 +234,8 @@ def export_institutional_excel(filename: str = "La_Dehesa_del_Castrillo_Financia
             if c_idx > 1:
                 cell.number_format = "#,##0.00"
 
-    # Tab 3: Debt Schedule
-    ws3 = wb.create_sheet(title="Debt Schedule")
-    ws3.views.sheetView[0].showGridLines = True
-    ws3["A1"] = "SENIOR DEBT AMORTIZATION SCHEDULE (FRENCH SYSTEM - 15 YEARS)"
-    ws3["A1"].font = title_font
-
-    debt_cols = ["year", "beginning_balance", "payment", "principal", "interest", "ending_balance", "short_term_debt", "long_term_debt"]
-    for col_idx, c in enumerate(debt_cols, start=1):
-        cell = ws3.cell(row=3, column=col_idx, value=c.replace("_", " ").title())
-        cell.fill = navy_fill
-        cell.font = header_font
-
-    for r_idx, (_, r) in enumerate(debt_sched.iterrows(), start=4):
-        for c_idx, val in enumerate(r, start=1):
-            cell = ws3.cell(row=r_idx, column=c_idx, value=round(val, 2))
-            cell.font = regular_font
-            cell.border = thin_border
-            if c_idx > 1:
-                cell.number_format = "#,##0.00"
+    # Tab 3 (Debt Schedule) is written by the live_excel module: a 240-month
+    # formula-driven amortisation with an annual SUMIF summary.
 
     # Tab 4: Scenarios & Sensitivity
     ws4 = wb.create_sheet(title="Scenario Stress-Testing")
@@ -229,18 +257,21 @@ def export_institutional_excel(filename: str = "La_Dehesa_del_Castrillo_Financia
     # Tab 5: Monte Carlo
     ws5 = wb.create_sheet(title="Monte Carlo Risk")
     ws5.views.sheetView[0].showGridLines = True
-    ws5["A1"] = "MONTE CARLO STOCHASTIC CREDIT RISK SIMULATION (N=1,000)"
+    ws5["A1"] = "MONTE CARLO STOCHASTIC CREDIT RISK SIMULATION (N=1,000 DRAWS ON THE MINIMUM DSCR)"
     ws5["A1"].font = title_font
 
     mc_kpis = [
         ("Simulations Executed", f"{summary.iterations:,}"),
-        ("Mean DSCR (Year 1)", f"{summary.mean_dscr_y1:.2f}x"),
-        ("Median DSCR (Year 1)", f"{summary.median_dscr_y1:.2f}x"),
-        ("VaR 95% DSCR (5th Percentile)", f"{summary.p5_dscr_y1:.2f}x"),
-        ("P(Covenant Breach) [DSCR < 1.25x]", f"{summary.prob_covenant_breach_y1*100:.1f}%"),
-        ("P(Cash Insolvency) [DSCR < 1.00x]", f"{summary.prob_cash_insolvency_y1*100:.1f}%"),
-        ("Mean Equity IRR", f"{summary.mean_equity_irr*100:.1f}%"),
-        ("Mean Ending Cash Year 1", f"{summary.mean_ending_cash_y1:,.2f} €"),
+        ("Mean Minimum DSCR (Years 1-3)", f"{summary.mean_min_dscr:.2f}x"),
+        ("Median Minimum DSCR (Years 1-3)", f"{summary.median_min_dscr:.2f}x"),
+        ("VaR 95% Minimum DSCR (5th Percentile)", f"{summary.p5_min_dscr:.2f}x"),
+        ("P(Covenant Breach) [min DSCR < 1.25x]", f"{summary.prob_covenant_breach*100:.1f}%"),
+        ("P(Debt-Service Shortfall) [min DSCR < 1.00x]", f"{summary.prob_cash_insolvency*100:.1f}%"),
+        ("Mean Equity IRR (8.5% exit)", f"{summary.mean_equity_irr*100:.1f}%"),
+        ("VaR 95% Equity IRR (5th Percentile)", f"{summary.p5_equity_irr*100:.1f}%"),
+        ("Cash Equity at Close (fixed in every draw)", f"{summary.cash_equity:,.2f} EUR"),
+        ("Total Equity at Close", f"{summary.total_equity_at_close:,.2f} EUR"),
+        ("Mean Ending Cash Year 1", f"{summary.mean_ending_cash_y1:,.2f} EUR"),
     ]
 
     ws5.cell(row=3, column=1, value="Simulation Parameter").fill = navy_fill
@@ -286,18 +317,26 @@ def export_institutional_excel(filename: str = "La_Dehesa_del_Castrillo_Financia
     ws6["A9"].font = bold_font
 
     memo_obj = CreditCommitteeMemo(copula_results=copula_res)
+    be = memo_obj.breakeven
     underwriting_kpis = [
-        ("Facility Requested (Senior Mortgage)", f"{copula_engine.P:,.2f} EUR"),
+        ("Facility Requested (Senior Mortgage, 35% LTV)", f"{copula_engine.P:,.2f} EUR"),
+        ("DSCR-Capped Principal at 1.25x", f"{memo_obj.debt_sizing['principal_dscr_cap']:,.2f} EUR"),
+        ("Binding Constraint", str(memo_obj.debt_sizing["binding_constraint"])),
         ("Total Project CapEx", f"{copula_engine.capex.total_capex:,.2f} EUR"),
         ("Senior Loan-to-Value (Total CapEx)", f"{(copula_engine.P / copula_engine.capex.total_capex)*100:.1f}%"),
-        ("Baseline Year 1 DSCR", f"{float(memo_obj.df_kpis.iloc[0]['dscr']):.2f}x"),
+        ("Cash Equity Required", f"{memo_obj.cash_equity:,.2f} EUR ({memo_obj.equity_to_capex:.1f}% of CapEx)"),
+        ("Year 1 DSCR (interest-only)", f"{float(memo_obj.df_kpis.iloc[0]['dscr']):.2f}x"),
+        ("Year 2 DSCR (first amortising year)", f"{float(memo_obj.df_kpis.iloc[1]['dscr']):.2f}x"),
         ("Mature Year 3 DSCR", f"{float(memo_obj.df_kpis.iloc[2]['dscr']):.2f}x"),
-        ("Operating Break-Even Occupancy", f"{memo_obj.breakeven['operating_breakeven_occupancy']:.1%}"),
-        ("Debt Service Break-Even Occupancy", f"{memo_obj.breakeven['debt_service_breakeven_occupancy']:.1%}"),
-        ("Standard Covenant DSRA (6 Months)", f"{copula_res.dsra_standard_6m:,.2f} EUR"),
-        ("Recommended Copula Tail DSRA (CVaR 99%)", f"{copula_res.dsra_recommended_tail:,.2f} EUR"),
-        ("Unhedged Deficit under 6-Month DSRA", f"{copula_res.dsra_recommended_tail - copula_res.dsra_standard_6m:,.2f} EUR"),
-        ("Credit Committee Recommendation", "CONDITIONAL APPROVAL (Escrow DSRA + LEADER Grant Pledge)"),
+        ("Operating Break-Even Occupancy (EBITDA = 0)", f"{be['operating_breakeven_occupancy_mature']:.2%}"),
+        ("Cash Debt-Service Break-Even (DSCR = 1.00x)", f"{be['debt_service_breakeven_occupancy_mature']:.2%}"),
+        ("Covenant Break-Even (DSCR = 1.25x)", f"{be['covenant_breakeven_occupancy_mature']:.2%}"),
+        ("ADR Required for the 1.25x Covenant", f"{be['covenant_breakeven_adr']:,.2f} EUR"),
+        ("ADR Required for a 10% Equity IRR (8.5% exit)", f"{be['equity_irr_10pct_adr']:,.2f} EUR"),
+        ("Contractual DSRA (6 Months)", f"{copula_res.dsra_standard_6m:,.2f} EUR"),
+        ("Recommended Copula Tail DSRA (Clayton CVaR 99%)", f"{copula_res.dsra_recommended_tail:,.2f} EUR"),
+        ("Unhedged Deficit under the 6-Month DSRA", f"{copula_res.dsra_recommended_tail - copula_res.dsra_standard_6m:,.2f} EUR"),
+        ("Credit Committee Recommendation", memo_obj.recommendation),
     ]
 
     ws6.cell(row=10, column=1, value="Underwriting Parameter").fill = navy_fill
@@ -340,7 +379,7 @@ def export_institutional_excel(filename: str = "La_Dehesa_del_Castrillo_Financia
         ("Unit Contribution Margin (Day)", f"{ue_metrics.unit_contribution_margin_eur:,.2f} EUR", f"{ue_metrics.unit_contribution_margin_pct*100:.2f}% contribution margin"),
         ("Room-Night Unit Margin", f"{ue_metrics.room_contribution_margin_eur:,.2f} EUR", f"{ue_metrics.room_contribution_margin_pct*100:.2f}% per room-night"),
         ("Annual Fixed Overhead (Payroll + OPEX)", f"{ue_metrics.annual_fixed_overhead:,.2f} EUR", "Base operational fixed costs"),
-        ("Annual Senior Debt Service", f"{ue_metrics.annual_senior_debt_service:,.2f} EUR", "15Y French amortization @ 3.5%"),
+        ("Annual Senior Debt Service", f"{ue_metrics.annual_senior_debt_service:,.2f} EUR", "20Y French amortization @ 4.0%, 12-month grace"),
         ("Annual Total Fixed Burden", f"{ue_metrics.annual_total_fixed_burden:,.2f} EUR", "Overhead + full debt service"),
         ("Operating Break-Even Occupied Days", f"{ue_metrics.operating_breakeven_days:.1f} Days", f"{(ue_metrics.operating_breakeven_days / 365)*100:.1f}% annual occupancy"),
         ("Cash Debt Break-Even Occupied Days", f"{ue_metrics.cash_debt_breakeven_days:.1f} Days", f"{(ue_metrics.cash_debt_breakeven_days / 365)*100:.1f}% annual occupancy"),
@@ -395,9 +434,10 @@ def export_institutional_excel(filename: str = "La_Dehesa_del_Castrillo_Financia
         ("fixed_payroll", "Payroll (EUR)"),
         ("fixed_opex", "Fixed OPEX (EUR)"),
         ("senior_debt_service", "Debt Svc (EUR)"),
-        ("net_operating_cash_flow", "Net Op CF (EUR)"),
-        ("tax_bridge_inflows", "Grant/VAT Inflow (EUR)"),
-        ("credit_line_drawn", "Credit Drawn (EUR)"),
+        ("operating_cash_flow", "Operating CF (EUR)"),
+        ("leader_inflow", "LEADER Grant (EUR)"),
+        ("vat_refund_inflow", "VAT Refund (EUR)"),
+        ("credit_line_draw", "Revolver Draw (EUR)"),
         ("ending_cash_balance", "Ending Cash (EUR)"),
         ("liquidity_buffer_total", "Total Liquidity (EUR)"),
     ]
@@ -438,6 +478,11 @@ def export_institutional_excel(filename: str = "La_Dehesa_del_Castrillo_Financia
     phase1_cash_y2 = float(df_kpi.iloc[1]["ending_cash"])
     phase1_dscr_y3 = float(df_kpi.iloc[2]["dscr"])
     exp_cons = exp_engine.compute_consolidated_underwriting(
+        phase1_rev_y3=float(df_proj.iloc[2]["total_revenue"]),
+        phase1_ebitda_y3=float(df_proj.iloc[2]["ebitda"]),
+        phase1_cfads_y3=float(df_proj.iloc[2]["cfads"]),
+        phase1_senior_debt_service=float(df_proj.iloc[2]["debt_service"]),
+        phase1_capex=float(engine.capex.total_capex),
         phase1_cash_end_y2=phase1_cash_y2,
         phase1_dscr_y3=phase1_dscr_y3,
     )
@@ -493,13 +538,13 @@ def export_institutional_excel(filename: str = "La_Dehesa_del_Castrillo_Financia
         ("Simple Post-Tax FCF Payback Period", f"{exp_metrics['simple_fcf_payback_years']:.2f} Years", "61.2 months recovery"),
         ("Year 5 Exit Valuation @ 8.5% Cap Rate", f"{exp_metrics['exit_val_85bps']:,.2f} EUR", f"Net gain: +{exp_metrics['net_gain_85bps']:,.2f} EUR"),
         ("5-Year Post-Tax IRR with Exit (8.5% Cap Rate)", f"{exp_metrics['irr_85bps']*100:.2f}%", f"MOIC: {exp_metrics['moic_85bps']:.2f}x"),
-        ("Realistic Scenario EBITDA (45% occ + 1 FTE)", f"{exp_realistic['ebitda_y3']:,.2f} EUR", f"IRR: {exp_realistic['irr_85bps']*100:.1f}%"),
-        ("Stress Scenario EBITDA (36.4% occ + 1 FTE)", f"{exp_stress['ebitda_y3']:,.2f} EUR", f"IRR: {exp_stress['irr_85bps']*100:.1f}%"),
-        ("Phase II Cash Need (net CapEx + VAT)", f"{exp_cons['phase2_cash_need']:,.2f} EUR", "€359,970 + €75,593.70"),
+        ("Realistic Scenario EBITDA (30% occ + 1 FTE)", f"{exp_realistic['ebitda_y3']:,.2f} EUR", f"IRR: {exp_realistic['irr_85bps']*100:.1f}%"),
+        ("Stress Scenario EBITDA (INE 21.24% occ + 1 FTE)", f"{exp_stress['ebitda_y3']:,.2f} EUR", f"IRR: {exp_stress['irr_85bps']*100:.1f}%"),
+        ("Phase II Cash Need (net CapEx + VAT)", f"{exp_cons['phase2_cash_need']:,.2f} EUR", "EUR 359,970 + EUR 75,593.70 input VAT"),
         ("Phase I Cash at End of Year 2", f"{phase1_cash_y2:,.2f} EUR", "Available for Phase II"),
         ("Phase II Funding Gap", f"{exp_cons['phase2_funding_gap']:,.2f} EUR", "Negative = not self-funded; raise additional funding"),
-        ("Consolidated Group EBITDA (Phase 1 + 2)", f"{exp_cons['consolidated_ebitda_y3']:,.2f} EUR", "+111.8% vs Phase 1 baseline (if funded)"),
-        ("Consolidated Debt Service Coverage (DSCR)", f"{exp_cons['consolidated_dscr_y3']:.2f}x", f"{phase1_dscr_y3:.2f}x to {exp_cons['consolidated_dscr_y3']:.2f}x (no new senior debt)"),
+        ("Consolidated Group EBITDA (Phase I + realistic Phase II)", f"{exp_cons['consolidated_ebitda_y3']:,.2f} EUR", f"{exp_cons['ebitda_increase_pct']*100:+.1f}% vs Phase I baseline (if funded)"),
+        ("Consolidated DSCR (CFADS basis)", f"{exp_cons['consolidated_dscr_y3']:.2f}x", f"{phase1_dscr_y3:.2f}x standalone to {exp_cons['consolidated_dscr_y3']:.2f}x consolidated (no new senior debt)"),
     ]
 
     ws8.cell(row=4, column=5, value="Return / Underwriting Parameter").fill = navy_fill
@@ -561,7 +606,7 @@ def export_institutional_excel(filename: str = "La_Dehesa_del_Castrillo_Financia
 
     # Auto-adjust column widths across the report tabs. The live tabs set their
     # own widths, and formulas should not inflate the column width.
-    live_tabs = {"Read Me & Checks", "Inputs", "Live Model", "Funding & Audit"}
+    live_tabs = {"Read Me & Checks", "Inputs", "Live Model", "Funding & Audit", "Debt Schedule"}
     for ws in wb.worksheets:
         if ws.title in live_tabs:
             continue

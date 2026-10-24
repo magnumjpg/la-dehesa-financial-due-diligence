@@ -12,9 +12,12 @@ UNIFIED INSTITUTIONAL PALETTE:
 
 Generates:
 1. figure_1_seasonality_ine.png: Empirical INE Segovia rural tourism curve vs. project baseline.
-2. figure_2_dscr_sensitivity_heatmap.png: 2D stress matrix of DSCR vs. interest rates and occupancy.
-3. figure_3_monte_carlo_distribution.png: Monte Carlo probability density of DSCR and VaR 95%.
-4. figure_4_cash_flow_waterfall.png: Sources & uses at close, showing the €70.8k funding gap.
+2. figure_2_dscr_sensitivity_heatmap.png: 2D stress matrix of Year-2 DSCR vs. interest rates and occupancy.
+3. figure_3_monte_carlo_distribution.png: Monte Carlo probability density of the minimum DSCR and VaR 95%.
+4. figure_4_cash_flow_waterfall.png: Cash sources & uses at close, which only balance with a
+   €521k cash-equity plug (49.6% of CapEx) - the net position is exactly zero.
+5. figure_5_copula_tail_risk.png: Gaussian vs. Clayton tail dependence on the Year-2 DSCR.
+6. figure_6_monthly_cash_runway.png: 24-month cash runway, revolver draw and solvency bridge.
 """
 
 from pathlib import Path
@@ -22,6 +25,7 @@ from typing import Optional
 import sys
 import matplotlib.pyplot as plt
 from matplotlib.colors import LinearSegmentedColormap
+from matplotlib.patches import Rectangle
 import seaborn as sns
 import numpy as np
 import pandas as pd
@@ -96,7 +100,7 @@ def generate_seasonality_chart(save_path: Optional[Path] = None) -> Path:
     width = 0.36
 
     rects1 = ax.bar(x - width / 2, ine_rates, width, label="INE Segovia Rural Tourism Benchmark", color=PALETTE["slate_benchmark"])
-    rects2 = ax.bar(x + width / 2, base_rates, width, label="La Dehesa Target Occupancy Baseline", color=PALETTE["navy_primary"])
+    rects2 = ax.bar(x + width / 2, base_rates, width, label="La Dehesa Mature Target (31.36%, Year 2+)", color=PALETTE["navy_primary"])
 
     ax.set_ylabel("Occupancy Rate (%)", color=PALETTE["slate_dark"])
     ax.set_title("Figure 1: Empirical Monthly Seasonality Curve (INE Segovia vs. Asset Baseline)", pad=14, fontweight="bold", color=PALETTE["slate_dark"])
@@ -104,6 +108,14 @@ def generate_seasonality_chart(save_path: Optional[Path] = None) -> Path:
     ax.set_xticklabels(months, color=PALETTE["slate_dark"])
     ax.set_ylim(0, 65)
     ax.legend(frameon=True, facecolor=PALETTE["background_card"], edgecolor=PALETTE["slate_border"])
+
+    ax.annotate(
+        "Year 1 runs at 0.90x this curve\n(28.2% weighted average)",
+        xy=(0.5, 60.5),
+        ha="left",
+        fontsize=8.5,
+        color=PALETTE["slate_dark"],
+    )
 
     ax.annotate(
         "Summer Leisure Peak\n(Jul-Aug: ~48-54%)",
@@ -152,9 +164,26 @@ def generate_dscr_sensitivity_heatmap(save_path: Optional[Path] = None) -> Path:
         ax=ax,
     )
 
-    ax.set_title("Figure 2: DSCR Underwriting Sensitivity Matrix (Year 1 Stress Test)", pad=14, fontweight="bold", color=PALETTE["slate_dark"])
-    ax.set_xlabel("Senior Mortgage Interest Rate (Euribor + Margin)", color=PALETTE["slate_dark"])
-    ax.set_ylabel("Occupancy Demand Multiplier", color=PALETTE["slate_dark"])
+    ax.set_title("Figure 2: Year-2 DSCR Sensitivity Matrix (First Amortising Year, 12-Month Grace)", pad=30, fontweight="bold", color=PALETTE["slate_dark"])
+    ax.set_xlabel("Senior Mortgage Interest Rate (Fixed, 20-Year Tenure)", color=PALETTE["slate_dark"])
+    ax.set_ylabel("Occupancy Demand Multiplier (vs. 31.36% Mature)", color=PALETTE["slate_dark"])
+
+    # Box the base case so the 1.15x underwriting point is unmistakable.
+    row_idx = list(df_matrix.index).index("100% Occ Factor")
+    col_idx = list(df_matrix.columns).index("4.0% Rate")
+    ax.add_patch(
+        Rectangle(
+            (col_idx, row_idx), 1, 1,
+            fill=False, edgecolor=PALETTE["navy_primary"], linewidth=2.8,
+        )
+    )
+    base_dscr = float(df_matrix.loc["100% Occ Factor", "4.0% Rate"])
+    ax.text(
+        0.5, 1.012,
+        f"Boxed cell = base case (100% demand, 4.0% rate): {base_dscr:.2f}x, below the 1.25x covenant",
+        transform=ax.transAxes, ha="center", va="bottom",
+        fontsize=8.5, fontweight="bold", color=PALETTE["rose_negative"],
+    )
 
     plt.tight_layout()
     fig.savefig(save_path)
@@ -163,7 +192,7 @@ def generate_dscr_sensitivity_heatmap(save_path: Optional[Path] = None) -> Path:
 
 
 def generate_monte_carlo_distribution(save_path: Optional[Path] = None) -> Path:
-    """Figure 3: Monte Carlo probability density of Year 1 DSCR across 1,000 iterations."""
+    """Figure 3: Monte Carlo probability density of the minimum DSCR across 1,000 iterations."""
     set_institutional_style()
     save_path = save_path or (get_assets_dir() / "figure_3_monte_carlo_distribution.png")
 
@@ -174,7 +203,7 @@ def generate_monte_carlo_distribution(save_path: Optional[Path] = None) -> Path:
 
     # Histogram and KDE strictly styled with unified palette
     sns.histplot(
-        df_sim["dscr_y1"],
+        df_sim["min_dscr"],
         kde=True,
         color=PALETTE["navy_primary"],
         bins=35,
@@ -186,16 +215,16 @@ def generate_monte_carlo_distribution(save_path: Optional[Path] = None) -> Path:
 
     # Strategic threshold markers
     ax.axvline(1.25, color=PALETTE["rose_negative"], linestyle="--", linewidth=1.8,
-               label=f"Bank Covenant Floor (1.25x) [P(Breach) = {summary.prob_covenant_breach_y1*100:.1f}%]")
+               label=f"Bank Covenant Floor (1.25x) [P(Breach) = {summary.prob_covenant_breach*100:.1f}%]")
     ax.axvline(1.00, color=PALETTE["slate_dark"], linestyle=":", linewidth=1.8,
-               label=f"Insolvency Floor (1.00x) [P(Default) = {summary.prob_cash_insolvency_y1*100:.1f}%]")
-    ax.axvline(summary.median_dscr_y1, color=PALETTE["teal_positive"], linestyle="-", linewidth=2.0,
-               label=f"Median DSCR ({summary.median_dscr_y1:.2f}x)")
-    ax.axvline(summary.p5_dscr_y1, color=PALETTE["amber_warning"], linestyle="-.", linewidth=1.6,
-               label=f"VaR 95% 5th Percentile ({summary.p5_dscr_y1:.2f}x)")
+               label=f"Insolvency Floor (1.00x) [P(Default) = {summary.prob_cash_insolvency*100:.1f}%]")
+    ax.axvline(summary.median_min_dscr, color=PALETTE["teal_positive"], linestyle="-", linewidth=2.0,
+               label=f"Median Minimum DSCR ({summary.median_min_dscr:.2f}x)")
+    ax.axvline(summary.p5_min_dscr, color=PALETTE["amber_warning"], linestyle="-.", linewidth=1.6,
+               label=f"VaR 95% 5th Percentile ({summary.p5_min_dscr:.2f}x)")
 
-    ax.set_title("Figure 3: Monte Carlo Simulation (N=1,000) - Year 1 DSCR Probability Distribution", pad=14, fontweight="bold", color=PALETTE["slate_dark"])
-    ax.set_xlabel("Year 1 Debt Service Coverage Ratio (DSCR)", color=PALETTE["slate_dark"])
+    ax.set_title("Figure 3: Monte Carlo Simulation (N=1,000) - Minimum DSCR (Years 1-3) Probability Distribution", pad=14, fontweight="bold", color=PALETTE["slate_dark"])
+    ax.set_xlabel("Minimum Debt Service Coverage Ratio, Years 1-3 (DSCR)", color=PALETTE["slate_dark"])
     ax.set_ylabel("Probability Density", color=PALETTE["slate_dark"])
     ax.legend(loc="upper right", frameon=True, facecolor=PALETTE["background_card"], edgecolor=PALETTE["slate_border"])
 
@@ -206,53 +235,89 @@ def generate_monte_carlo_distribution(save_path: Optional[Path] = None) -> Path:
 
 
 def generate_cash_flow_waterfall(save_path: Optional[Path] = None) -> Path:
-    """Figure 4: Sources & uses at close, showing the €70.8k funding gap."""
+    """Figure 4: Cash sources & uses at close (management case).
+
+    The structure only closes because the cash equity is a plug of EUR 521k
+    (49.6% of CapEx), not the 30% in the business plan. The net position is zero
+    by construction, so the chart shows the cumulative funding bridge rather than
+    a fictional gap.
+    """
     set_institutional_style()
     save_path = save_path or (get_assets_dir() / "figure_4_cash_flow_waterfall.png")
+
+    from src.core.funding import SourcesUsesEngine
+
+    funding = SourcesUsesEngine(case="management").compute()
 
     fig, ax = plt.subplots(figsize=(11, 5.2), dpi=300)
 
     steps = [
-        "Senior debt",
-        "Sponsor equity",
-        "VAT bridge",
-        "CapEx (net)",
-        "Input VAT (21%)",
-        "Pre-opening",
-        "Working capital",
-        "DSRA (6m)",
-        "Net position",
+        ("Senior debt (35% LTV)", funding.senior_debt),
+        ("VAT bridge", funding.vat_bridge),
+        ("Cash equity plug", funding.cash_equity_required),
+        ("Cash CapEx", -funding.cash_capex),
+        ("Interest during construction", -funding.idc),
+        ("Input VAT (bridge-funded)", -funding.input_vat),
+        ("Pre-opening costs", -funding.pre_opening_costs),
+        ("Working capital", -funding.initial_working_capital),
+        ("DSRA (6 months)", -funding.dsra),
     ]
 
-    # Management case, €k. Sources: 507.5 + 217.5 + 153.1 = 878.1.
-    # Uses: 729.0 + 153.1 + 25.0 + 20.0 + 21.8 = 948.9.
-    # Net position: -70.8. The VAT bridge and input VAT cancel; the gap is real.
-    amounts = [507.5, 217.5, 153.1, -729.0, -153.1, -25.0, -20.0, -21.8, -70.8]
+    labels = [s[0] for s in steps] + ["Net position at close"]
+    deltas = [s[1] / 1000.0 for s in steps]
+    cumulative = np.cumsum(deltas).tolist() + [0.0]
+    starts = [0.0] + cumulative[:-2] + [0.0]
+    # For a waterfall the final bar spans from 0 to the net position (0 here);
+    # draw it as a flat marker at zero.
+    bottoms = []
+    heights = []
+    for i, d in enumerate(deltas):
+        bottom = min(starts[i], starts[i] + d)
+        bottoms.append(bottom)
+        heights.append(abs(d))
+    bottoms.append(0.0)
+    heights.append(0.0)
 
-    # Teal for sources, rose for uses, navy for the net position.
     colors = [
-        PALETTE["teal_positive"] if a > 0 else PALETTE["rose_negative"]
-        for a in amounts
-    ]
-    colors[-1] = PALETTE["navy_primary"]
+        PALETTE["teal_positive"] if d > 0 else PALETTE["rose_negative"]
+        for d in deltas
+    ] + [PALETTE["navy_primary"]]
 
-    y_pos = np.arange(len(steps))
-    bars = ax.barh(y_pos, amounts, color=colors, height=0.55, edgecolor=PALETTE["slate_border"], linewidth=0.8)
+    y_pos = np.arange(len(labels))
+    bars = ax.barh(
+        y_pos, heights, left=bottoms, color=colors, height=0.55,
+        edgecolor=PALETTE["slate_border"], linewidth=0.8,
+    )
 
     ax.set_yticks(y_pos)
-    ax.set_yticklabels(steps, color=PALETTE["slate_dark"], fontweight="bold")
-    ax.set_xlabel("€k", color=PALETTE["slate_dark"])
-    ax.set_title("Figure 4: Sources & Uses at Close — The €70.8k Funding Gap (Management Case)", pad=14, fontweight="bold", color=PALETTE["slate_dark"])
+    ax.set_yticklabels(labels, color=PALETTE["slate_dark"], fontweight="bold")
+    ax.set_xlabel("EUR thousands (EURk)", color=PALETTE["slate_dark"])
+    ax.set_title(
+        "Figure 4: Cash Sources & Uses at Close - The EUR 521k Equity Plug (49.6% of CapEx)",
+        pad=14, fontweight="bold", color=PALETTE["slate_dark"],
+    )
     ax.axvline(0, color=PALETTE["slate_dark"], linewidth=0.8)
+    ax.invert_yaxis()
 
-    for bar, val in zip(bars, amounts):
-        sign = "+" if val > 0 else ""
-        x_text = val + (10 if val >= 0 else -10)
-        ha = "left" if val >= 0 else "right"
-        ax.text(x_text, bar.get_y() + bar.get_height() / 2, f"{sign}{val:.1f}k €",
-                va="center", ha=ha, fontsize=8.5, fontweight="bold", color=PALETTE["slate_dark"])
+    for i, (bar, d) in enumerate(zip(bars, deltas)):
+        sign = "+" if d > 0 else ""
+        x_text = cumulative[i] + (12 if d >= 0 else -12)
+        ha = "left" if d >= 0 else "right"
+        ax.text(
+            x_text, bar.get_y() + bar.get_height() / 2,
+            f"{sign}{d:,.1f}k",
+            va="center", ha=ha, fontsize=8.5, fontweight="bold",
+            color=PALETTE["slate_dark"],
+        )
 
-    ax.set_xlim(-820, 620)
+    ax.text(
+        0, len(labels) - 1,
+        "EUR 0.00 gap\n(sources = uses)",
+        va="center", ha="left", fontsize=8.5, fontweight="bold",
+        color=PALETTE["navy_primary"],
+    )
+
+    ax.set_xlim(-120, 1180)
     plt.tight_layout()
     fig.savefig(save_path)
     plt.close(fig)
@@ -270,19 +335,24 @@ def generate_copula_tail_risk_chart(output_path: Optional[Path] = None) -> Path:
     save_path = output_path or (get_assets_dir() / "figure_5_copula_tail_risk.png")
 
     from src.simulation.copula_engine import CopulaSimulationEngine
+    from src.config.ine_weights import get_annual_weighted_occupancy
 
     engine = CopulaSimulationEngine(n_simulations=50_000, random_seed=42)
     results = engine.run_comparative_analysis()
+
+    # The copula shocks occupancy relative to the Year-2 management base
+    # (mature 31.36%, no ramp discount in Year 2).
+    base_occ_pct = get_annual_weighted_occupancy() * 100.0
 
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 6.2))
 
     # --- Panel A: Joint Tail Dependency Scatter ---
     # Subsample 2,500 points for clarity and high visual definition
     idx = np.random.default_rng(42).choice(50_000, size=2500, replace=False)
-    occ_g_sub = results.occ_gaussian[idx] * 0.3136 * 0.90 * 100  # Occupancy %
+    occ_g_sub = results.occ_gaussian[idx] * base_occ_pct  # Occupancy %
     dscr_g_sub = results.dscr_gaussian[idx]
 
-    occ_c_sub = results.occ_clayton[idx] * 0.3136 * 0.90 * 100
+    occ_c_sub = results.occ_clayton[idx] * base_occ_pct
     dscr_c_sub = results.dscr_clayton[idx]
 
     ax1.scatter(
@@ -320,10 +390,10 @@ def generate_copula_tail_risk_chart(output_path: Optional[Path] = None) -> Path:
         bbox=dict(boxstyle="round,pad=0.3", facecolor="white", edgecolor=PALETTE["rose_negative"], alpha=0.9),
     )
 
-    ax1.set_xlim(12, 42)
+    ax1.set_xlim(12, 45)
     ax1.set_ylim(-0.3, 2.7)
-    ax1.set_xlabel("Year 1 Effective Occupancy Rate (%)", color=PALETTE["slate_dark"])
-    ax1.set_ylabel("Year 1 Debt Service Coverage Ratio (DSCR)", color=PALETTE["slate_dark"])
+    ax1.set_xlabel("Year 2 Effective Occupancy Rate (%)", color=PALETTE["slate_dark"])
+    ax1.set_ylabel("Year 2 Debt Service Coverage Ratio (DSCR)", color=PALETTE["slate_dark"])
     ax1.set_title("(A) Joint Tail Dependency: Clayton Clustering vs. Gaussian Model", pad=12, fontweight="bold", color=PALETTE["slate_dark"])
     ax1.legend(loc="upper left", frameon=True, facecolor="white", framealpha=0.95, edgecolor=PALETTE["slate_border"], fontsize=8)
 
@@ -384,12 +454,12 @@ def generate_copula_tail_risk_chart(output_path: Optional[Path] = None) -> Path:
     )
 
     ax2.set_xlim(-0.4, 2.7)
-    ax2.set_xlabel("Year 1 Debt Service Coverage Ratio (DSCR)", color=PALETTE["slate_dark"])
+    ax2.set_xlabel("Year 2 Debt Service Coverage Ratio (DSCR)", color=PALETTE["slate_dark"])
     ax2.set_ylabel("Empirical Probability Density", color=PALETTE["slate_dark"])
     ax2.set_title("(B) Downside Tail Distribution & Expected Shortfall (CVaR 99%)", pad=12, fontweight="bold", color=PALETTE["slate_dark"])
     ax2.legend(loc="upper right", frameon=True, facecolor="white", framealpha=0.95, edgecolor=PALETTE["slate_border"], fontsize=8)
 
-    plt.suptitle("Figure 5: Multivariate Copula Tail Risk - Asymmetric Lower Tail Clustering vs. Naive Gaussian Model",
+    plt.suptitle("Figure 5: Multivariate Copula Tail Risk on the Year-2 DSCR - Asymmetric Lower Tail Clustering vs. Naive Gaussian Model",
                  fontsize=12, fontweight="bold", color=PALETTE["slate_dark"], y=0.99)
     plt.tight_layout()
     fig.savefig(save_path)
@@ -415,28 +485,28 @@ def generate_monthly_cash_runway_chart(save_path: Optional[Path] = None) -> Path
     months_y1 = [m[:3] for m in df_y1["month_name"]]
     x_y1 = np.arange(len(months_y1))
 
-    colors_cf = [PALETTE["teal_positive"] if v >= 0 else PALETTE["rose_negative"] for v in df_y1["net_operating_cash_flow"]]
-    ax1.bar(x_y1, df_y1["net_operating_cash_flow"] / 1000, color=colors_cf, width=0.55, edgecolor=PALETTE["slate_border"], label="Net Operating Cash Flow")
-
-    ax1.plot(x_y1, df_y1["gross_revenue"] / 1000, color=PALETTE["navy_primary"], marker="o", markersize=4, linewidth=1.8, label="Gross Revenue (k€)")
+    colors_cf = [PALETTE["teal_positive"] if v >= 0 else PALETTE["rose_negative"] for v in df_y1["operating_cash_flow"]]
+    ax1.bar(x_y1, df_y1["operating_cash_flow"] / 1000, color=colors_cf, width=0.55, edgecolor=PALETTE["slate_border"], label="Operating Cash Flow")
+    ax1.plot(x_y1, df_y1["gross_revenue"] / 1000, color=PALETTE["navy_primary"], marker="o", markersize=4, linewidth=1.8, label="Gross Revenue (kEUR)")
     fixed_burden_k = (df_y1["fixed_payroll"].iloc[0] + df_y1["fixed_opex"].iloc[0] + df_y1["senior_debt_service"].iloc[0]) / 1000
-    ax1.axhline(fixed_burden_k, color=PALETTE["amber_warning"], linestyle="--", linewidth=1.4, label=f"Fixed Burden ({fixed_burden_k:.1f}k€/mo)")
+    ax1.axhline(fixed_burden_k, color=PALETTE["amber_warning"], linestyle="--", linewidth=1.4, label=f"Fixed Burden ({fixed_burden_k:.1f}kEUR/mo)")
     ax1.axhline(0, color=PALETTE["slate_dark"], linestyle="-", linewidth=0.8)
 
     ax1.set_xticks(x_y1)
     ax1.set_xticklabels(months_y1)
-    ax1.set_ylabel("Thousand EUR (€k)", color=PALETTE["slate_dark"])
+    ax1.set_ylabel("Thousand EUR (EURk)", color=PALETTE["slate_dark"])
     ax1.set_title("(A) Year 1 Monthly Operating Cash Flow & Seasonality", pad=12, fontweight="bold", color=PALETTE["slate_dark"])
     ax1.legend(loc="upper left", frameon=True, facecolor="white", framealpha=0.95, edgecolor=PALETTE["slate_border"], fontsize=8)
 
-    trough_val = df_y1.iloc[1]["net_operating_cash_flow"] / 1000
-    ax1.annotate(f"Winter Trough\n({trough_val:.1f}k€ burn)", xy=(1, trough_val), xytext=(1, trough_val - 4),
+    trough_idx = int(summary.year1_trough_month_index) - 1
+    trough_val = df_y1.iloc[trough_idx]["operating_cash_flow"] / 1000
+    ax1.annotate(f"Winter Trough\n({trough_val:.1f}kEUR burn)", xy=(trough_idx, trough_val), xytext=(trough_idx, trough_val - 4),
                  arrowprops=dict(arrowstyle="->", color=PALETTE["rose_negative"]),
                  fontsize=8, fontweight="bold", ha="center", color=PALETTE["rose_negative"])
 
     peak_idx = 7
-    peak_val = df_y1.iloc[peak_idx]["net_operating_cash_flow"] / 1000
-    ax1.annotate(f"Summer Peak\n(+{peak_val:.1f}k€ surplus)", xy=(peak_idx, peak_val), xytext=(peak_idx, peak_val + 3),
+    peak_val = df_y1.iloc[peak_idx]["operating_cash_flow"] / 1000
+    ax1.annotate(f"Summer Peak\n(+{peak_val:.1f}kEUR surplus)", xy=(peak_idx, peak_val), xytext=(peak_idx, peak_val + 3),
                  arrowprops=dict(arrowstyle="->", color=PALETTE["teal_positive"]),
                  fontsize=8, fontweight="bold", ha="center", color=PALETTE["teal_positive"])
 
@@ -445,30 +515,34 @@ def generate_monthly_cash_runway_chart(save_path: Optional[Path] = None) -> Path
     cash_k = df_monthly["ending_cash_balance"].values / 1000
     total_liq_k = df_monthly["liquidity_buffer_total"].values / 1000
 
-    ax2.plot(m_indices, cash_k, color=PALETTE["navy_primary"], marker="s", markersize=3.5, linewidth=2.0, label="Ending Cash Balance (k€)")
+    ax2.plot(m_indices, cash_k, color=PALETTE["navy_primary"], marker="s", markersize=3.5, linewidth=2.0, label="Ending Cash Balance (kEUR)")
     ax2.fill_between(m_indices, cash_k, color=PALETTE["navy_light"], alpha=0.15)
-    ax2.plot(m_indices, total_liq_k, color=PALETTE["teal_positive"], linestyle=":", linewidth=1.8, label="Total Available Liquidity (Cash + Credit Line)")
+    ax2.plot(m_indices, total_liq_k, color=PALETTE["teal_positive"], linestyle=":", linewidth=1.8, label="Total Available Liquidity (Cash + Undrawn Revolver)")
 
     ax2.axvline(summary.year1_trough_month_index, color=PALETTE["rose_negative"], linestyle="--", linewidth=1.2)
-    ax2.annotate(f"Cash Trough: {summary.year1_trough_month}\n(€{summary.year1_trough_cash_balance:,.0f} min cash)",
-                 xy=(summary.year1_trough_month_index, summary.year1_trough_cash_balance / 1000),
-                 xytext=(summary.year1_trough_month_index + 1.2, summary.year1_trough_cash_balance / 1000 - 8),
-                 arrowprops=dict(arrowstyle="->", color=PALETTE["rose_negative"]),
-                 fontsize=8, fontweight="bold", color=PALETTE["rose_negative"],
-                 bbox=dict(boxstyle="round,pad=0.2", facecolor="white", edgecolor=PALETTE["rose_negative"], alpha=0.9))
+    ax2.annotate(
+        f"Cash Trough: {summary.year1_trough_month}\n"
+        f"(EUR {summary.year1_trough_cash_balance:,.0f} pre-revolver, "
+        f"EUR {summary.year1_max_credit_line_draw:,.0f} drawn)",
+        xy=(summary.year1_trough_month_index, summary.year1_trough_actual_cash / 1000),
+        xytext=(summary.year1_trough_month_index + 1.2, summary.year1_trough_actual_cash / 1000 - 12),
+        arrowprops=dict(arrowstyle="->", color=PALETTE["rose_negative"]),
+        fontsize=8, fontweight="bold", color=PALETTE["rose_negative"],
+        bbox=dict(boxstyle="round,pad=0.2", facecolor="white", edgecolor=PALETTE["rose_negative"], alpha=0.9),
+    )
 
     ax2.axvline(14, color=PALETTE["amber_warning"], linestyle="--", linewidth=1.2)
-    ax2.annotate("LEADER Grant\n(+€163k)", xy=(14, cash_k[13]), xytext=(11.5, cash_k[13] + 15),
+    ax2.annotate("LEADER Grant\n(+EUR 163k, Month 14)", xy=(14, cash_k[13]), xytext=(9.5, cash_k[13] + 20),
                  arrowprops=dict(arrowstyle="->", color=PALETTE["amber_warning"]),
                  fontsize=8, fontweight="bold", color=PALETTE["amber_warning"])
 
     ax2.axvline(18, color=PALETTE["teal_positive"], linestyle="--", linewidth=1.2)
-    ax2.annotate("AEAT VAT Refund\n(+€152k)", xy=(18, cash_k[17]), xytext=(15.5, cash_k[17] + 18),
+    ax2.annotate("AEAT VAT Refund\n(+EUR 168k, Month 18)\nrepays the bridge", xy=(18, cash_k[17]), xytext=(15.0, cash_k[17] + 25),
                  arrowprops=dict(arrowstyle="->", color=PALETTE["teal_positive"]),
                  fontsize=8, fontweight="bold", color=PALETTE["teal_positive"])
 
     ax2.set_xlabel("Operational Month (1 to 24)", color=PALETTE["slate_dark"])
-    ax2.set_ylabel("Liquidity Cushion (€k)", color=PALETTE["slate_dark"])
+    ax2.set_ylabel("Liquidity Cushion (EURk)", color=PALETTE["slate_dark"])
     ax2.set_title("(B) 24-Month Cumulative Cash Runway & Solvency Bridge", pad=12, fontweight="bold", color=PALETTE["slate_dark"])
     ax2.legend(loc="upper left", frameon=True, facecolor="white", framealpha=0.95, edgecolor=PALETTE["slate_border"], fontsize=8)
 

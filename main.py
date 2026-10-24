@@ -94,8 +94,8 @@ def run_executive_pipeline(generate_charts: bool = True):
         c_kpi = credit.compute_credit_kpis(c_df, c_debt)
         c_returns = credit.compute_returns_summary(
             c_df,
-            initial_equity=c_engine.financing.sponsor_equity,
-            initial_capex=c_engine.capex.total_capex,
+            initial_equity=c_engine.total_equity_at_close,
+            initial_capex=c_engine.total_project_investment,
         )
         y1 = c_kpi.iloc[0]
         case_rows.append({
@@ -123,7 +123,7 @@ def run_executive_pipeline(generate_charts: bool = True):
     print()
 
     # Step 5: Monthly Cash Flow, Runway & Cash Trough Audit
-    print("[5/14] MONTHLY OPERATING LIQUIDITY STRESS (UNFUNDED VS. FUNDED)")
+    print("[5/14] MONTHLY LIQUIDITY RECONCILIATION, SEASONAL TROUGH & REVOLVER AUDIT")
     print("-" * 88)
     from src.core.monthly_cash import MonthlyCashEngine
     mc_engine = MonthlyCashEngine()
@@ -149,13 +149,17 @@ def run_executive_pipeline(generate_charts: bool = True):
             "Uses at close": f.total_uses_at_close,
             "Sources at close": f.total_sources_at_close,
             "Gap at close": f.funding_gap_at_close,
-            "Adj. cash Y1": f.cash_y1_adjusted,
-            "DSCR Y1": f.dscr_y1,
-            "Credit line drawn": f.model_credit_line_drawn_y1,
+            "VAT bridge Y1": f.vat_bridge_drawn_y1,
+            "Min DSCR": f.dscr_min,
+            "DSCR-capped debt": f.dscr_cap_principal,
+            "Equity / CapEx %": f.equity_to_capex_pct,
             "Status": f.funding_status,
         })
     df_funding = pd.DataFrame(funding_rows)
     print(df_funding.to_string(index=False))
+    print()
+    print("-> The binding constraint is the DSCR cap, not the 35% LTV request: the")
+    print("   EUR 367,535 facility breaches the 1.25x covenant in Year 2.")
     print()
     SourcesUsesEngine(case="management").print_terminal_summary()
     print()
@@ -165,10 +169,12 @@ def run_executive_pipeline(generate_charts: bool = True):
     print("-" * 88)
     returns = credit.compute_returns_summary(
         df_proj,
-        initial_equity=engine.financing.sponsor_equity,
-        initial_capex=engine.capex.total_capex,
+        initial_equity=engine.total_equity_at_close,
+        initial_capex=engine.total_project_investment,
         exit_cap_rate=0.085,
     )
+    print(f"Total equity at close:            €{engine.total_equity_at_close:>12,.2f}")
+    print(f"Total project investment:         €{engine.total_project_investment:>12,.2f}")
     print(f"Project IRR (no exit):            {returns['project_irr']*100:>8.2f}%" if returns['project_irr'] is not None else "Project IRR (no exit):            n/a")
     print(f"Project IRR (8.5% exit):          {returns['project_irr_exit']*100:>8.2f}%" if returns['project_irr_exit'] is not None else "Project IRR (8.5% exit):          n/a")
     print(f"Equity IRR (no exit):             {returns['equity_irr']*100:>8.2f}%" if returns['equity_irr'] is not None else "Equity IRR (no exit):             n/a")
@@ -180,21 +186,26 @@ def run_executive_pipeline(generate_charts: bool = True):
     print()
 
     # Step 9: Monte Carlo Credit Risk Simulation
-    print("[9/14] NAIVE GAUSSIAN MONTE CARLO SIMULATION (N=1,000 ITERATIONS)")
+    print("[9/14] GAUSSIAN MONTE CARLO CREDIT-RISK SIMULATION (N=1,000 ITERATIONS)")
     print("-" * 88)
     sim = MonteCarloSimulator(iterations=1000, random_seed=42)
     _, summary = sim.run_simulation()
 
-    print(f"Iterations:                      {summary.iterations:,}")
-    print(f"Mean DSCR (Year 1):              {summary.mean_dscr_y1:.2f}x")
-    print(f"Median DSCR (Year 1):            {summary.median_dscr_y1:.2f}x")
-    print(f"VaR 95% DSCR (5th percentile):   {summary.p5_dscr_y1:.2f}x")
-    print(f"P(Covenant Breach) [DSCR < 1.25]: {summary.prob_covenant_breach_y1*100:.1f}%")
-    print(f"P(Insolvency Default) [DSCR < 1]: {summary.prob_cash_insolvency_y1*100:.1f}%")
+    print(f"Iterations:                          {summary.iterations:,}")
+    print(f"Cash equity (fixed across draws):    €{summary.cash_equity:,.2f}")
+    print(f"Total equity at close:               €{summary.total_equity_at_close:,.2f}")
+    print(f"Mean minimum DSCR (Years 1-3):       {summary.mean_min_dscr:.2f}x")
+    print(f"Median minimum DSCR:                 {summary.median_min_dscr:.2f}x")
+    print(f"VaR 95% minimum DSCR (5th pct):      {summary.p5_min_dscr:.2f}x")
+    print(f"P(Covenant breach) [min DSCR<1.25x]: {summary.prob_covenant_breach*100:.1f}%")
+    print(f"P(Debt-service shortfall) [<1.00x]:  {summary.prob_cash_insolvency*100:.1f}%")
+    print(f"Mean equity IRR (8.5% exit):         {summary.mean_equity_irr*100:.2f}%")
+    print(f"VaR 95% equity IRR (5th pct):        {summary.p5_equity_irr*100:.2f}%")
     print()
 
     # Step 10: Multivariate Copula Tail Risk Engine
-    print("[10/14] MULTIVARIATE COPULA TAIL RISK ENGINE (50,000 DRAWS: GAUSSIAN vs. STUDENT-T vs. CLAYTON)")
+    print("[10/14] MULTIVARIATE COPULA TAIL-RISK ENGINE (50,000 DRAWS: GAUSSIAN vs. STUDENT-T vs. CLAYTON)")
+    print("        Credit test: Year-2 DSCR on CFADS, 20Y/4.0% debt with 12-month grace, full cost stack")
     print("-" * 88)
     from src.simulation.copula_engine import CopulaSimulationEngine
     from src.core.credit_committee import CreditCommitteeMemo
@@ -219,8 +230,17 @@ def run_executive_pipeline(generate_charts: bool = True):
     exp_engine = ExpansionFinancialEngine()
     phase1_cash_y2 = float(df_kpi.iloc[1]["ending_cash"])
     phase1_dscr_y3 = float(df_kpi.iloc[2]["dscr"])
+    phase1_ebitda_y3 = float(df_proj.iloc[2]["ebitda"])
+    phase1_cfads_y3 = float(df_proj.iloc[2]["cfads"])
+    phase1_rev_y3 = float(df_proj.iloc[2]["total_revenue"])
+    phase1_ds = float(df_proj.iloc[2]["debt_service"])
     gate = exp_engine.compute_phase_gate(phase1_cash_y2, phase1_dscr_y3)
     consolidated = exp_engine.compute_consolidated_underwriting(
+        phase1_rev_y3=phase1_rev_y3,
+        phase1_ebitda_y3=phase1_ebitda_y3,
+        phase1_cfads_y3=phase1_cfads_y3,
+        phase1_senior_debt_service=phase1_ds,
+        phase1_capex=float(engine.capex.total_capex),
         phase1_cash_end_y2=phase1_cash_y2,
         phase1_dscr_y3=phase1_dscr_y3,
     )

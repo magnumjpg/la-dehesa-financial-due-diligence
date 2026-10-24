@@ -172,6 +172,9 @@ def generate_reconciliation_summary() -> pd.DataFrame:
             "ebitda": float(y1["ebitda"]),
             "cash": float(y1["ending_cash"]),
             "dscr": float(y1["dscr"]),
+            "capex": float(engine.capex.total_capex),
+            "input_vat": float(engine.capex.total_input_vat),
+            "equity": float(engine.total_equity_at_close),
         }
 
     def triple(key: str, fmt: str) -> str:
@@ -200,19 +203,19 @@ def generate_reconciliation_summary() -> pd.DataFrame:
             "Category": "Year 1 ending cash",
             "Original Excel": "-2,560.00 € (approx.)",
             "Refined: mgmt / market / promoter": triple("cash", "{:,.0f} €"),
-            "Notes": "Original negative cash is a real funding gap.",
+            "Notes": "The originals are cash-insolvent at close; the refined model sizes the equity plug to fix it.",
         },
         {
             "Category": "Year 1 DSCR",
             "Original Excel": "n/a (no DSCR line)",
             "Refined: mgmt / market / promoter": triple("dscr", "{:.2f}x"),
-            "Notes": "Only management clears 1.25x.",
+            "Notes": "Only management clears 1.00x in Year 1; the 1.25x covenant still binds in Year 2.",
         },
         {
-            "Category": "CapEx",
+            "Category": "All-in CapEx",
             "Original Excel": "725,000.00 €",
-            "Refined: mgmt / market / promoter": "729,000.00 €",
-            "Notes": "Includes €4k Kit Digital.",
+            "Refined: mgmt / market / promoter": triple("capex", "{:,.0f} €"),
+            "Notes": "Management/market: land 250k + 550 m2 works + kitchen + FF&E + biopool + digital + fees + contingency.",
         },
         {
             "Category": "Payroll (annual)",
@@ -223,8 +226,14 @@ def generate_reconciliation_summary() -> pd.DataFrame:
         {
             "Category": "Input VAT on CapEx",
             "Original Excel": "Not modeled",
-            "Refined: mgmt / market / promoter": "153,090 / 143,596 €",
-            "Notes": "21% deductible; bridge is financing.",
+            "Refined: mgmt / market / promoter": triple("input_vat", "{:,.0f} €"),
+            "Notes": "21% on non-land CapEx; bridge-financed and refunded by AEAT.",
+        },
+        {
+            "Category": "Equity at close",
+            "Original Excel": "30% of CapEx (assumed)",
+            "Refined: mgmt / market / promoter": triple("equity", "{:,.0f} €"),
+            "Notes": "A cash-equity plug plus in-kind land, not a 30% assumption.",
         },
         {
             "Category": "Output VAT",

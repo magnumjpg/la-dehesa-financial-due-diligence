@@ -2,26 +2,30 @@
 Programmatic Model Audit & Data Room Integrity Engine for La Dehesa del Castrillo S.L.
 
 This is a *computed* audit, not a self-certification checklist. Every rule is
-evaluated against the model output and can fail. The audit intentionally
-reports material exceptions (funding gap, credit-line inconsistency, Phase II
-double-spend, market-case covenant breach) alongside the genuine strengths
-(balance-sheet equality, payroll hourly compliance, promoter-case replication).
+evaluated against the model output and can fail. The audit deliberately reports
+the material exceptions (DSCR covenant breach in Year 2, negative project
+returns, a 49.6% cash-equity requirement, Phase II shortfall, market-case
+insolvency, upside occupancy vs. INE) alongside the genuine strengths
+(balance-sheet equality, payroll hourly compliance, VAT treatment, promoter-case
+replication).
 
-Rules:
-1. Balance-sheet equality (Assets == Liabilities + Equity).
-2. Hospitality VAT rate (10% on lodging and restaurant).
-3. CapEx input VAT (21%) recognised as a fiscal asset.
-4. Payroll hourly compliance vs. SMI 2026 and the Segovia convenio.
-5. Management-case DSCR covenant (>= 1.25x).
-6. Adjusted Year-1 cash after pre-opening, working capital and DSRA.
-7. DSRA sizing vs. the 6-month debt service.
-8. Sources & uses at close (no funding gap).
-9. Credit-line utilisation (model bridge <= stated limit).
+Rules (16):
+1.  Balance-sheet equality (Assets == Liabilities + Equity).
+2.  Hospitality VAT rate (10% on lodging and restaurant).
+3.  CapEx input VAT (21% on non-land CapEx) recognised as a fiscal asset.
+4.  Payroll hourly compliance vs. SMI 2026 and the Segovia convenio.
+5.  Management-case minimum DSCR over the projection (>= 1.25x).
+6.  Minimum cash balance over the projection (>= 0).
+7.  DSRA sizing vs. six months of the maximum annual debt service.
+8.  Sources & uses at close (no funding gap).
+9.  VAT bridge within its stated limit.
 10. Management occupancy vs. INE market occupancy.
 11. Phase II self-funding / phase gate.
-12. Returns consistency (project IRR with exit >= WACC).
+12. Project IRR with exit vs. the 8% WACC.
 13. Promoter-case replication of the original university simulator.
-14. Market-case DSCR covenant.
+14. Market-case minimum DSCR (>= 1.25x).
+15. Cash equity requirement vs. the original 30% assumption.
+16. FF&E reserve of 3% of revenue deducted from CFADS.
 """
 
 from dataclasses import asdict, dataclass
@@ -30,20 +34,16 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from src.config.assumptions import (
-    CapExStructure,
-    FinancingStructure,
-    LaborStructure,
-    FixedOpexStructure,
-    RevenueModelConfig,
     SCENARIOS,
     SMI_2026_HOURLY,
-    CONVENIO_SEGOVIA_2026_HOURLY,
 )
 from src.config.ine_weights import get_annual_weighted_occupancy, get_market_occupancy
 from src.core.statements import FinancialModelEngine
-from src.core.metrics import CreditMetricsEngine
+from src.core.metrics import BreakEvenEngine, CreditMetricsEngine
 from src.core.funding import SourcesUsesEngine
 from src.core.expansion import ExpansionFinancialEngine
+
+SCHEMA_VERSION = "4.0.0"
 
 
 @dataclass
@@ -114,8 +114,8 @@ class ModelAuditEngine:
         kpi = credit.compute_credit_kpis(df, debt)
         returns = credit.compute_returns_summary(
             df,
-            initial_equity=engine.financing.sponsor_equity,
-            initial_capex=engine.capex.total_capex,
+            initial_equity=engine.total_equity_at_close,
+            initial_capex=engine.total_project_investment,
         )
         return engine, df, debt, kpi, returns
 
@@ -134,9 +134,11 @@ class ModelAuditEngine:
 
         expansion = ExpansionFinancialEngine()
         phase_gate = expansion.compute_phase_gate(
-            phase1_cash_end_y2=funding_mgmt.cash_y2_model,
-            phase1_dscr_y3=float(mgmt_kpi.iloc[2]["dscr"]),
+            phase1_cash_end_y2=funding_mgmt.cash_by_year[1],
+            phase1_dscr_y3=funding_mgmt.dscr_by_year[2],
         )
+
+        breakeven = BreakEvenEngine(case="management").compute()
 
         # --- Computed metrics -------------------------------------------------
         mgmt_y1 = mgmt_kpi.iloc[0]
@@ -156,9 +158,9 @@ class ModelAuditEngine:
             year=1,
             revenue_lodging=float(mgmt_y1["revenue_rooms"] + mgmt_y1["revenue_full_house"]),
             revenue_restaurant=float(mgmt_y1["revenue_restaurant"]),
-            capex_expenditure=mgmt_engine.capex.total_capex,
-            taxable_opex=float(mgmt_y1["fixed_opex"] + mgmt_y1["cogs_restaurant"]),
-            request_annual_refund=True,
+            capex_expenditure=0.0,
+            taxable_opex=float(mgmt_y1["fixed_opex"] + mgmt_y1["total_variable_costs"]),
+            request_annual_refund=False,
         )
         net_revenue_y1 = float(mgmt_y1["total_revenue"])
         applied_vat_rate = (
@@ -167,7 +169,9 @@ class ModelAuditEngine:
         )
 
         input_vat = float(mgmt_engine.capex.total_input_vat)
-        expected_input_vat = round(mgmt_engine.capex.total_capex * 0.21, 2)
+        expected_input_vat = round(
+            (mgmt_engine.capex.total_capex - mgmt_engine.capex.land.amount) * 0.21, 2
+        )
 
         payroll_rows = mgmt_engine.labor.hourly_compliance
         payroll_smi_ok = all(r["compliant_smi"] for r in payroll_rows)
@@ -182,52 +186,74 @@ class ModelAuditEngine:
         prom_rev_ok = abs(float(prom_y1["total_revenue"]) - 86_275.0) <= 1.0
         prom_ebitda_ok = abs(float(prom_y1["ebitda"]) - 11_297.0) <= 1.0
 
+        ffe_ok = abs(
+            float(mgmt_y1["ffe_reserve"])
+            - float(mgmt_y1["total_revenue"]) * mgmt_engine.rev_cfg.ffe_reserve_rate
+        ) <= 1.0
+
+        equity_ratio = funding_mgmt.cash_equity_required / mgmt_engine.capex.total_capex
+
         # --- Metrics catalogue ------------------------------------------------
         metrics_catalog: List[AuditMetric] = [
             AuditMetric(
-                "capex_total", "Total Phase I CapEx", mgmt_engine.capex.total_capex, "EUR",
-                "Land 250k + Renovation 440k + Biopool 35k + Digitalization 4k",
+                "capex_total", "Total Phase I CapEx (realistic budget)", mgmt_engine.capex.total_capex, "EUR",
+                "Land 250k + 550 m2 @ 1,000 EUR/m2 + kitchen 55k + FF&E 65k + biopool 40k + digital 12k + fees 42.6k + contingency 35.5k",
                 "Project technical due diligence", "Capital Expenditure",
             ),
             AuditMetric(
+                "capex_per_sqm", "Renovation cost per square metre",
+                round(mgmt_engine.capex.renovation.amount / 550.0, 2), "EUR/m2",
+                "Renovation 550,000 / 550 m2", "Technical due diligence", "Capital Expenditure",
+            ),
+            AuditMetric(
                 "input_vat", "Deductible input VAT on CapEx", input_vat, "EUR",
-                "21% * total CapEx", "Ley 37/1992 (IVA)", "Tax Asset",
+                "21% * (total CapEx - land)", "Ley 37/1992 (IVA)", "Tax Asset",
             ),
             AuditMetric(
                 "management_revenue_y1", "Management-case Year-1 revenue", float(mgmt_y1["total_revenue"]), "EUR",
-                "31.36% mature occupancy * one on-site meal per guest per day * €25 ticket",
+                "31.36% mature occupancy (ramped to 28.2% in Y1) * 8 keys * ADR + one meal per guest at EUR 25",
                 "Python management case (upside)", "P&L Operations",
             ),
             AuditMetric(
                 "management_ebitda_y1", "Management-case Year-1 EBITDA", float(mgmt_y1["ebitda"]), "EUR",
-                "Revenue - COGS - payroll (€60,075) - fixed opex (€12,159)",
+                "Revenue - variable stack - payroll (60,075) - fixed opex (30,500)",
                 "Operating P&L", "P&L Operations",
             ),
             AuditMetric(
-                "management_dscr_y1", "Management-case Year-1 DSCR", float(mgmt_y1["dscr"]), "ratio",
-                "(EBITDA - tax) / annual debt service", "Bank covenant (floor 1.25x)", "Credit Solvency",
+                "management_dscr_min", "Management-case minimum DSCR (Years 1-5)", funding_mgmt.dscr_min, "ratio",
+                "(EBITDA - FF&E reserve - tax) / senior debt service", "Bank covenant (floor 1.25x)", "Credit Solvency",
+            ),
+            AuditMetric(
+                "management_cash_equity", "Cash equity required at close", funding_mgmt.cash_equity_required, "EUR",
+                "Total uses - senior debt - VAT bridge - land in kind",
+                "Sources & Uses analysis", "Funding",
+            ),
+            AuditMetric(
+                "management_equity_ratio", "Cash equity / total CapEx", round(equity_ratio, 4), "percentage",
+                "Cash equity / total CapEx", "Sources & Uses analysis", "Funding",
+            ),
+            AuditMetric(
+                "management_total_equity", "Total equity at close (cash + land in kind)",
+                mgmt_engine.total_equity_at_close, "EUR",
+                "Cash equity + in-kind land", "Sources & Uses analysis", "Funding",
             ),
             AuditMetric(
                 "market_revenue_y1", "INE market-case Year-1 revenue", float(mkt_y1["total_revenue"]), "EUR",
-                "INE 21.24% occupancy * original unit economics (€85/€380/€20)",
+                "INE 21.24% occupancy * original unit economics (EUR 85/EUR 380/EUR 20)",
                 "INE EOTR Segovia 2025", "P&L Operations",
             ),
             AuditMetric(
                 "market_ebitda_y1", "INE market-case Year-1 EBITDA", float(mkt_y1["ebitda"]), "EUR",
-                "Revenue - COGS - payroll - fixed opex", "Operating P&L", "P&L Operations",
-            ),
-            AuditMetric(
-                "market_dscr_y1", "INE market-case Year-1 DSCR", float(mkt_y1["dscr"]), "ratio",
-                "(EBITDA - tax) / annual debt service", "Bank covenant (floor 1.25x)", "Credit Solvency",
+                "Revenue - variable stack - payroll - fixed opex", "Operating P&L", "P&L Operations",
             ),
             AuditMetric(
                 "promoter_revenue_y1", "Promoter-case Year-1 revenue", float(prom_y1["total_revenue"]), "EUR",
-                "491 room-nights * €85 + 72 house-nights * €380 + 859 meals * €20",
+                "491 room-nights * EUR 85 + 72 house-nights * EUR 380 + 859 meals * EUR 20",
                 "Original university simulator", "Replication",
             ),
             AuditMetric(
                 "promoter_ebitda_y1", "Promoter-case Year-1 EBITDA", float(prom_y1["ebitda"]), "EUR",
-                "€86,275 - €14,903 opex - €60,075 payroll", "Original university simulator", "Replication",
+                "86,275 revenue - 14,903 opex - 60,075 payroll", "Original university simulator", "Replication",
             ),
             AuditMetric(
                 "management_occupancy", "Management-case mature occupancy", round(mgmt_occ, 4), "percentage",
@@ -238,17 +264,26 @@ class ModelAuditEngine:
                 "Day-weighted average of the INE monthly series", "INE EOTR Segovia 2025", "Occupancy",
             ),
             AuditMetric(
-                "funding_gap_close", "Funding gap at close", funding_mgmt.funding_gap_at_close, "EUR",
-                "Sources at close - uses at close (CapEx + VAT + pre-opening + WC + DSRA)",
-                "Sources & Uses analysis", "Liquidity",
+                "covenant_breakeven_occupancy", "Mature occupancy required for a 1.25x covenant",
+                breakeven["covenant_breakeven_occupancy_mature"], "percentage",
+                "Bisection on the occupancy multiplier until min DSCR = 1.25x",
+                "Computed break-even", "Break-even",
             ),
             AuditMetric(
-                "credit_line_drawn_y1", "Credit line / VAT bridge drawn in Year 1", funding_mgmt.model_credit_line_drawn_y1, "EUR",
-                "Model credit_line_drawn (VAT bridge) at end of Year 1", "Model cash flow", "Liquidity",
+                "covenant_breakeven_adr", "ADR required for a 1.25x covenant at base occupancy",
+                breakeven["covenant_breakeven_adr"], "EUR",
+                "Bisection on the ADR multiplier until min DSCR = 1.25x",
+                "Computed break-even", "Break-even",
             ),
             AuditMetric(
-                "phase2_cash_need", "Phase II cash need (net CapEx + VAT)", phase_gate["phase2_cash_need"], "EUR",
-                "€359,970 + €75,593.70", "Phase II expansion budget", "Phase II",
+                "equity_irr_10pct_adr", "ADR required for a 10% equity IRR (8.5% exit)",
+                breakeven["equity_irr_10pct_adr"], "EUR",
+                "Bisection on the ADR multiplier until the equity IRR reaches 10%",
+                "Computed break-even", "Break-even",
+            ),
+            AuditMetric(
+                "phase2_cash_need", "Phase II cash need (CapEx + VAT)", phase_gate["phase2_cash_need"], "EUR",
+                "359,970 + 75,593.70", "Phase II expansion budget", "Phase II",
             ),
             AuditMetric(
                 "phase2_funding_gap", "Phase II funding gap", phase_gate["phase2_funding_gap"], "EUR",
@@ -256,11 +291,15 @@ class ModelAuditEngine:
             ),
             AuditMetric(
                 "project_irr_exit", "Project IRR with 8.5% exit (management case)", mgmt_returns["project_irr_exit"], "percentage",
-                "Unlevered FCF + terminal value at 8.5% cap rate", "DCF / exit valuation", "Returns",
+                "Unlevered FCF + terminal value at an 8.5% cap rate", "DCF / exit valuation", "Returns",
             ),
             AuditMetric(
                 "equity_irr_exit", "Equity IRR with 8.5% exit (management case)", mgmt_returns["equity_irr_exit"], "percentage",
                 "Levered FCF + terminal equity value", "DCF / exit valuation", "Returns",
+            ),
+            AuditMetric(
+                "terminal_value", "Terminal value at an 8.5% cap rate", mgmt_returns["terminal_value"], "EUR",
+                "Year-5 EBITDA / 8.5%", "Exit valuation", "Returns",
             ),
         ]
 
@@ -272,7 +311,7 @@ class ModelAuditEngine:
                 "Assets must equal liabilities plus equity across all three cases.",
                 "abs(total_assets - (total_liabilities + total_equity)) <= 0.01",
                 max_bs_diff <= 0.01, round(max_bs_diff, 4), 0.01,
-                "Verify VAT credit and financing facilities are balanced across CFO, CFI and CFF.",
+                "Verify that the VAT pass-through, the FF&E reserve and the in-kind land are booked on both sides.",
             ),
             self._rule(
                 "RULE_02_HOSPITALITY_VAT_RATE",
@@ -280,13 +319,13 @@ class ModelAuditEngine:
                 "Lodging and restaurant revenue must be taxed at 10%, not 21%.",
                 "applied_vat_rate == 0.10",
                 abs(applied_vat_rate - 0.10) <= 0.0001, applied_vat_rate, 0.10,
-                "Recalibrate output VAT to Ley 37/1992 art. 91.Uno.2.2º.",
+                "Recalibrate output VAT to Ley 37/1992 art. 91.Uno.2.2o.",
             ),
             self._rule(
                 "RULE_03_CAPEX_INPUT_VAT",
                 "CapEx input VAT recognised as a fiscal asset",
-                "21% input VAT on CapEx must be booked as a receivable, not expensed.",
-                "input_vat == 21% * capex",
+                "21% input VAT on non-land CapEx must be booked as a receivable, not expensed.",
+                "input_vat == 21% * (capex - land)",
                 abs(input_vat - expected_input_vat) <= 1.0, input_vat, expected_input_vat,
                 "Book the Modelo 303/390 deductible VAT asset and disclose the bridge facility.",
             ),
@@ -304,27 +343,29 @@ class ModelAuditEngine:
             ),
             self._rule(
                 "RULE_05_MANAGEMENT_DSCR",
-                "Management-case Year-1 DSCR covenant",
-                "The management case must meet the 1.25x bank covenant in Year 1.",
-                "management_dscr_y1 >= 1.25",
-                float(mgmt_y1["dscr"]) >= 1.25, float(mgmt_y1["dscr"]), 1.25,
-                "If DSCR < 1.25x, inject equity, extend the grace period or reduce debt.",
+                "Management-case minimum DSCR covenant",
+                "The management case must meet the 1.25x bank covenant in every projection year.",
+                "min(dscr_y1..y5) >= 1.25",
+                funding_mgmt.dscr_min >= 1.25, funding_mgmt.dscr_min, 1.25,
+                "Year 2 breaches the covenant when amortisation starts. Extend the grace period, "
+                "reduce the facility or inject equity before the first amortising payment.",
             ),
             self._rule(
-                "RULE_06_ADJUSTED_CASH_TROUGH",
-                "Adjusted Year-1 cash after omitted close-day uses",
-                "Year-1 cash must remain positive after pre-opening, working capital and DSRA.",
-                "adjusted_cash_y1 >= 0",
-                funding_mgmt.cash_y1_adjusted >= 0, funding_mgmt.cash_y1_adjusted, 0.0,
-                "Fund the €70.8k close-day gap with additional equity or a larger facility.",
+                "RULE_06_MINIMUM_CASH",
+                "Minimum cash balance over the projection",
+                "Cash must remain non-negative after the equity plug and the DSRA.",
+                "min(cash_y1..y5) >= 0",
+                funding_mgmt.min_cash >= 0, funding_mgmt.min_cash, 0.0,
+                "Increase the equity injection or the revolving facility.",
             ),
             self._rule(
                 "RULE_07_DSRA_SIZING",
-                "DSRA sizing vs. six months of debt service",
-                "The DSRA must cover at least six months of senior debt service.",
-                "dsra >= 6/12 * annual_debt_service",
-                funding_mgmt.dsra >= 0.5 * float(mgmt_debt.iloc[0]["payment"]),
-                funding_mgmt.dsra, round(0.5 * float(mgmt_debt.iloc[0]["payment"]), 2),
+                "DSRA sizing vs. six months of maximum debt service",
+                "The DSRA must cover at least six months of the maximum annual senior debt service.",
+                "dsra >= 0.5 * max(annual_debt_service)",
+                funding_mgmt.dsra >= 0.5 * mgmt_engine.annual_debt_service_max - 0.01,
+                funding_mgmt.dsra,
+                round(0.5 * mgmt_engine.annual_debt_service_max, 2),
                 "Pledge the DSRA in escrow before financial close.",
                 severity="WARNING",
             ),
@@ -333,18 +374,18 @@ class ModelAuditEngine:
                 "Sources & uses at close",
                 "Close-day sources must cover close-day uses.",
                 "sources_at_close - uses_at_close >= 0",
-                funding_mgmt.funding_gap_at_close >= 0,
+                funding_mgmt.funding_gap_at_close >= -0.01,
                 funding_mgmt.funding_gap_at_close, 0.0,
-                "Add €70.8k of equity or a larger VAT/working-capital facility.",
+                "Add equity or a larger VAT/working-capital facility.",
             ),
             self._rule(
-                "RULE_09_CREDIT_LINE_LIMIT",
-                "Credit-line utilisation vs. stated limit",
-                "The model's Year-1 VAT bridge must not exceed the stated €50k revolving line.",
-                "credit_line_drawn_y1 <= 50,000",
-                funding_mgmt.model_credit_line_drawn_y1 <= funding_mgmt.credit_line_limit,
-                funding_mgmt.model_credit_line_drawn_y1, funding_mgmt.credit_line_limit,
-                "Disclose the VAT bridge as a separate €153k facility or increase the line to €150k.",
+                "RULE_09_VAT_BRIDGE_LIMIT",
+                "VAT bridge within its stated limit",
+                "The gross input VAT drawn on the bridge must not exceed the 175,000 facility.",
+                "vat_bridge <= vat_bridge_limit",
+                funding_mgmt.vat_bridge <= funding_mgmt.vat_bridge_limit,
+                funding_mgmt.vat_bridge, funding_mgmt.vat_bridge_limit,
+                "Size the bridge on the gross input VAT (168,021) or request a larger facility.",
             ),
             self._rule(
                 "RULE_10_OCCUPANCY_VS_INE",
@@ -361,7 +402,7 @@ class ModelAuditEngine:
                 "Phase II may proceed only if Phase I cash covers the full Phase II cash need.",
                 "phase1_cash_end_y2 >= phase2_cash_need",
                 phase_gate["phase2_proceed"], phase_gate["phase2_funding_gap"], 0.0,
-                "Do not double-count the LEADER grant and VAT refund. Raise €241.6k or phase the expansion.",
+                "Do not double-count the LEADER grant and VAT refund. Raise the shortfall or phase the expansion.",
             ),
             self._rule(
                 "RULE_12_RETURNS_VS_WACC",
@@ -370,12 +411,13 @@ class ModelAuditEngine:
                 "project_irr_exit >= 0.08",
                 (mgmt_returns["project_irr_exit"] or 0.0) >= 0.08,
                 mgmt_returns["project_irr_exit"], 0.08,
-                "If IRR < WACC, the exit cap rate or the operating assumptions must be revisited.",
+                "The all-in cost (1.05m) is not recovered by the exit value (terminal EBITDA / 8.5%). "
+                "Revisit ADR, occupancy or the renovation scope.",
             ),
             self._rule(
                 "RULE_13_PROMOTER_REPLICATION",
                 "Promoter-case replication of the original simulator",
-                "The promoter case must reproduce the original Excel's Year-1 revenue (€86,275) and EBITDA (€11,297).",
+                "The promoter case must reproduce the original Excel's Year-1 revenue (86,275) and EBITDA (11,297).",
                 "abs(revenue - 86,275) <= 1 and abs(EBITDA - 11,297) <= 1",
                 prom_rev_ok and prom_ebitda_ok,
                 {"revenue": float(prom_y1["total_revenue"]), "ebitda": float(prom_y1["ebitda"])},
@@ -385,11 +427,30 @@ class ModelAuditEngine:
             ),
             self._rule(
                 "RULE_14_MARKET_DSCR",
-                "INE market-case Year-1 DSCR covenant",
+                "INE market-case minimum DSCR covenant",
                 "The independent INE market case must also meet the 1.25x covenant.",
-                "market_dscr_y1 >= 1.25",
-                float(mkt_y1["dscr"]) >= 1.25, float(mkt_y1["dscr"]), 1.25,
+                "min(market_dscr) >= 1.25",
+                funding_mkt.dscr_min >= 1.25, funding_mkt.dscr_min, 1.25,
                 "At 21.24% occupancy the project does not cover debt service. Re-size the debt or add equity.",
+            ),
+            self._rule(
+                "RULE_15_EQUITY_REQUIREMENT",
+                "Cash equity requirement vs. the 30% assumption",
+                "The cash equity needed to close the structure must not exceed 30% of total CapEx.",
+                "cash_equity / total_capex <= 0.30",
+                equity_ratio <= 0.30, round(equity_ratio, 4), 0.30,
+                "The original 30% equity assumption is not financeable at 35% LTV: the structure "
+                "needs ~50% cash equity plus the land in kind.",
+            ),
+            self._rule(
+                "RULE_16_FFE_RESERVE",
+                "FF&E reserve deducted from CFADS",
+                "A 3% FF&E reserve must be deducted from EBITDA before debt service.",
+                "ffe_reserve == 3% * revenue",
+                ffe_ok, float(mgmt_y1["ffe_reserve"]),
+                round(float(mgmt_y1["total_revenue"]) * 0.03, 2),
+                "Book the reserve as restricted cash and deduct it from CFADS.",
+                severity="INFO",
             ),
         ]
 
@@ -415,15 +476,15 @@ class ModelAuditEngine:
                 "project_name": "La Dehesa del Castrillo S.L.",
                 "legal_form": "Sociedad de Responsabilidad Limitada (S.L.)",
                 "industry_sector": "Boutique Hospitality & Agritourism Estate",
-                "jurisdiction": "Kingdom of Spain (Castilla y León, Segovia)",
+                "jurisdiction": "Kingdom of Spain (Castilla y Leon, Segovia)",
                 "governing_statutes": [
-                    "Ley 37/1992 (Impuesto sobre el Valor Añadido)",
+                    "Ley 37/1992 (Impuesto sobre el Valor Anadido)",
                     "Ley 27/2014 (Impuesto sobre Sociedades)",
-                    "Convenio Colectivo Provincial de Hostelería de Segovia (BOCyL)",
-                    "Instituto Nacional de Estadística (EOTR Segovia)",
+                    "Convenio Colectivo Provincial de Hosteleria de Segovia (BOCyL)",
+                    "Instituto Nacional de Estadistica (EOTR Segovia)",
                     "Real Decreto 126/2026 (SMI 2026)",
                 ],
-                "schema_version": "3.0.0",
+                "schema_version": SCHEMA_VERSION,
                 "framework": "Computed Model Audit & Funding-Gap Verification",
                 "deterministic_output": True,
             },
@@ -431,23 +492,34 @@ class ModelAuditEngine:
                 "management": {
                     "revenue_y1": float(mgmt_y1["total_revenue"]),
                     "ebitda_y1": float(mgmt_y1["ebitda"]),
+                    "cfads_y1": float(mgmt_y1["cfads"]),
                     "dscr_y1": float(mgmt_y1["dscr"]),
+                    "dscr_min": funding_mgmt.dscr_min,
                     "cash_y1": float(mgmt_y1["ending_cash"]),
+                    "cash_equity": funding_mgmt.cash_equity_required,
+                    "total_equity": mgmt_engine.total_equity_at_close,
                     "project_irr_exit": mgmt_returns["project_irr_exit"],
                     "equity_irr_exit": mgmt_returns["equity_irr_exit"],
+                    "terminal_value": mgmt_returns["terminal_value"],
                 },
                 "market": {
                     "revenue_y1": float(mkt_y1["total_revenue"]),
                     "ebitda_y1": float(mkt_y1["ebitda"]),
+                    "cfads_y1": float(mkt_y1["cfads"]),
                     "dscr_y1": float(mkt_y1["dscr"]),
+                    "dscr_min": funding_mkt.dscr_min,
                     "cash_y1": float(mkt_y1["ending_cash"]),
+                    "cash_equity": funding_mkt.cash_equity_required,
                     "project_irr_exit": mkt_returns["project_irr_exit"],
                 },
                 "promoter": {
                     "revenue_y1": float(prom_y1["total_revenue"]),
                     "ebitda_y1": float(prom_y1["ebitda"]),
+                    "cfads_y1": float(prom_y1["cfads"]),
                     "dscr_y1": float(prom_y1["dscr"]),
+                    "dscr_min": funding_prom.dscr_min,
                     "cash_y1": float(prom_y1["ending_cash"]),
+                    "cash_equity": funding_prom.cash_equity_required,
                 },
             },
             "funding": {
@@ -456,6 +528,7 @@ class ModelAuditEngine:
                 "promoter": asdict(funding_prom),
                 "phase2_gate": phase_gate,
             },
+            "break_even": breakeven,
             "ground_truth_metrics": {m.metric_id: asdict(m) for m in metrics_catalog},
             "guardrail_audit_rules": [asdict(g) for g in guardrails],
             "execution_status": {
@@ -496,8 +569,17 @@ class ModelAuditEngine:
         print("-" * 88)
         print("Case Summary:")
         for case, values in payload["case_summary"].items():
-            print(f"  {case.upper():10s} Revenue Y1 €{values['revenue_y1']:>12,.2f} | "
-                  f"EBITDA €{values['ebitda_y1']:>12,.2f} | DSCR {values['dscr_y1']:.2f}x")
+            print(f"  {case.upper():10s} Revenue Y1 EUR {values['revenue_y1']:>12,.2f} | "
+                  f"EBITDA EUR {values['ebitda_y1']:>12,.2f} | DSCR min {values['dscr_min']:.2f}x | "
+                  f"Cash equity EUR {values['cash_equity']:>12,.2f}")
+        print("-" * 88)
+        print("Break-even (management case):")
+        be = payload["break_even"]
+        print(f"  Base mature occupancy:         {be['base_occupancy_mature']}")
+        print(f"  Operating break-even:          {be['operating_breakeven_occupancy_mature']}")
+        print(f"  Covenant occupancy required:   {be['covenant_breakeven_occupancy_mature']}")
+        print(f"  Covenant ADR required:         EUR {be['covenant_breakeven_adr']}")
+        print(f"  ADR for a 10% equity IRR:      EUR {be['equity_irr_10pct_adr']}")
         print("-" * 88)
         print("Guardrail Integrity Status:")
         for r in payload["guardrail_audit_rules"]:

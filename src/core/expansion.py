@@ -60,9 +60,9 @@ class ExpansionOperatingAssumptions:
     adr_weighted_base: float = 290.0
 
     # Occupancy Rates
-    occ_weekend: float = 0.885     # 88.5%
-    occ_weekday: float = 0.347     # 34.7%
-    occ_weighted_base: float = 0.500  # 50.0% = 365 nights/year
+    occ_weekend: float = 0.620     # 62.0% weekend / holiday nights
+    occ_weekday: float = 0.220     # 22.0% Sunday-Thursday
+    occ_weighted_base: float = 0.350  # ~35% blended (1.65x the INE Segovia average)
 
     # Gastronomy & Ancillary
     fnb_capture_rate: float = 0.85
@@ -108,23 +108,30 @@ class ExpansionFinancialEngine:
         self.cfg = assumptions
 
     def _get_scenario_params(self, scenario: str) -> Dict[str, float]:
-        """Returns the occupancy/ADR/cost parameters for a named scenario."""
+        """
+        Returns the occupancy/ADR/cost parameters for a named scenario.
+
+        Phase II is a small ultra-premium suite product, so its occupancy can
+        sit above the Phase I whole-house average, but not at the 45-50% of the
+        original expansion case. All scenarios carry one incremental FTE: the
+        Phase I team cannot service another 219-256 suite-nights with the same
+        payroll.
+        """
         if scenario == "conservative":
-            return dict(occ=0.40, adr=250.0, fnb_ticket=110.0, fnb_capture=0.80,
+            return dict(occ=0.2124, adr=250.0, fnb_ticket=110.0, fnb_capture=0.80,
                         direct_share=0.60, ota_share=0.40, ota_comm=0.17, fte_count=1.0)
         if scenario == "realistic":
-            # 45% occupancy (1.4x the INE market average), €270 ADR, one
-            # additional FTE. This is the recommended base for Phase II.
-            return dict(occ=0.45, adr=270.0, fnb_ticket=120.0, fnb_capture=0.85,
+            return dict(occ=0.30, adr=270.0, fnb_ticket=120.0, fnb_capture=0.85,
                         direct_share=0.65, ota_share=0.35, ota_comm=0.16, fte_count=1.0)
         if scenario == "stress":
-            # Market occupancy (36.4% = 1.5x INE), €250 ADR, one FTE.
-            return dict(occ=0.364, adr=250.0, fnb_ticket=110.0, fnb_capture=0.80,
+            # Official INE Segovia rural occupancy: the downside that Phase I
+            # already fails, shown here so the expansion cannot hide it.
+            return dict(occ=0.2124, adr=240.0, fnb_ticket=110.0, fnb_capture=0.80,
                         direct_share=0.60, ota_share=0.40, ota_comm=0.17, fte_count=1.0)
         if scenario == "optimistic":
-            return dict(occ=0.58, adr=330.0, fnb_ticket=150.0, fnb_capture=0.90,
-                        direct_share=0.75, ota_share=0.25, ota_comm=0.15, fte_count=0.0)
-        # base: existing team absorbs the suites (no incremental payroll)
+            return dict(occ=0.40, adr=330.0, fnb_ticket=150.0, fnb_capture=0.90,
+                        direct_share=0.75, ota_share=0.25, ota_comm=0.15, fte_count=1.0)
+        # base: 35% blended occupancy, one incremental FTE
         return dict(
             occ=self.cfg.occ_weighted_base,
             adr=self.cfg.adr_weighted_base,
@@ -133,7 +140,7 @@ class ExpansionFinancialEngine:
             direct_share=self.cfg.direct_booking_share,
             ota_share=self.cfg.ota_booking_share,
             ota_comm=self.cfg.ota_commission_rate,
-            fte_count=0.0,
+            fte_count=1.0,
         )
 
     def compute_stabilized_pnl(self, scenario: str = "base") -> Dict[str, float]:
@@ -295,6 +302,10 @@ class ExpansionFinancialEngine:
                 fraction = (capex - prev_cum) / r["ebitda"]
                 ebitda_payback = (r["year"] - 1) + fraction
                 break
+        if cum_ebitda < capex:
+            shortfall = capex - cum_ebitda
+            y5_ebitda = df_5y.iloc[-1]["ebitda"]
+            ebitda_payback = 5.0 + (shortfall / y5_ebitda) if y5_ebitda > 0 else float("inf")
 
         # Simple Payback on Post-Tax FCF
         cum_fcf = 0.0
@@ -307,10 +318,10 @@ class ExpansionFinancialEngine:
                 fcf_payback = (r["year"] - 1) + fraction
                 break
         if cum_fcf < capex:
-            # Extended into Year 6
+            # Extended into Year 6 and beyond using the Year-5 run-rate.
             shortfall = capex - cum_fcf
             y5_fcf = df_5y.iloc[-1]["free_cash_flow"]
-            fcf_payback = 5.0 + (shortfall / y5_fcf)
+            fcf_payback = 5.0 + (shortfall / y5_fcf) if y5_fcf > 0 else float("inf")
 
         # Discounted Payback
         cum_dfcf = 0.0
@@ -325,7 +336,7 @@ class ExpansionFinancialEngine:
         if cum_dfcf < capex:
             shortfall = capex - cum_dfcf
             y5_dfcf = df_5y.iloc[-1]["discounted_fcf"]
-            dfcf_payback = 5.0 + (shortfall / y5_dfcf)
+            dfcf_payback = 5.0 + (shortfall / y5_dfcf) if y5_dfcf > 0 else float("inf")
 
         # Year 3 Mature Metrics
         y3_row = df_5y.iloc[2]
@@ -379,8 +390,8 @@ class ExpansionFinancialEngine:
 
     def compute_phase_gate(
         self,
-        phase1_cash_end_y2: float = 193_949.95,
-        phase1_dscr_y3: float = 1.73,
+        phase1_cash_end_y2: float = 183_322.64,
+        phase1_dscr_y3: float = 1.15,
     ) -> Dict[str, float]:
         """
         Phase-gate test for Phase II.
@@ -411,15 +422,23 @@ class ExpansionFinancialEngine:
 
     def compute_consolidated_underwriting(
         self,
-        phase1_rev_y3: float = 180_306.0,
-        phase1_ebitda_y3: float = 89_139.87,
-        phase1_senior_debt_service: float = 43_536.36,
-        phase1_capex: float = 729_000.0,
-        phase1_cash_end_y2: float = 193_949.95,
+        phase1_rev_y3: float = 171_720.00,
+        phase1_ebitda_y3: float = 37_041.58,
+        phase1_cfads_y3: float = 31_889.98,
+        phase1_senior_debt_service: float = 27_647.64,
+        phase1_capex: float = 1_050_100.00,
+        phase1_cash_end_y2: float = 183_322.64,
         phase1_dscr_y3: Optional[float] = None,
     ) -> Dict[str, float]:
-        """Calculates consolidated asset metrics combining Phase I baseline and Phase II expansion."""
-        pnl_exp = self.compute_stabilized_pnl(scenario="base")
+        """
+        Consolidated asset metrics combining the Phase I baseline and Phase II.
+
+        Phase II is presented on the *realistic* scenario (30% occupancy), not
+        the base case, because the base case's 35% is still an upside relative
+        to the INE market. DSCR is computed on CFADS (EBITDA less the FF&E
+        reserve and cash tax), consistent with the Phase I credit analysis.
+        """
+        pnl_exp = self.compute_stabilized_pnl(scenario="realistic")
         exp_capex = self.capex.total_all_in_capex
 
         cons_rev = phase1_rev_y3 + pnl_exp["gross_revenue"]
@@ -427,9 +446,14 @@ class ExpansionFinancialEngine:
         cons_ebitda_margin = cons_ebitda / cons_rev
         cons_capex = phase1_capex + exp_capex
 
-        # Phase 1 standalone DSCR vs Consolidated DSCR
-        dscr_p1 = phase1_ebitda_y3 / phase1_senior_debt_service
-        dscr_consolidated = cons_ebitda / phase1_senior_debt_service
+        phase2_cfads = (
+            pnl_exp["ebitda"] - pnl_exp["ffe_reserve"] - pnl_exp["tax"]
+        )
+        consolidated_cfads = phase1_cfads_y3 + phase2_cfads
+
+        # Phase I standalone DSCR vs consolidated DSCR, both on CFADS.
+        dscr_p1 = phase1_cfads_y3 / phase1_senior_debt_service
+        dscr_consolidated = consolidated_cfads / phase1_senior_debt_service
 
         gate = self.compute_phase_gate(
             phase1_cash_end_y2=phase1_cash_end_y2,
@@ -444,16 +468,22 @@ class ExpansionFinancialEngine:
         return {
             "phase1_rev_y3": phase1_rev_y3,
             "phase1_ebitda_y3": phase1_ebitda_y3,
+            "phase1_cfads_y3": phase1_cfads_y3,
             "phase1_dscr_y3": phase1_dscr_y3 if phase1_dscr_y3 is not None else dscr_p1,
             "phase1_cash_end_y2": phase1_cash_end_y2,
             "phase1_valuation_85bps": val_p1,
             "phase2_rev_y3": pnl_exp["gross_revenue"],
             "phase2_ebitda_y3": pnl_exp["ebitda"],
+            "phase2_cfads_y3": phase2_cfads,
             "phase2_capex": exp_capex,
             "consolidated_rev_y3": cons_rev,
             "consolidated_ebitda_y3": cons_ebitda,
+            "consolidated_cfads_y3": consolidated_cfads,
             "consolidated_ebitda_margin": cons_ebitda_margin,
-            "ebitda_increase_pct": (cons_ebitda - phase1_ebitda_y3) / phase1_ebitda_y3,
+            "ebitda_increase_pct": (
+                (cons_ebitda - phase1_ebitda_y3) / phase1_ebitda_y3
+                if phase1_ebitda_y3 else 0.0
+            ),
             "senior_debt_service_annual": phase1_senior_debt_service,
             "consolidated_dscr_y3": dscr_consolidated,
             "consolidated_total_capex": cons_capex,
@@ -476,8 +506,8 @@ class ExpansionFinancialEngine:
 
     def print_terminal_summary(
         self,
-        phase1_cash_end_y2: float = 193_949.95,
-        phase1_dscr_y3: float = 1.73,
+        phase1_cash_end_y2: float = 183_322.64,
+        phase1_dscr_y3: float = 1.15,
     ):
         """Prints executive summary of Phase II expansion metrics to console."""
         m = self.compute_investment_metrics()
@@ -493,17 +523,17 @@ class ExpansionFinancialEngine:
         print("=" * 88)
         print(f"Total Phase II CapEx (All-In):    €{m['all_in_capex']:,.2f} (€179,985/suite all-inclusive)")
         print(f"Cash Need incl. 21% VAT:          €{c['phase2_cash_need']:,.2f}")
-        print(f"Stabilized Year 3 Incremental Rev: €{c['phase2_rev_y3']:,.2f} (ADR €290 net | 50.0% Occ)")
-        print(f"Stabilized Incremental EBITDA:    €{m['ebitda_y3']:,.2f} (68.15% EBITDA margin, no incremental FTE)")
-        print(f"Return on Invested Capital (ROIC): {m['roic_y3']*100:.2f}% (EVA spread over 8% WACC)")
-        print(f"Development Yield on Cost:        {m['yield_on_cost']*100:.2f}%")
-        print(f"Simple EBITDA Payback:            {m['simple_ebitda_payback_years']:.2f} Years")
-        print(f"Simple Post-Tax FCF Payback:      {m['simple_fcf_payback_years']:.2f} Years")
+        print(f"Realistic Year 3 Incremental Rev: €{c['phase2_rev_y3']:,.2f} (ADR €270 net | 30.0% Occ, 1 FTE)")
+        print(f"Realistic Incremental EBITDA:     €{realistic['ebitda_y3']:,.2f} ({realistic['ebitda_y3']/c['phase2_rev_y3']*100:.2f}% EBITDA margin, 1 FTE)")
+        print(f"Return on Invested Capital (ROIC): {realistic['roic_y3']*100:.2f}% (EVA spread over 8% WACC)")
+        print(f"Development Yield on Cost:        {realistic['yield_on_cost']*100:.2f}%")
+        print(f"Simple EBITDA Payback:            {realistic['simple_ebitda_payback_years']:.2f} Years")
+        print(f"Simple Post-Tax FCF Payback:      {realistic['simple_fcf_payback_years']:.2f} Years")
         print("-" * 88)
-        print("SCENARIO SENSITIVITY (YEAR-3 EBITDA / 8.5% EXIT IRR):")
-        print(f"  - Base (no incremental FTE):     €{m['ebitda_y3']:,.2f} | IRR {m['irr_85bps']*100:.1f}%")
-        print(f"  - Realistic (45% occ + 1 FTE):   €{realistic['ebitda_y3']:,.2f} | IRR {realistic['irr_85bps']*100:.1f}%")
-        print(f"  - Stress (36.4% occ + 1 FTE):    €{stress['ebitda_y3']:,.2f} | IRR {stress['irr_85bps']*100:.1f}%")
+        print("SCENARIO SENSITIVITY (YEAR-3 EBITDA / 8.5% EXIT IRR, ALL WITH 1 FTE):")
+        print(f"  - Base (35.0% occ):              €{m['ebitda_y3']:,.2f} | IRR {m['irr_85bps']*100:.1f}%")
+        print(f"  - Realistic (30.0% occ):         €{realistic['ebitda_y3']:,.2f} | IRR {realistic['irr_85bps']*100:.1f}%")
+        print(f"  - Stress (INE 21.24% occ):       €{stress['ebitda_y3']:,.2f} | IRR {stress['irr_85bps']*100:.1f}%")
         print("-" * 88)
         print("PHASE-GATE TEST (PHASE I COVENANT + CASH COVER):")
         print(f"  - Phase I DSCR Year 3:           {c['phase1_dscr_y3']:.2f}x (floor 1.25x) -> {'PASS' if c['phase2_dscr_condition_met'] else 'FAIL'}")
@@ -512,11 +542,12 @@ class ExpansionFinancialEngine:
         print(f"  - Phase II funding gap:          €{c['phase2_funding_gap']:,.2f}")
         print(f"  - Gate recommendation:           {c['phase2_gate_recommendation']}")
         print("-" * 88)
-        print("CONSOLIDATED ASSET IMPACT (PHASE I + PHASE II, IF FUNDED):")
+        print("CONSOLIDATED ASSET IMPACT (PHASE I + REALISTIC PHASE II, IF FUNDED):")
         print(f"  - Consolidated Year 3 Revenue:   €{c['consolidated_rev_y3']:,.2f}")
         print(f"  - Consolidated Year 3 EBITDA:    €{c['consolidated_ebitda_y3']:,.2f}")
         print(f"  - Consolidated EBITDA Margin:    {c['consolidated_ebitda_margin']*100:.2f}%")
-        print(f"  - Debt Service Coverage (DSCR):  {c['phase1_dscr_y3']:.2f}x --> {c['consolidated_dscr_y3']:.2f}x (zero new senior debt)")
+        print(f"  - Consolidated CFADS:            €{c['consolidated_cfads_y3']:,.2f}")
+        print(f"  - Debt Service Coverage (DSCR):  {c['phase1_dscr_y3']:.2f}x --> {c['consolidated_dscr_y3']:.2f}x on CFADS (no new senior debt)")
         print(f"  - Consolidated Asset Valuation:  €{c['consolidated_valuation_85bps']:,.2f}")
         print("=" * 88)
 
