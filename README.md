@@ -374,6 +374,7 @@ proyecto-dehesa-del-castrillo/
 ├── main.py                       # 14-step pipeline
 ├── README.md / README_ES.md
 ├── requirements.txt
+├── .github/workflows/tests.yml   # CI: test suite + pipeline
 ├── src/
 │   ├── config/
 │   │   ├── assumptions.py        # CapEx, payroll, debt, opex, cases, funding fields
@@ -410,6 +411,9 @@ proyecto-dehesa-del-castrillo/
 │   ├── test_unit_economics_monthly.py
 │   ├── test_simulation.py
 │   └── test_copula.py
+├── raw_data/                     # Source workbooks for the reconciliation
+│   ├── La_Dehesa_de_Castrillo_Proyecto.xlsx
+│   └── Presentacion_La_Dehesa.xlsx
 ├── data/
 │   ├── La_Dehesa_del_Castrillo_Financial_Model.xlsx
 │   └── model_audit_summary.json
@@ -458,7 +462,7 @@ This is a portfolio model, not an investment memorandum. The main limitations ar
 6. **The tax model is simplified.** It uses a 25% corporate tax rate, no VAT group, no regional deductions and no BIN schedule beyond the current year.
 7. **The payroll model is part-time.** The hourly rates are compliant, but scheduling, coverage and turnover risk remain.
 8. **The grant is assumed committed.** There is no award letter in the repository; the LEADER timing is modelled at Month 14.
-9. **The original raw Excel files are not redistributed.** The promoter case is hard-coded from the audited values and replicated in `statements.py`.
+9. **The two source workbooks used for the reconciliation are included in `raw_data/`.** The original Word report and the live OneDrive workbook are not redistributed; the promoter case is hard-coded from the audited values and replicated in `statements.py`.
 10. **The annual P&L still uses a simplified cost stack.** It includes restaurant COGS (30%) but not the OTA commissions (9% of lodging), amenities (€35/day) or breakfast cost that the unit-economics engine includes. Adding them would reduce management EBITDA by about €23.5k (to ~€42.6k) and push the DSCR below 1.25x. This is the top priority for the next iteration.
 11. **OPEX is low for the asset.** The €12,159 fixed opex is thin for a 550 m² hotel with a restaurant and a biopool; a realistic range is €30–40k. The audit's EBITDA bridge shows the effect.
 12. **No FF&E reserve, construction period, IDC or grace period.** The refurbishment is assumed to open immediately after close, and the renovation CapEx of €440k (€800/m²) is below the market range of €1,200–1,800/m². Both are material.

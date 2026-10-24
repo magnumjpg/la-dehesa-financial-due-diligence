@@ -374,6 +374,7 @@ proyecto-dehesa-del-castrillo/
 ├── main.py                       # Pipeline de 14 pasos
 ├── README.md / README_ES.md
 ├── requirements.txt
+├── .github/workflows/tests.yml   # CI: tests + pipeline
 ├── src/
 │   ├── config/
 │   │   ├── assumptions.py        # CapEx, nómina, deuda, opex, casos, campos de financiación
@@ -410,6 +411,9 @@ proyecto-dehesa-del-castrillo/
 │   ├── test_unit_economics_monthly.py
 │   ├── test_simulation.py
 │   └── test_copula.py
+├── raw_data/                     # Libros fuente de la reconciliación
+│   ├── La_Dehesa_de_Castrillo_Proyecto.xlsx
+│   └── Presentacion_La_Dehesa.xlsx
 ├── data/
 │   ├── La_Dehesa_del_Castrillo_Financial_Model.xlsx
 │   └── model_audit_summary.json
@@ -458,7 +462,7 @@ Este es un modelo de portfolio, no un memorando de inversión. Las limitaciones 
 6. **El modelo fiscal es simplificado.** Usa un tipo de sociedades del 25%, sin grupo de IVA, sin deducciones autonómicas y sin calendario de BINs más allá del año corriente.
 7. **El modelo de nómina es a tiempo parcial.** Los precios/hora cumplen, pero quedan riesgos de planificación, cobertura y rotación.
 8. **La subvención se asume concedida.** No hay carta de concesión en el repositorio; el timing LEADER se modela en el mes 14.
-9. **Los Excel originales no se redistribuyen.** El caso promotor está codificado a partir de los valores auditados y replicado en `statements.py`.
+9. **Los dos libros fuente usados en la reconciliación están incluidos en `raw_data/`.** El informe Word original y el libro vivo de OneDrive no se redistribuyen; el caso promotor está codificado a partir de los valores auditados y replicado en `statements.py`.
 10. **El P&L anual todavía usa una pila de costes simplificada.** Incluye COGS de restaurante (30%), pero no las comisiones OTA (9% del alojamiento), amenities (35 €/día) ni el coste del desayuno que sí incluye el motor de unit economics. Añadirlos reduciría el EBITDA de gestión en unos 23,5 k€ (hasta ~42,6 k€) y llevaría el DSCR por debajo de 1,25x. Es la primera prioridad de la siguiente iteración.
 11. **El OPEX es bajo para el activo.** Los 12.159 € de opex fijo son finos para un hotel de 550 m² con restaurante y biopiscina; un rango realista es 30.000–40.000 €. El puente de EBITDA de la auditoría muestra el efecto.
 12. **No hay reserva de FF&E, periodo de construcción, IDC ni carencia.** Se asume que la reforma abre inmediatamente después del cierre, y el CapEx de reforma de 440.000 € (800 €/m²) está por debajo del rango de mercado de 1.200–1.800 €/m². Ambos son materiales.
