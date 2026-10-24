@@ -20,35 +20,65 @@ def calculate_npv(rate: float, cash_flows: List[float]) -> float:
     return round(val, 2)
 
 
-def calculate_irr(cash_flows: List[float], max_iter: int = 1000, tol: float = 1e-6) -> Optional[float]:
+def _npv_at(rate: float, cash_flows: List[float]) -> float:
+    return sum(cf / ((1.0 + rate) ** t) for t, cf in enumerate(cash_flows))
+
+
+def calculate_irr(cash_flows: List[float], max_iter: int = 1000, tol: float = 1e-7) -> Optional[float]:
     """
-    Computes Internal Rate of Return (IRR) using robust Newton-Raphson with bisection fallback.
-    Avoids heavy third-party dependencies while guaranteeing convergence.
+    Computes the Internal Rate of Return (IRR).
+
+    Strategy:
+    1. Fast Newton-Raphson from 10%.
+    2. If Newton fails to converge, scan for sign changes on a dense grid and
+       use bisection on each bracket. This avoids the silent hardcoded fallback
+       that previously returned 15.57% when NumPy's `np.irr` was unavailable.
     """
-    # Check if there is at least one sign change
     has_pos = any(cf > 0 for cf in cash_flows)
     has_neg = any(cf < 0 for cf in cash_flows)
     if not (has_pos and has_neg):
         return None
 
-    rate = 0.10  # Initial guess 10%
+    # Newton-Raphson
+    rate = 0.10
     for _ in range(max_iter):
-        npv = sum(cf / ((1.0 + rate) ** t) for t, cf in enumerate(cash_flows))
-        d_npv = sum(-t * cf / ((1.0 + rate) ** (t + 1)) for t, cf in enumerate(cash_flows))
-
+        npv = _npv_at(rate, cash_flows)
+        d_npv = sum(
+            -t * cf / ((1.0 + rate) ** (t + 1))
+            for t, cf in enumerate(cash_flows)
+        )
         if abs(d_npv) < 1e-12:
             break
-
         new_rate = rate - npv / d_npv
+        if not np.isfinite(new_rate) or new_rate <= -0.9999:
+            break
         if abs(new_rate - rate) < tol:
-            return round(new_rate, 4)
+            return round(new_rate, 6)
         rate = new_rate
 
-        # Prevent divergence to extreme negatives
-        if rate <= -0.99:
-            rate = -0.50
+    # Bisection fallback on a dense grid of brackets.
+    grid = [-0.9999 + i * (10.0 + 0.9999) / 2000.0 for i in range(2001)]
+    previous_rate = grid[0]
+    previous_npv = _npv_at(previous_rate, cash_flows)
+    for current_rate in grid[1:]:
+        current_npv = _npv_at(current_rate, cash_flows)
+        if previous_npv == 0.0:
+            return round(previous_rate, 6)
+        if previous_npv * current_npv < 0.0:
+            low, high = previous_rate, current_rate
+            for _ in range(200):
+                mid = (low + high) / 2.0
+                mid_npv = _npv_at(mid, cash_flows)
+                if abs(mid_npv) < 1e-8:
+                    return round(mid, 6)
+                if _npv_at(low, cash_flows) * mid_npv < 0.0:
+                    high = mid
+                else:
+                    low = mid
+            return round((low + high) / 2.0, 6)
+        previous_rate, previous_npv = current_rate, current_npv
 
-    return round(rate, 4) if not np.isnan(rate) else None
+    return None
 
 
 class CreditMetricsEngine:
@@ -99,23 +129,61 @@ class CreditMetricsEngine:
         df_projection: pd.DataFrame,
         initial_equity: float = 217_500.0,
         initial_capex: float = 729_000.0,
+        exit_cap_rate: float = 0.085,
     ) -> Dict[str, Any]:
-        """Computes Project IRR (Unlevered) and Equity IRR (Levered)."""
-        # Unlevered cash flows: -CapEx at t=0, followed by FCFF
-        unlevered_cfs = [-initial_capex] + df_projection["fcff"].tolist()
-        project_irr = calculate_irr(unlevered_cfs)
-        project_npv = calculate_npv(self.discount_wacc, unlevered_cfs)
+        """
+        Computes Project IRR (unlevered) and Equity IRR (levered).
 
-        # Levered cash flows: -Equity at t=0, followed by FCFE + cash build
-        levered_cfs = [-initial_equity] + df_projection["fcfe"].tolist()
-        equity_irr = calculate_irr(levered_cfs)
-        equity_npv = calculate_npv(self.discount_wacc, levered_cfs)
+        The initial CapEx and the initial equity are placed at t=0; the
+        operating FCF series must therefore exclude the Year-1 CapEx (which is
+        already in `fcff_ex_capex` / `fcfe_proper`). A terminal value at the end
+        of the projection is added using an exit cap rate on final EBITDA.
+        """
+        if "fcff_ex_capex" in df_projection.columns:
+            fcff_ops = df_projection["fcff_ex_capex"].tolist()
+        else:
+            fcff_ops = df_projection["fcff"].tolist()
+        if "fcfe_proper" in df_projection.columns:
+            fcfe_ops = df_projection["fcfe_proper"].tolist()
+        else:
+            fcfe_ops = df_projection["fcfe"].tolist()
+
+        project_cfs = [-initial_capex] + fcff_ops
+        equity_cfs = [-initial_equity] + fcfe_ops
+
+        terminal_ebitda = float(df_projection.iloc[-1]["ebitda"])
+        terminal_value = terminal_ebitda / exit_cap_rate if exit_cap_rate > 0 else 0.0
+        ending_debt = float(df_projection.iloc[-1]["total_debt"])
+
+        project_cfs_exit = list(project_cfs)
+        equity_cfs_exit = list(equity_cfs)
+        project_cfs_exit[-1] += terminal_value
+        equity_cfs_exit[-1] += max(0.0, terminal_value - ending_debt)
+
+        project_irr = calculate_irr(project_cfs)
+        equity_irr = calculate_irr(equity_cfs)
+        project_irr_exit = calculate_irr(project_cfs_exit)
+        equity_irr_exit = calculate_irr(equity_cfs_exit)
+        project_npv = calculate_npv(self.discount_wacc, project_cfs_exit)
+        equity_npv = calculate_npv(self.discount_wacc, equity_cfs_exit)
+
+        project_moic = (sum(fcff_ops) + terminal_value) / initial_capex if initial_capex else None
+        equity_moic = (
+            (sum(fcfe_ops) + max(0.0, terminal_value - ending_debt)) / initial_equity
+            if initial_equity else None
+        )
 
         return {
             "project_irr": project_irr,
+            "project_irr_exit": project_irr_exit,
             "project_npv": project_npv,
             "equity_irr": equity_irr,
+            "equity_irr_exit": equity_irr_exit,
             "equity_npv": equity_npv,
+            "terminal_value": round(terminal_value, 2),
+            "terminal_cap_rate": exit_cap_rate,
+            "project_moic": round(project_moic, 4) if project_moic is not None else None,
+            "equity_moic": round(equity_moic, 4) if equity_moic is not None else None,
             "discount_wacc": self.discount_wacc,
         }
 

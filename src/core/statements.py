@@ -7,7 +7,7 @@ Integrates:
 3. Cash Flow Statement: Direct and Indirect methods (CFO, CFI, CFF, FCFF, FCFE).
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Dict, List, Optional
 import pandas as pd
 
@@ -54,6 +54,8 @@ class AnnualStatementRecord:
     ending_cash: float
     fcff: float
     fcfe: float
+    fcff_ex_capex: float  # EBIT*(1-t) + D&A, before the initial CapEx outlay
+    fcfe_proper: float    # Net income + D&A - ΔWC - principal (capex funded at t=0)
 
     # Balance Sheet
     gross_ppe: float
@@ -89,13 +91,48 @@ class FinancialModelEngine:
         opex: Optional[FixedOpexStructure] = None,
         revenue_cfg: Optional[RevenueModelConfig] = None,
         scenario: Optional[ScenarioDrivers] = None,
+        case: str = "management",
     ):
+        self.case = case
         self.capex = capex or CapExStructure()
         self.financing = financing or FinancingStructure()
         self.labor = labor or LaborStructure()
         self.opex = opex or FixedOpexStructure()
         self.rev_cfg = revenue_cfg or RevenueModelConfig()
         self.scenario = scenario or SCENARIOS["base"]
+
+        # Case-specific calibration.
+        # - management: current Python base (31.36% mature occupancy, upside).
+        # - market: INE Segovia 2025 (21.24%) with original unit economics.
+        # - promoter: exact original university simulator (19.2%, 4.5%/25Y debt).
+        if case == "promoter":
+            self.rev_cfg = replace(self.rev_cfg, calibration_mode="promoter")
+            self.financing = replace(
+                self.financing,
+                loan_interest_rate=0.045,
+                loan_tenure_years=25,
+                leader_subsidy_amount=0.0,
+                credit_line_limit=20_000.0,
+                initial_credit_line_draw=20_000.0,
+            )
+            self.capex = CapExStructure(
+                land=self.capex.land,
+                renovation=self.capex.renovation,
+                biopool_landscaping=replace(self.capex.biopool_landscaping, depreciation_rate=0.13),
+                digitalization=replace(self.capex.digitalization, amount=0.0),
+            )
+            self.opex = FixedOpexStructure(
+                maintenance=3_600.0,
+                insurance=1_200.0,
+                utilities=3_659.0,
+                marketing_seo=0.0,
+                pms_software=0.0,
+                purchases=6_444.0,
+            )
+        elif case == "market":
+            self.rev_cfg = replace(self.rev_cfg, calibration_mode="market")
+        else:
+            self.rev_cfg = replace(self.rev_cfg, calibration_mode="ine_market")
 
         # Adjusted financing terms based on scenario
         effective_interest_rate = max(
@@ -119,6 +156,53 @@ class FinancialModelEngine:
         """
         occ_mult = self.scenario.occupancy_multiplier
         adr_mult = self.scenario.adr_multiplier
+
+        if self.rev_cfg.calibration_mode in ("promoter", "market"):
+            if self.rev_cfg.calibration_mode == "promoter":
+                room_nights = float(self.rev_cfg.promoter_room_nights_y1)
+                house_nights = float(self.rev_cfg.promoter_house_nights_y1)
+                meals = float(self.rev_cfg.promoter_meals_y1)
+                room_adr = self.rev_cfg.promoter_room_adr
+                house_adr = self.rev_cfg.promoter_house_adr
+                ticket = self.rev_cfg.promoter_restaurant_ticket
+                g2 = self.rev_cfg.promoter_growth_y2
+                g3 = self.rev_cfg.promoter_growth_y3
+            else:
+                room_nights = float(self.rev_cfg.market_room_nights_y1)
+                house_nights = float(self.rev_cfg.market_house_nights_y1)
+                meals = float(self.rev_cfg.market_meals_y1)
+                room_adr = self.rev_cfg.market_room_adr
+                house_adr = self.rev_cfg.market_house_adr
+                ticket = self.rev_cfg.market_restaurant_ticket
+                g2 = self.rev_cfg.market_growth_y2
+                g3 = self.rev_cfg.market_growth_y3
+
+            if year == 1:
+                factor = 1.0
+            elif year == 2:
+                factor = g2
+            elif year == 3:
+                factor = g2 * g3
+            else:
+                factor = g2 * g3 * (1.05 ** (year - 3))
+
+            room_nights *= factor * occ_mult
+            house_nights *= factor * occ_mult
+            meals *= factor * occ_mult
+            rev_rooms = room_nights * room_adr * adr_mult
+            rev_house = house_nights * house_adr * adr_mult
+            rev_restaurant = meals * ticket * adr_mult
+            cogs_restaurant = (
+                0.0 if self.rev_cfg.calibration_mode == "promoter"
+                else rev_restaurant * self.rev_cfg.restaurant_cogs_ratio
+            )
+            return {
+                "rev_rooms": round(rev_rooms, 2),
+                "rev_house": round(rev_house, 2),
+                "rev_restaurant": round(rev_restaurant, 2),
+                "total_revenue": round(rev_rooms + rev_house + rev_restaurant, 2),
+                "cogs_restaurant": round(cogs_restaurant, 2),
+            }
 
         if self.rev_cfg.calibration_mode == "leader_excel":
             # Exact figures from Presentacion_La_Dehesa.xlsx (Tablas para PPT)
@@ -185,6 +269,7 @@ class FinancialModelEngine:
         capital_subsidies = 0.0
         vat_receivable = 0.0
         vat_bridge_liability = 0.0
+        credit_line_balance = 0.0
 
         for y in range(1, projection_years + 1):
             rev = self.calculate_revenue_for_year(y)
@@ -248,10 +333,12 @@ class FinancialModelEngine:
             if y == 1:
                 # Startup financing: Senior Loan + Sponsor Equity + Bank VAT bridge facility
                 vat_bridge_liability = new_vat_receivable
+                credit_line_balance = self.financing.initial_credit_line_draw
                 cff = round(
                     self.financing.senior_debt_principal
                     + self.financing.sponsor_equity
                     + vat_bridge_liability
+                    + credit_line_balance
                     - principal_repayment,
                     2,
                 )
@@ -276,6 +363,13 @@ class FinancialModelEngine:
             fcfe = round(
                 fcff - total_interest * (1.0 - effective_tax_rate) - principal_repayment, 2
             )
+            # Standard return conventions: the initial CapEx and the initial
+            # debt/equity are placed at t=0, so the operating FCF series must
+            # not include the Y1 CapEx again.
+            fcff_ex_capex = round(ebit * (1.0 - effective_tax_rate) + depreciation, 2)
+            fcfe_proper = round(
+                net_income + depreciation - delta_vat_receivable - principal_repayment, 2
+            )
 
             # Balance Sheet
             accum_depr = round(accum_depr + depreciation, 2)
@@ -283,7 +377,7 @@ class FinancialModelEngine:
             total_assets = round(net_ppe + ending_cash + vat_receivable, 2)
 
             total_debt = ending_debt_balance
-            total_liabilities = round(total_debt + vat_bridge_liability, 2)
+            total_liabilities = round(total_debt + vat_bridge_liability + credit_line_balance, 2)
 
             retained_earnings = round(retained_earnings + net_income, 2)
             share_capital = self.financing.sponsor_equity
@@ -318,6 +412,8 @@ class FinancialModelEngine:
                 ending_cash=ending_cash,
                 fcff=fcff,
                 fcfe=fcfe,
+                fcff_ex_capex=fcff_ex_capex,
+                fcfe_proper=fcfe_proper,
                 gross_ppe=gross_ppe,
                 accumulated_depreciation=accum_depr,
                 net_ppe=net_ppe,
@@ -328,7 +424,7 @@ class FinancialModelEngine:
                 short_term_debt=st_debt,
                 long_term_debt=lt_debt,
                 total_debt=total_debt,
-                credit_line_drawn=vat_bridge_liability,
+                credit_line_drawn=round(vat_bridge_liability + credit_line_balance, 2),
                 total_liabilities=total_liabilities,
                 share_capital=share_capital,
                 retained_earnings=retained_earnings,

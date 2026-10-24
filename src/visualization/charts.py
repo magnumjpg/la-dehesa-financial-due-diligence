@@ -14,7 +14,7 @@ Generates:
 1. figure_1_seasonality_ine.png: Empirical INE Segovia rural tourism curve vs. project baseline.
 2. figure_2_dscr_sensitivity_heatmap.png: 2D stress matrix of DSCR vs. interest rates and occupancy.
 3. figure_3_monte_carlo_distribution.png: Monte Carlo probability density of DSCR and VaR 95%.
-4. figure_4_cash_flow_waterfall.png: Due diligence cash flow waterfall showing the VAT correction and solvency bridge.
+4. figure_4_cash_flow_waterfall.png: Sources & uses at close, showing the €70.8k funding gap.
 """
 
 from pathlib import Path
@@ -206,52 +206,53 @@ def generate_monte_carlo_distribution(save_path: Optional[Path] = None) -> Path:
 
 
 def generate_cash_flow_waterfall(save_path: Optional[Path] = None) -> Path:
-    """Figure 4: Year 1 cash flow waterfall showing the VAT correction and solvency bridge."""
+    """Figure 4: Sources & uses at close, showing the €70.8k funding gap."""
     set_institutional_style()
     save_path = save_path or (get_assets_dir() / "figure_4_cash_flow_waterfall.png")
 
     fig, ax = plt.subplots(figsize=(11, 5.2), dpi=300)
 
     steps = [
-        "Gross Revenue (Y1)",
-        "COGS (F&B)",
-        "Labor (Segovia)",
-        "Fixed OPEX",
-        "EBITDA",
-        "Debt Service",
-        "VAT Error (-21%)",
-        "VAT Correction & Bridge",
-        "Net Cash (Solvency)",
+        "Senior debt",
+        "Sponsor equity",
+        "VAT bridge",
+        "CapEx (net)",
+        "Input VAT (21%)",
+        "Pre-opening",
+        "Working capital",
+        "DSRA (6m)",
+        "Net position",
     ]
 
-    amounts = [96.6, -10.1, -60.1, -11.0, 15.4, -43.5, -152.3, 213.0, 60.8]
+    # Management case, €k. Sources: 507.5 + 217.5 + 153.1 = 878.1.
+    # Uses: 729.0 + 153.1 + 25.0 + 20.0 + 21.8 = 948.9.
+    # Net position: -70.8. The VAT bridge and input VAT cancel; the gap is real.
+    amounts = [507.5, 217.5, 153.1, -729.0, -153.1, -25.0, -20.0, -21.8, -70.8]
 
-    # Bar colors strictly assigned from the unified palette:
-    # Teal for inflows / positive margin, Rose for costs / debt / errors, Navy for final solvency
+    # Teal for sources, rose for uses, navy for the net position.
     colors = [
         PALETTE["teal_positive"] if a > 0 else PALETTE["rose_negative"]
         for a in amounts
     ]
-    colors[-1] = PALETTE["navy_primary"]    # Final Net Solvency Bar (Deep Navy)
-    colors[-3] = PALETTE["rose_negative"]   # Flawed 21% VAT impact
-    colors[-2] = PALETTE["teal_positive"]   # Statutory VAT correction and bridge
+    colors[-1] = PALETTE["navy_primary"]
 
     y_pos = np.arange(len(steps))
     bars = ax.barh(y_pos, amounts, color=colors, height=0.55, edgecolor=PALETTE["slate_border"], linewidth=0.8)
 
     ax.set_yticks(y_pos)
     ax.set_yticklabels(steps, color=PALETTE["slate_dark"], fontweight="bold")
-    ax.set_xlabel("Cash Flow Impact (€k)", color=PALETTE["slate_dark"])
-    ax.set_title("Figure 4: Due Diligence Waterfall - Statutory VAT Restructuring & Year 1 Solvency Bridge", pad=14, fontweight="bold", color=PALETTE["slate_dark"])
+    ax.set_xlabel("€k", color=PALETTE["slate_dark"])
+    ax.set_title("Figure 4: Sources & Uses at Close — The €70.8k Funding Gap (Management Case)", pad=14, fontweight="bold", color=PALETTE["slate_dark"])
     ax.axvline(0, color=PALETTE["slate_dark"], linewidth=0.8)
 
     for bar, val in zip(bars, amounts):
         sign = "+" if val > 0 else ""
-        x_text = val + (3 if val >= 0 else -18)
+        x_text = val + (10 if val >= 0 else -10)
+        ha = "left" if val >= 0 else "right"
         ax.text(x_text, bar.get_y() + bar.get_height() / 2, f"{sign}{val:.1f}k €",
-                va="center", fontsize=8.5, fontweight="bold", color=PALETTE["slate_dark"])
+                va="center", ha=ha, fontsize=8.5, fontweight="bold", color=PALETTE["slate_dark"])
 
-    ax.set_xlim(-180, 245)
+    ax.set_xlim(-820, 620)
     plt.tight_layout()
     fig.savefig(save_path)
     plt.close(fig)

@@ -65,3 +65,45 @@ def test_expansion_consolidated_underwriting():
     assert cons["ebitda_increase_pct"] == pytest.approx(1.1176, abs=0.01)
     assert cons["consolidated_dscr_y3"] > 3.50
     assert cons["consolidated_valuation_85bps"] > 2_200_000.0
+
+
+def test_expansion_realistic_and_stress_scenarios():
+    engine = ExpansionFinancialEngine()
+
+    realistic = engine.compute_investment_metrics(scenario="realistic")
+    assert realistic["ebitda_y3"] == pytest.approx(51_435.20, abs=0.01)
+    assert realistic["irr_85bps"] == pytest.approx(0.196402, abs=1e-5)
+    assert realistic["moic_85bps"] == pytest.approx(2.2471, abs=0.001)
+
+    stress = engine.compute_investment_metrics(scenario="stress")
+    assert stress["ebitda_y3"] == pytest.approx(25_185.88, abs=0.01)
+    assert stress["irr_85bps"] == pytest.approx(0.020746, abs=1e-5)
+    assert stress["net_gain_85bps"] < 0
+
+
+def test_phase_two_gate_is_negative_for_management_case():
+    engine = ExpansionFinancialEngine()
+    gate = engine.compute_phase_gate(phase1_cash_end_y2=193_949.95, phase1_dscr_y3=1.73)
+
+    assert gate["phase1_cash_end_y2"] == 193_949.95
+    assert gate["phase2_cash_need"] == 435_563.70
+    assert gate["phase2_funding_gap"] == -241_613.75
+    assert gate["dscr_condition_met"] is True
+    assert gate["cash_condition_met"] is False
+    assert gate["phase2_proceed"] is False
+    assert "DO NOT PROCEED" in gate["recommendation"]
+
+
+def test_consolidated_underwriting_uses_the_phase_gate():
+    engine = ExpansionFinancialEngine()
+    cons = engine.compute_consolidated_underwriting(
+        phase1_cash_end_y2=193_949.95,
+        phase1_dscr_y3=1.73,
+    )
+
+    assert cons["phase2_funding_gap"] == -241_613.75
+    assert cons["phase2_cash_condition_met"] is False
+    assert cons["phase2_proceed"] is False
+    # The consolidated DSCR is only valid if Phase II is actually funded.
+    assert cons["consolidated_dscr_y3"] == pytest.approx(4.3357, abs=1e-3)
+

@@ -1,588 +1,493 @@
 # La Dehesa del Castrillo S.L.
-### Viabilidad Financiera, Due Diligence Operativa y Stress-Testing Estocástico para Hostelería Rural
 
-[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Tests: Pytest Passed](https://img.shields.io/badge/tests-30%20passed-brightgreen.svg)](https://docs.pytest.org/)
-[![Model Audit: Verified](https://img.shields.io/badge/Model%20Audit-7%2F7%20Passed-blue.svg)](data/model_audit_summary.json)
-[![Deliverable: Excel Model](https://img.shields.io/badge/Modelo%20Excel-8%20Pestañas%20.XLSX-success.svg)](data/La_Dehesa_del_Castrillo_Financial_Model.xlsx)
+### Viabilidad hostelera, underwriting de deuda senior y due diligence computacional
 
-[English](README.md) | [Español](README_ES.md)
+**Modelo financiero de portfolio construido a partir de mi propio trabajo de fin de grado.**
+Python 3.11 · 41 tests automatizados · modelo Excel de 12 pestañas · pipeline de 14 pasos
 
-**Autor:** Jaime Pérez  
-**Especialidad:** Real Estate Private Equity, Due Diligence Operativa y Análisis de Crédito Bancario  
-**Alcance del Proyecto:** Finca Rural de 25 Hectáreas | Segovia, España | Inversión: 729k € Fase I + 360k € Fase II | Expansión Autofinanciada con Recursos Propios  
-**Entregables Principales:** Motor Financiero Modular en Python (`/src`), Motor de Expansión Fase II (`expansion.py`), Motor de Unit Economics y Runway Mensual (`unit_economics.py`, `monthly_cash.py`), Capa de Auditoría Programática e Integridad de Modelo (`model_audit_summary.json`), Motor de Cópulas Multivariables (`copula_engine.py`), Memorando para Comité de Riesgos (`credit_committee.py`), Figuras Institucionales de Alta Resolución (`/assets`), Batería de Tests Unitarios (`/tests`) y Modelo Maestro en Excel de 8 pestañas (`data/La_Dehesa_del_Castrillo_Financial_Model.xlsx`).
+> **Lee esto primero.** Esto no es un pitch de "operación segura". El caso promotor original genera 86.275 € de ingresos en el año 1, 11.297 € de EBITDA y caja negativa. Con la ocupación oficial del INE para Segovia (21,24%), el proyecto no cubre el servicio de deuda en el año 1 (DSCR 0,40x). El caso principal en Python (31,36% de ocupación madura, 28,23% en el año 1) es un **caso de gestión / upside**, no una previsión de mercado, y es el único que cumple el covenant de 1,25x. La auditoría está deliberadamente permitida fallar: **pasan 8 de 14 reglas, quedan 5 excepciones materiales y 1 warning**, y el veredicto es `CONDITIONAL - 5 MATERIAL EXCEPTION(S)`.
 
+---
+
+## 1. Qué es este proyecto
+
+Partí de mi propio trabajo universitario: un estudio de viabilidad para una finca rural de 25 hectáreas en Segovia (7 habitaciones dobles, una casa rural completa, un restaurante de 21 cubiertos y una biopiscina natural). El Excel original es un simulador promotor de una sola hoja con fórmulas vivas; usa una ocupación del 19,2%. El Word documenta una ocupación más conservadora del 16,5–17%, contratos a tiempo parcial y una solicitud de ayuda LEADER. Esa diferencia entre el Word y el Excel es lo primero que tuvo que reconciliar la auditoría.
+
+Después reconstruí el análisis en Python para responder a las preguntas que el trabajo original no podía responder:
+
+- ¿Qué pasa con la **ocupación oficial del INE** en lugar del supuesto del promotor?
+- ¿Se **financia de verdad el proyecto al cierre**, una vez incluidos los costes de preapertura, el circulante y una reserva de servicio de deuda?
+- ¿Es la **nómina legal por hora** según el convenio de hostelería de Segovia y el SMI de 2026?
+- ¿El **puente de IVA** crea caja o solo la mueve?
+- ¿Puede la **Fase II** autofinanciarse con la caja de la Fase I, o es un doble gasto de la subvención y del reembolso de IVA?
+- ¿Cómo son los retornos **con y sin salida**?
+
+La capa Python no es un lavado de cara. Añade una arquitectura de tres casos, un motor de fuentes y usos, una auditoría computada, un libro Excel con fórmulas vivas y una batería de tests que fija los números honestos.
+
+---
+
+## 2. Tres casos, uno al lado del otro
+
+| Caso | Ocupación madura | Ingresos A1 | EBITDA A1 | DSCR A1 | Caja A1 | TIR proyecto (sin salida) | TIR proyecto (salida 8,5%) | TIR equity (salida 8,5%) |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| **Gestión (upside)** | 31,36% | 154.548 € | 66.086 € | 1,34x | 10.790 € | −20,89% | 15,43% | 29,74% |
+| **Mercado INE** | 21,24% | 95.555 € | 17.621 € | 0,40x | −29.915 € | −27,31% | 9,63% | 17,43% |
+| **Promotor (Excel original)** | 19,20% | 86.275 € | 11.297 € | 0,33x | −2.553 € | −29,48% | 6,84% | 10,95% |
+
+**Qué es cada caso:**
+
+- **Promotor** — réplica fiel del Excel universitario original: 19,2% de ocupación (491 habitaciones-noche sobre 2.555 disponibles), ADR de 85 € en habitación, 380 € en casa, ticket de restaurante de 20 €, deuda al 4,5% a 25 años y sin subvención. El modelo Python reproduce los ingresos y el EBITDA originales al euro y la caja del año 1 con una diferencia de 7 € (original ≈ −2.560 €; modelo −2.553,20 €). Es el caso que el autor realmente suscribió.
+- **Mercado INE** — el benchmark independiente: 21,24% de ocupación oficial de Segovia en 2025 (INE EOTR, tabla 2070), con los unit economics originales y la misma deuda. Es lo más parecido a un caso de mercado dentro del libro.
+- **Gestión (upside)** — el caso principal en Python: 31,36% de ocupación madura (1,48x la media del INE), una comida por huésped y día a 25 €, deuda senior al 5,5% y la subvención LEADER de 163.000 € en el mes 14. Es un upside operativo, no un caso base.
+
+Los tres casos comparten CapEx, tipo impositivo y mecánica de balance. La diferencia está en la demanda y en los unit economics, que es exactamente donde reside el riesgo.
+
+---
+
+## 3. Los hallazgos que importan
+
+1. **El Excel original es el caso promotor, no el caso base.** Genera 86.275 € de ingresos y 11.297 € de EBITDA. Los 154.548 € / 66.086 € del modelo Python publicado son un upside de gestión, no una corrección del original.
+2. **El caso de mercado INE no cubre el servicio de deuda en el año 1.** Con 21,24% de ocupación, el EBITDA es 17.621 €, el DSCR es 0,40x y la caja del año 1 es −29.915 €. El proyecto solo funciona si la ocupación supera materialmente la media provincial.
+3. **El caso de gestión cumple el covenant con un 28,23% en el año 1 y un 31,36% en el año 2.** El DSCR es 1,34x en el año 1, 1,64x en el año 2 y 1,73x en el año 3. Eso es 1,48x la media del INE en madurez, que es el supuesto comercial central que hay que defender. Ojo: el P&L anual usa una pila de costes simplificada; con la pila completa de unit economics (OTA, amenities, desayuno), el punto muerto del covenant es 28,44% y el margen de seguridad es mucho más fino.
+4. **Hay un gap de financiación de 70.768 € al cierre.** Los usos al cierre son 948.858 € (CapEx 729.000 € + IVA soportado 153.090 € + preapertura 25.000 € + circulante 20.000 € + DSRA de 6 meses 21.768 €). Las fuentes al cierre son 878.090 € (deuda 507.500 € + equity 217.500 € + puente de IVA 153.090 €). La subvención LEADER de 163.000 € llega en el mes 14 y no puede financiar el cierre. Con los usos omitidos, la caja del año 1 de gestión es **−55.978 €**, no +10.790 €.
+5. **La línea de crédito es incoherente.** El modelo dispone de un puente de IVA de 143.596 € en el caso de gestión, 147.285 € en el de mercado y 166.752 € en el promotor, mientras que la línea revolvente declarada es de 50.000 €. El puente debe revelarse como una facilidad separada o la línea debe ampliarse.
+6. **La Fase II no se autofinancia.** La Fase II necesita 435.564 € (359.970 € de CapEx neto + 75.593,70 € de IVA). La Fase I genera 193.950 € de caja al final del año 2. El gap del phase-gate es **−241.614 €**, por lo que el gate devuelve `DO NOT PROCEED`. La antigua afirmación de "100% autofinanciada" era un doble gasto de la subvención LEADER y del reembolso de IVA.
+7. **Los retornos dependen de la salida.** Sin salida, la TIR del proyecto a 5 años es negativa en los tres casos (−20,89% gestión, −27,31% mercado, −29,48% promotor). Con una salida a cap rate del 8,5%, la TIR del proyecto de gestión es 15,43% y la del equity es 29,74%. La salida, no el flujo operativo, es lo que mueve el retorno.
+8. **La auditoría es computada y puede fallar.** Pasan 8 de 14 reglas. Las cinco excepciones materiales son la caja ajustada, las fuentes y usos, el límite de la línea de crédito, la autofinanciación de la Fase II y el DSCR de mercado. El warning es la ocupación de gestión frente al INE. Ese es el sentido de la capa de auditoría: reporta lo que el modelo hace de verdad, no lo que la narrativa quiere.
+9. **La nómina es a tiempo parcial y cumple por hora.** El Word original documenta unas 1.900 horas para dos cocineros y 1.792 horas de limpieza. El modelo refinado usa 950 + 950 + 1.792 = 3.692 horas (2,09 FTE). El bruto por hora es 14,21 € para los cocineros y 9,77 € para limpieza, por encima del SMI 2026 (9,69 €) y del mínimo del convenio de Segovia (10,12 € para cocinero, 9,02 € para auxiliar). La comparación anterior de "3 FTE a convenio completo" era errónea; el riesgo que queda es de planificación y cobertura, no de precio/hora.
+10. **Las afirmaciones "BB+ investment grade" y "escudo de BINs" eran incorrectas.** BB+ es sub-investment-grade, no investment grade. El caso de gestión tiene EBT positivo desde el año 1 (31.041 €) y paga 7.760 € de impuesto de sociedades; no tiene escudo de BINs. Ambas afirmaciones se han eliminado de la narrativa del modelo.
+
+---
+
+## 4. Original vs refinado: la reconciliación
+
+| Categoría | Excel original | Refinado: gestión / mercado / promotor | Notas |
+|---|---|---|---|
+| Ocupación (madura) | 19,20% | 31,36% / 21,24% / 19,20% | Gestión es 1,48x el INE; promotor es el original. |
+| Ingresos A1 | 86.275 € | 154.548 € / 95.555 € / 86.275 € | Gestión añade 1 comida/huésped/día a 25 €. |
+| EBITDA A1 | 11.297 € | 66.086 € / 17.621 € / 11.297 € | El promotor coincide con el original al euro. |
+| Caja final A1 | ≈ −2.560 € | 10.790 € / −29.915 € / −2.553 € | La caja negativa original es un gap real de financiación. |
+| DSCR A1 | n/a | 1,34x / 0,40x / 0,33x | Solo gestión supera 1,25x. |
+| CapEx | 725.000 € | 729.000 € | Incluye 4.000 € de Kit Digital. |
+| Nómina (anual) | 58.740 € | 60.075 € | Horas a tiempo parcial; incluye SS empresarial. |
+| IVA soportado CapEx | No modelado | 153.090 € bruto / 143.596 € puente | 21% deducible; el puente es financiación. |
+| IVA repercutido | No modelado (ingresos netos) | 10,0% legal | El Excel original no aplicaba el 21% a las ventas. |
+| Balance | Una hoja, sin balance | Activo = Pasivo + Patrimonio (0,00 €) | Doble partida estricta, 5 años, 3 casos. |
+
+### La corrección de la "trampa del IVA"
+
+El README anterior afirmaba que aplicar el 21% de IVA a las ventas de hostelería creaba un déficit de caja de −152.250 € en el año 1, y que corregirlo al 10% "confirmaba la solvencia" en +60.750 €. **Eso no es lo que hace el Excel original.** La hoja original trabaja en ingresos netos y no aplica el 21% de IVA repercutido a las ventas. Su caja negativa del año 1 es un gap real de financiación, no un artefacto del IVA.
+
+El modelo refinado sí aplica el tipo legal del 10% para hostelería (Ley 37/1992, art. 91.Uno.2.2ª) y sí reconoce el 21% de IVA soportado en CapEx como activo deducible. Pero el puente que financia ese IVA soportado es una **fuente de financiación**, no una subvención:
+
+- Se dispone al cierre (153.090 € en el motor de financiación; 143.596 € neto de IVA repercutido en el modelo anual).
+- Devenga un 5,5% de interés. El modelo anual carga un año completo de intereses del puente en el año 2 (7.897,80 €), que es la razón por la que el beneficio neto del año 2 es 29.583 € y no 35.506 €.
+- Se repaga con el reembolso de la AEAT en el mes 18. El reembolso no es una segunda entrada de caja.
+
+La conclusión honesta es: **la caja negativa original es un gap de financiación, y el caso de gestión solo es solvente por la ocupación upside y por el puente.** La corrección del IVA cambia el calendario y la estructura de financiación; no crea 213.000 € de valor.
+
+---
+
+## 5. Calibración de demanda: INE vs promotor vs gestión
+
+La *Encuesta de Ocupación en Alojamientos de Turismo Rural* (EOTR) del INE, tabla 2070 para Segovia, registra:
+
+| Periodo | Ocupación por habitaciones | Habitaciones-noche ocupadas |
+|---|---:|---:|
+| 2023 | 21,32% | — |
+| 2024 | 21,50% | — |
+| 2025 | **21,24%** | 77,5 días |
+| Agosto 2025 | 36,78% | — |
+| Enero 2025 | 9,58% | — |
+
+El caso de gestión usa una serie mensual calibrada a la media anual de 21,24% de 2025, conservando los anclajes de enero y agosto. Tras el ramp-up de 2026 (90% en el año 1, 100% en el año 2, 105% desde el año 3), el caso de gestión alcanza 28,23% en el año 1, 31,36% en el año 2 y 32,93% en el año 3. El motor mensual muestra el valle de invierno en marzo y el pico de verano en agosto.
+
+El caso promotor usa el 19,2% del Excel original (491 habitaciones-noche / 2.555 disponibles). El caso de mercado usa el 21,24% con los unit economics originales. La diferencia entre 19,2% y 31,36% es el riesgo comercial que el modelo está suscribiendo.
+
+---
+
+## 6. Unit economics (USALI y costeo marginal)
+
+| Métrica | Valor |
+|---|---:|
+| Capacidad | 8 llaves (7 habitaciones dobles + 1 casa rural) = 2.920 unidad-noches/año |
+| Ingreso bruto diario al 100% | 1.500 € (975 € alojamiento + 525 € F&B) |
+| Coste variable por día ocupado | 280,25 € (18,7%) |
+| — COGS F&B (30%) | 157,50 € |
+| — Comisiones OTA (60% al 15%) | 87,75 € |
+| — Amenities y suministros | 35,00 € |
+| Margen de contribución unitario | 1.219,75 € por día ocupado (81,32%) |
+| Margen por habitación-noche | 107,97 € por habitación-noche (79,98%) |
+| Overhead fijo anual | 72.234 € (nómina 60.075 € + opex 12.159 €) |
+| Servicio de deuda senior | 43.536,35 € (amortización francesa 15 años al 3,5%) |
+| Carga fija anual total | 115.770,35 € |
+
+**Umbrales de punto muerto:**
+
+| Umbral | Días ocupados | Ocupación |
+|---|---:|---:|
+| Punto muerto operativo (EBITDA = 0) | 59,2 | 16,22% |
+| Punto muerto de servicio de deuda (DSCR = 1,00x) | 94,9 | 26,00% |
+| Covenant bancario (DSCR ≥ 1,25x) | 103,8 | 28,44% |
+
+Esta es la forma más clara de ver el problema: el 19,2% del promotor está por encima del punto muerto operativo pero **por debajo** del punto muerto de servicio de deuda del 26,00%, así que el caso original no puede pagar su deuda con la operación. El 31,36% del caso de gestión está por encima del covenant del 28,44%, pero solo por unos 2,9 puntos porcentuales. El modelo anual de tres estados pasa el año 1 con un 28,23% porque usa una pila de costes simplificada; el umbral del 28,44% es la visión más estricta de unit economics y es la que debería usar un comité de crédito.
+
+---
+
+## 7. Nómina: tiempo parcial, no 3 FTE
+
+El Word original documenta contratos a tiempo parcial: unas 1.900 horas entre dos cocineros y 1.792 horas de limpieza. El modelo refinado usa:
+
+| Rol | Horas anuales | FTE | Bruto/hora | SMI 2026 | Mínimo convenio Segovia | ¿Cumple? |
+|---|---:|---:|---:|---:|---:|---|
+| Cocinero 1 | 950 | 0,54 | 14,21 € | 9,69 € | 10,12 € | Sí |
+| Cocinero 2 | 950 | 0,54 | 14,21 € | 9,69 € | 10,12 € | Sí |
+| Limpieza / auxiliar | 1.792 | 1,01 | 9,77 € | 9,69 € | 9,02 € | Sí |
+| **Total** | **3.692** | **2,09** | — | — | — | — |
+
+El SMI 2026 es 17.094 € brutos anuales (14 pagas de 1.221 €, Real Decreto 126/2026). El convenio de hostelería de Segovia (2026) fija la referencia de cocinero en 17.844,16 € y la de auxiliar en 15.916,22 €; dividido por las horas anuales relevantes, los mínimos por hora son 10,12 € y 9,02 €. Los brutos por hora del modelo están por encima de ambos mínimos.
+
+Los 58.740 € del Excel original son nómina bruta (35.640 € cocineros + 23.100 € limpieza). Los 60.075 € del modelo refinado incluyen seguridad social empresarial y la estructura de horas a tiempo parcial. La diferencia no es un error de nómina; es una base de coste distinta. La afirmación anterior de que el modelo empleaba "3 FTE a convenio completo" era errónea y se ha eliminado.
+
+---
+
+## 8. Modelo de tres estados y réplica del promotor
+
+El modelo genera cuenta de resultados, estado de flujos de caja y balance para cinco años. La fórmula de ingresos del caso de gestión es:
 
 ```
-+----------------------------------------------------------------------------------------------------+
-|                                CUADRO DE MANDO EJECUTIVO DE VIABILIDAD                              |
-+---------------------------------+-------------------------+-----------------------+----------------+
-| Métrica Financiera              | Año 1 (Rampa Arranque)  | Año 2 (Estabilizado)  | Año 3 (Maduro) |
-+---------------------------------+-------------------------+-----------------------+----------------+
-| Ventas Totales Operativas       | 154.548 €               | 171.720 €             | 180.306 €      |
-| Margen EBITDA Realizado         | 66.086 € (42,76%)       | 81.455 € (47,43%)     | 89.140 € (49,4%)|
-| Beneficio Neto (BDI)            | 23.281 €                | 29.583 €              | 41.993 €       |
-| Saldo de Caja de Cierre         | 10.790 €                | 193.950 €             | 225.556 €      |
-| Saldo Deuda Bancaria Hipotecaria| 481.309 €               | 454.186 €             | 426.098 €      |
-| Cobertura Servicio Deuda (DSCR) | 1,34x (Covenant: 1,25x) | 1,64x                 | 1,73x          |
-| Cobertura de Intereses (ICR)    | 3,81x                   | 4,96x                 | 5,77x          |
-| Descuadre en Balance            | 0,00 €                  | 0,00 €                | 0,00 €         |
-+---------------------------------+-------------------------+-----------------------+----------------+
+Ingresos = 365 × ocupación × (7 habitaciones × 85 € + 1 casa × 380 € + 21 comidas × 25 €)
 ```
 
----
+Los casos de mercado y promotor usan los unit economics originales (85 € / 380 € / 20 €, 859 comidas al 19,2%, escaladas al 21,24% en el caso de mercado). La deuda es una amortización francesa a 15 años al 3,5% en gestión/mercado y al 4,5% a 25 años en el promotor. El impuesto es el 25% del EBT positivo; el caso de gestión paga impuestos desde el año 1, así que no hay escudo de BINs.
 
-## 1. Resumen Ejecutivo y Tesis de Inversión
+**Comprobación de réplica del promotor:**
 
-**La Dehesa del Castrillo S.L.** es un modelo cuantitativo de viabilidad y memorando de *due diligence* bancaria para la adquisición, rehabilitación integral y explotación de un complejo agroturístico en una finca de 25 hectáreas en Segovia (Castilla y León). El activo integra un hotel rural boutique de 7 habitaciones dobles, una casa rural completa para 10-12 plazas, restaurante de agroturismo y una biopiscina natural de depuración biológica.
+| Línea | Excel original | Caso promotor Python | Diferencia |
+|---|---:|---:|---:|
+| Ingresos A1 | 86.275 € | 86.275,00 € | 0,00 € |
+| EBITDA A1 | 11.297 € | 11.297,00 € | 0,00 € |
+| Caja final A1 | ≈ −2.560 € | −2.553,20 € | ≈ 7 € |
+| Discrepancia de balance | n/a | 0,00 € | — |
 
-En el sector de hostelería rural en España, los análisis de viabilidad convencionales suelen adolecer de dos sesgos sistemáticos:
-1. **Optimismo sin contraste empírico:** Proyecciones teóricas basadas en ocupaciones lineales del 50%+ durante todo el año, ignorando convenios laborales y cargas sociales reales.
-2. **La trampa técnica del IVA (21% vs 10%):** Aplicar erróneamente el tipo general del 21% a las ventas hoteleras y omitir la recuperación del IVA soportado en la reforma. En los simuladores bancarios tradicionales, esto generaba una falsa quiebra técnica (-152.250 € en Año 1), provocando el rechazo de expedientes solventes.
-
-Este proyecto subsana estas deficiencias mediante **rigor empírico y estándares de finanzas corporativas senior**:
-- **Corrección Fiscal y Financiera del IVA:** Aplicación del tipo reducido del 10% legal (*Ley 37/1992*) y estructuración del crédito fiscal de 143.600 € como activo exigible ante la AEAT, respaldado por una línea puente hasta su cobro y abono de la ayuda LEADER (163.000 €), demostrando solvencia real y superávit de caja (**+10.790 € a +60.750 € en Año 1**).
-- **Calibración con Microdatos Oficiales del INE:** Curva estacional de demanda mensual calibrada con la Encuesta de Ocupación en Alojamientos de Turismo Rural (EOTR) de Segovia.
-- **Costes Laborales según Convenio Colectivo:** Plantilla dimensionada conforme al *Convenio Colectivo Provincial de Hostelería de Segovia*, con el 35,0% obligatorio de Seguridad Social patronal.
-- **Modelo de 3 Estados Financieros Integrado:** Cuenta de Resultados, Flujo de Caja (Directo/Indirecto) y Balance que **cuadra al céntimo ($Activo = Pasivo + PN$)** con 0,00 € de descuadre en todos los años.
-- **Análisis de Crédito y Riesgo Estocástico:** Covenants bancarios ($DSCR \ge 1,25x$), análisis de punto muerto de ocupación y simulación Monte Carlo con 1.000 iteraciones.
+La identidad de balance (Activo = Pasivo + Patrimonio) se cumple con 0,00 € en los tres casos y los cinco años. Se comprueba en los tests y en la pestaña `Live Model` del Excel.
 
 ---
 
-## 2. El Hallazgo Central: Corrección de la Trampa del IVA
+## 9. Financiación: fuentes y usos, gap y línea de crédito
 
-```
-                        COMPARATIVA: IMPACTO DE LA RECLASIFICACIÓN FISCAL
-+---------------------------------------------------+   +---------------------------------------------------+
-|            SIMULADOR BANCARIO ESTÁNDAR            |   |             REALIDAD LA DEHESA CORREGIDA          |
-+---------------------------------------------------+   +---------------------------------------------------+
-| * IVA 21% aplicado a todas las pernoctaciones     |   | * IVA 10% legal en alojamiento y comidas (LIVA)   |
-| * IVA soportado en CapEx tratado como gasto fondo |   | * 152.250 € de crédito fiscal exigible a la AEAT  |
-| * Drenaje masivo de tesorería en el arranque      |   | * Póliza puente / anticipo de subvención activada |
-| * Saldo Caja Año 1: -152.250 €                    |   | * Saldo Caja Año 1: +10.790 € a +60.750 €         |
-| * Diagnóstico: FALSA QUIEBRA TÉCNICA              |   | * Diagnóstico: SOLVENCIA TOTAL CONFIRMADA         |
-+---------------------------------------------------+   +---------------------------------------------------+
-```
+| Caso | Usos al cierre | Fuentes al cierre | Gap al cierre | Caja ajustada A1 | DSCR A1 | Línea dispuesta | Estado |
+|---|---:|---:|---:|---:|---:|---:|---|
+| Gestión | 948.858 € | 878.090 € | **−70.768 €** | **−55.978 €** | 1,34x | 143.596 € | Infrafinanciado |
+| Mercado | 948.858 € | 878.090 € | **−70.768 €** | **−96.684 €** | 0,40x | 147.285 € | Infrafinanciado |
+| Promotor | 939.175 € | 897.250 € | **−41.925 €** | **−64.478 €** | 0,33x | 166.752 € | Infrafinanciado |
 
-### Marco Regulatorio y Escudo Fiscal
-1. **Impuesto sobre el Valor Añadido (Ley 37/1992):**
-   - **IVA Repercutido (10%):** Conforme al Art. 91.Uno.2.2º, los servicios de hostelería, pernoctaciones y restaurante tributan al tipo reducido del **10%**, no al 21%.
-   - **IVA Soportado Deducible (21%):** La inversión de 729.000 € genera 152.250 € de crédito fiscal deducible frente a Hacienda. En el Año 1, el IVA soportado supera con creces al repercutido, generando un derecho de cobro frente a la Agencia Tributaria (Modelo 303/390).
-2. **Impuesto sobre Sociedades y Amortizaciones (Ley 27/2014):**
-   - **Tablas Fiscales Oficiales:** Amortización lineal del 3,0% en obra civil comercial (550 m²: 13.200 €/año), 10,0% en biopiscina e instalaciones (3.500 €/año) y 25,0% en digitalización/PMS (1.000 €/año). Total amortización anual: **17.700 €**.
-   - **Bases Imponibles Negativas (BINs):** Las amortizaciones generan pérdidas contables transitorias que alimentan créditos fiscales (BINs, art. 26 LIS), blindando los beneficios operativos futuros contra el pago del Impuesto de Sociedades en la fase de arraigo.
+**Usos al cierre (gestión):**
 
-![Cascada de Flujo de Caja Due Diligence](assets/figure_4_cash_flow_waterfall.png)
+| Uso | Importe |
+|---|---:|
+| CapEx (neto de IVA) | 729.000,00 € |
+| IVA soportado (21%) | 153.090,00 € |
+| Costes de preapertura | 25.000,00 € |
+| Circulante inicial | 20.000,00 € |
+| DSRA (6 meses de servicio de deuda) | 21.768,18 € |
+| **Total usos** | **948.858,18 €** |
 
----
+**Fuentes al cierre:**
 
-## 3. Estructura de Inversión (CapEx) y Financiación
+| Fuente | Importe |
+|---|---:|
+| Deuda senior (70%) | 507.500,00 € |
+| Equity promotor (30%) | 217.500,00 € |
+| Puente de reembolso de IVA | 153.090,00 € |
+| Línea de crédito al cierre | 0,00 € |
+| **Total fuentes** | **878.090,00 €** |
+| Subvención LEADER (mes 14, post-cierre) | 163.000,00 € |
+| **Total incluyendo subvención** | **1.041.090,00 €** |
 
-El proyecto requiere **881.250 € de necesidades financieras iniciales**, cubriendo activos y el desfase de IVA:
+La subvención es real, pero es **post-cierre**. El gap al cierre es 70.768,18 €; la inyección de equity recomendada es exactamente esa cantidad. Si se incluye la subvención, la posición total de financiación es positiva (92.231,82 €), pero el proyecto es ilíquido al cierre.
 
-| Partida de Inversión (CapEx) | Importe (€) | % s/ Total | Racional y Respaldo Técnico |
-| :--- | :--- | :--- | :--- |
-| **Terrenos (Finca 25 ha en Segovia)** | 250.000 € | 28,37% | Dehesa de encinar con valor patrimonial rústico |
-| **Rehabilitación y Obra Civil (550 m²)** | 440.000 € | 49,93% | 550 m² rehabilitados a ratio de 800 €/m² |
-| **Biopiscina y Paisajismo** | 35.000 € | 3,97% | Activo diferencial de depuración natural sin químicos |
-| **Digitalización y PMS (Kit Digital)** | 4.000 € | 0,45% | PMS en nube, cerraduras inteligentes y portal web |
-| **Total Inversión Inmovilizado** | **729.000 €** | **82,72%** | **Base Amortizable: 479.000 € | No amortizable: 250.000 €** |
-| **IVA Soportado Inversión (21%)** | 152.250 € | 17,28% | Crédito fiscal deducible/recuperable de la AEAT |
-| **Total Necesidades de Arranque** | **881.250 €** | **100,00%** | **Liquidez requerida para alcanzar la fase operativa** |
+**Incoherencia de la línea de crédito.** El modelo anual dispone un puente de IVA de 143.596 € en el caso de gestión. La línea revolvente declarada es de 50.000 €. El puente es una facilidad separada con un 5,5% de interés, no la línea operativa. El modelo debe revelarlo como facilidad separada o ampliar la línea a al menos 150.000 €. La auditoría lo marca como excepción material.
 
-Para cubrir estas necesidades sin sobreapalancar la sociedad, se estructuró un paquete de **938.000 € en recursos financieros movilizados**:
-- **Préstamo Hipotecario Senior (70% CapEx base):** **507.500 €** al 3,50% a 15 años (cuota anual de 43.522 €).
-- **Fondos Propios / Capital Social (30% CapEx base):** **217.500 €** aportados por los socios promotores.
-- **Póliza de Crédito / Puente de IVA:** **50.000 €** de circulante (ampliable a 143.600 €) para descontar la devolución tributaria.
-- **Subvención LEADER a Fondo Perdido:** **163.000 €** (~33% de la inversión auxiliable), liquidada tras justificación en Año 2.
-- **Cojín de Seguridad Inicial:** Los recursos movilizados (938.000 €) superan las necesidades iniciales (881.250 €), dejando un **colchón de liquidez de +56.750 €**.
+**DSRA.** El motor de financiación usa seis meses de servicio de deuda (21.768,18 €). El análisis CVaR 99% del comité de crédito recomienda 47.596,85 €. Si se usa el DSRA mayor, el gap al cierre se amplía en 25.828,67 €, hasta unos 96.597 €. Es un punto de term sheet, no un error de redondeo.
 
 ---
 
-## 4. Calibración Empírica de Ocupación: Microdatos INE Segovia
+## 10. Retornos: la salida es la que hace el trabajo
 
-En vez de supuestos lineales, el modelo incorpora la serie de estacionalidad mensual de la Encuesta de Turismo Rural del INE para la provincia de Segovia:
+| Caso | TIR proyecto (sin salida) | TIR proyecto (salida 8,5%) | TIR equity (salida 8,5%) | Valor terminal | MOIC proyecto | MOIC equity |
+|---|---:|---:|---:|---:|---:|---:|
+| Gestión | −20,89% | 15,43% | 29,74% | 1.048.704 € | 1,90x | 3,73x |
+| Mercado | −27,31% | 9,63% | 17,43% | 898.396 € | 1,54x | 2,52x |
+| Promotor | −29,48% | 6,84% | 10,95% | 796.462 € | 1,36x | 1,82x |
 
-![Curva de Estacionalidad Mensual](assets/figure_1_seasonality_ine.png)
+El valor terminal es el EBITDA del año 5 capitalizado a un cap rate del 8,5%. Sin salida, el flujo operativo de cinco años no recupera el CapEx de 729.000 € en ningún caso. La TIR de proyecto de gestión del 15,43% está por debajo de un hurdle típico de private equity del 18–20%; la TIR de equity del 29,74% está apalancada y depende de la salida. Los casos de mercado y promotor están por debajo de un hurdle razonable incluso con la salida.
 
-- **Inventario:** 7 Habitaciones Dobles (85 € ADR sin IVA) + 1 Casa Rural Completa (380 € ADR sin IVA).
-- **Restauración:** 21 comensales por día ocupado (2 por habitación + 7 por casa completa) a 25 € de ticket medio con un 30% de coste de producto (COGS).
-- **Capacidad al 100%:** 1.500 €/día (595 € habitaciones + 380 € casa + 525 € restaurante).
-- **Ocupación Ponderada Provincial:** Media anual de **31,36%** (114,5 días ocupados equivalentes al año).
-- **Facturación Anual de Régimen:** $114,5 \times 1.500 € = \text{171.720 €}$ en régimen estabilizado (Año 2), con 154.548 € en el Año 1 (rampa del 90%) y 180.306 € en el Año 3.
-
-### Análisis de Unit Economics y Margen de Contribución (Marco de Costeo Marginal y USALI)
-Un principio fundamental en el análisis institucional y private equity inmobiliario es que las cuentas de resultados anuales agregadas pueden esconder fragilidad operativa si los unit economics no demuestran apalancamiento operativo real. En este análisis, la métrica central a evaluar es cómo se expande el margen de contribución conforme aumenta la ocupación, aislando con precisión los costes variables de canal y servicio respecto a la carga fija estructural.
-
-A través del motor modular (`src/core/unit_economics.py`), cada día ocupado y noche de habitación se desagrega en ingresos brutos, costes variables de captación y contribución marginal neta:
-
-| Partida Operativa | Capacidad Diaria 100% (8 Unidades + 21 Comensales) | Por Noche de Habitación (Habitación + 2 Comensales) | Criterio y Supuesto Económico |
-| :--- | :---: | :---: | :--- |
-| **Ingresos Brutos Alojamiento** | 975,00 € | 85,00 € | 7 habitaciones @ 85 € + 1 casa @ 380 € (netos de IVA) |
-| **Ingresos Brutos Restauración** | 525,00 € | 50,00 € | 21 comensales (2 por hab., 7 por casa) @ 25 € ticket |
-| **Facturación Diaria Total** | **1.500,00 €** | **135,00 €** | **Régimen de Capacidad Estructural al 100%** |
-| (-) Coste de Producto Restaurante (30%) | -157,50 € | -15,00 € | Materias primas directas de alimentos y bebidas |
-| (-) Comisiones de Canal / OTAs | -87,75 € | -7,65 € | Mix ponderado: 60% OTAs (Booking/Airbnb @ 15%) vs 40% directa (0%) |
-| (-) Suministros Variables y Lavandería | -35,00 € | -4,00 € | Cambio de lencería, amenities ecológicos y toallas biopiscina |
-| **Costes Variables Totales** | **-280,25 € (18,68%)** | **-26,65 € (19,74%)** | **Coste marginal total por ciclo ocupado** |
-| **Margen de Contribución Unitario (€)** | **1.219,75 € / día** | **108,35 € / habitación** | **Caja limpia generada para cubrir costes fijos y deuda** |
-| **Margen de Contribución Unitario (%)** | **81,32%** | **80,26%** | **Estructura operativa de alto apalancamiento marginal** |
-
-#### Evolución de RevPAR, TRevPAR y Cobertura de Costes Fijos
-
-| Ejercicio Proyectado | Tasa de Ocupación | Días Ocupados | Ingresos Alojamiento | Facturación Total | RevPAR (8 Unidades) | TRevPAR (8 Unidades) | Margen Contribución Total | Cobertura Carga Fija |
-| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| **Año 1 (Rampa)** | 28,22% | 103,0 | 100.438 € | 154.548 € | **34,40 €** | **52,93 €** | **125.634 €** | **1,09x** |
-| **Año 2 (Estabilizado)** | 31,36% | 114,5 | 111.598 € | 171.720 € | **38,22 €** | **58,81 €** | **139.660 €** | **1,21x** |
-| **Año 3 (Maduro)** | 32,93% | 120,2 | 117.178 € | 180.306 € | **40,13 €** | **61,75 €** | **146.614 €** | **1,27x** |
-
-> [!NOTE]
-> **Umbral de Apalancamiento Operativo:** La carga fija total anual asciende a **115.756 €** (Personal fijo 60.075 € + OPEX fijo 12.159 € + Servicio de la deuda sénior 43.522 €). Como cada día ocupado genera **1.219,75 €** de margen limpio:
-> - **Punto Muerto Operativo ($EBITDA = 0$):** 59,2 días ocupados (16,23% de ocupación anual).
-> - **Punto Muerto de Deuda en Caja ($DSCR = 1,00x$):** 94,9 días ocupados (26,00% de ocupación anual).
-> - **Punto Muerto de Covenant Bancario ($DSCR \ge 1,25x$):** 103,8 días ocupados (28,44% de ocupación anual).
-> Incluso en el Año 1 de rampa, el activo registra 103,0 días equivalentes generando 125.634 € de margen de contribución, demostrando que los unit economics se fortalecen con la escala en lugar de degradarse.
+Esto contrasta deliberadamente con el README anterior, que reportaba una TIR media del sponsor del 18,4% a partir de un Monte Carlo que no modelaba la salida ni el gap de financiación. Los retornos actuales se calculan a partir de la serie de flujos, con un solver de TIR Newton/bisección y un valor terminal explícito.
 
 ---
 
+## 11. Stress-testing de escenarios
 
-## 5. Costes de Personal: Convenio Colectivo de Segovia
+| Métrica | Conservador A1 | Conservador A3 | Base A1 | Base A3 | Optimista A1 | Optimista A3 |
+|---|---:|---:|---:|---:|---:|---:|
+| Ingresos | 124.798 € | 145.597 € | 154.548 € | 180.306 € | 204.003 € | 238.004 € |
+| EBITDA | 32.236 € | 50.852 € | 66.086 € | 89.140 € | 111.794 € | 142.224 € |
+| Beneficio neto | −10.309 € | 10.753 € | 23.281 € | 41.993 € | 59.431 € | 83.513 € |
+| Caja final | −19.923 € | 134.218 € | 10.790 € | 225.556 € | 45.927 € | 340.430 € |
+| DSCR | 0,67x | 1,06x | 1,34x | 1,73x | 2,19x | 2,72x |
+| ICR | 1,30x | 2,27x | 3,81x | 5,77x | 7,53x | 10,80x |
 
-La plantilla cumple con las tablas salariales del *Convenio Colectivo Provincial de Hostelería de Segovia* (BOCyL), complementada con automatización de accesos para optimizar la estructura:
-
-| Puesto Laboral | Grupo de Convenio | Efectivos | Salario Bruto Anual | SS Empresa (35,0%) | Coste Empresa Anual |
-| :--- | :--- | :---: | :--- | :--- | :--- |
-| **Jefa de Cocina (Cocinera 1)** | Grupo II (Producción Hostelería) | 1 | 13.500 € | 4.725 € | 18.225 € |
-| **Apoyo Cocina y Sala (Cocinera 2)** | Grupo II (Apoyo Sala y Eventos) | 1 | 13.500 € | 4.725 € | 18.225 € |
-| **Limpieza y Mantenimiento** | Grupo III (Mantenimiento e Higiene) | 1 | 17.500 € | 6.125 € | 23.625 € |
-| **Total Gastos de Personal** | - | **3** | **44.500 €** | **15.575 €** | **60.075 €** |
-
-Gastos fijos operativos adicionales (OPEX sin IVA): **10.959 €/año** (Mantenimiento biopiscina y poda 3.600 €, Seguro multirriesgo 1.200 €, Suministros y biomasa 3.659 €, Marketing y SEO local 2.500 €).
-
----
-
-## 6. Proyección Financiera Integrada (3 Estados Financieros)
-
-El motor contable (`src/core/statements.py`) proyecta los 3 estados financieros garantizando la identidad de balance:
-
-$$\text{Activo}_t \equiv \text{Pasivo}_t + \text{Patrimonio Neto}_t \quad (\Delta = \text{0,0000 €})$$
-
-### Proyecciones del Caso Base (5 Años)
-
-| Partida Financiera (€) | Año 1 (Rampa) | Año 2 (Estabilización) | Año 3 (Maduro) | Año 4 (Expansión) | Año 5 (Consolidado) |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| **Ventas Totales Operativas** | **154.548,00** | **171.720,00** | **180.306,00** | **180.306,00** | **180.306,00** |
-| (-) Coste Alimentos y Bebidas (30%) | -16.227,54 | -18.030,60 | -18.932,13 | -18.932,13 | -18.932,13 |
-| **Margen Bruto de Explotación** | **138.320,46** | **153.689,40** | **161.373,87** | **161.373,87** | **161.373,87** |
-| (-) Gastos de Personal (Convenio) | -60.075,00 | -60.075,00 | -60.075,00 | -60.075,00 | -60.075,00 |
-| (-) Gastos Fijos y Suministros | -12.159,00 | -12.159,00 | -12.159,00 | -12.159,00 | -12.159,00 |
-| **EBITDA** | **66.086,46** | **81.455,40** | **89.139,87** | **89.139,87** | **89.139,87** |
-| (-) Amortizaciones Fiscales Lineales | -17.700,00 | -17.700,00 | -17.700,00 | -17.700,00 | -17.700,00 |
-| **Resultado Explotación (EBIT)** | **48.386,46** | **63.755,40** | **71.439,87** | **71.439,87** | **71.439,87** |
-| (-) Gastos Financieros (Hipoteca) | -17.330,48 | -15.897,89 | -14.414,28 | -12.877,94 | -11.286,99 |
-| **Resultado Antes de Impuestos (EBT)**| **31.055,98** | **47.857,51** | **57.025,59** | **58.561,93** | **60.152,88** |
-| (-) Impuesto de Sociedades (25% s/BINs)| -7.774,88 | -18.274,41 | -15.032,27 | -15.819,37 | -16.634,43 |
-| **Beneficio Neto del Ejercicio** | **23.281,10** | **29.583,10** | **41.993,32** | **42.742,56** | **43.518,45** |
-| **Flujo de Caja Operativo (CFO)** | **-102.615,27** | **190.879,47** | **59.693,32** | **60.442,56** | **61.218,45** |
-| **Flujo de Caja Financiación (CFF)** | **748.808,64** | **85.877,11** | **-28.087,58** | **-29.086,57** | **-30.121,09** |
-| **Saldo Final de Tesorería** | **10.789,74** | **193.949,95** | **225.555,69** | **256.911,68** | **288.009,04** |
-| **Deuda Viva Hipotecaria** | **481.308,64** | **454.185,75** | **426.098,17** | **397.011,60** | **366.890,51** |
-| **Patrimonio Neto Acumulado** | **240.781,10** | **433.364,20** | **475.357,52** | **518.100,08** | **561.618,53** |
-| **Descuadre Contable** | **0,00** | **0,00** | **0,00** | **0,00** | **0,00** |
+El caso conservador incumple el covenant en el año 1 (0,67x) y termina con caja negativa. El caso base es el upside de gestión. El optimista es una sensibilidad, no una previsión.
 
 ---
 
-## 7. Flujo de Caja Mensual, Trough de Liquidez y Puente de Circulante (Años 1 y 2)
+## 12. Monte Carlo y riesgo de cola con cúpulas
 
-Como se señala habitualmente en el ecosistema fintech e inversión institucional, *"la contabilidad se diseña para verse limpia, pero el comportamiento por debajo rara vez lo es. La caja a corto plazo te mantiene vivo, pero la calidad estructural del sistema determina el desenlace final"*.
+**Monte Carlo gaussiano naïve (N = 1.000):**
 
-En hostelería rural, las cifras anuales enmascaran el mayor riesgo de liquidez: **la estacionalidad invernal**. Aunque el Año 1 facture 154.548 €, enero y febrero presentan históricamente ocupaciones inferiores al 16% en Segovia, generando apenas ~5.650 €/mes en ventas mientras las nóminas (5.006 €/mes), el OPEX fijo (1.013 €/mes) y la cuota hipotecaria (3.627 €/mes) exigen un drenaje continuo de **9.646 €/mes**. Asimismo, la Agencia Tributaria (*AEAT*) demora entre 6 y 10 meses tras el cierre fiscal en auditar y abonar los **152.250 € del IVA soportado en la reforma**.
+| Métrica | Valor |
+|---|---:|
+| DSCR medio año 1 | 1,36x |
+| DSCR mediano año 1 | 1,34x |
+| VaR 95% (percentil 5) | 0,88x |
+| P(incumplimiento de covenant, DSCR < 1,25x) | 35,4% |
+| P(insolvencia, DSCR < 1,00x) | 9,6% |
 
-Para garantizar solvencia ininterrumpida, el motor financiero ejecuta una simulación mensual a 24 meses (`src/core/monthly_cash.py`):
+**Cúpulas multivariantes (50.000 simulaciones):**
 
-![Flujo de Caja Mensual y Puente de Solvencia](assets/figure_6_monthly_cash_runway.png)
+| Modelo | DSCR medio | DSCR mediano | VaR 95% | VaR 99% | CVaR 99% | P(DSCR < 1,25x) | P(DSCR < 1,00x) | Déficit CVaR 99% |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| Gaussiana | 1,36x | 1,34x | 0,64x | 0,37x | 0,26x | 42,31% | 21,61% | 33.906 € |
+| Student-t (ν = 4) | 1,36x | 1,34x | 0,64x | 0,35x | 0,21x | 42,11% | 21,23% | 36.735 € |
+| Clayton (θ = 1,8) | 1,36x | 1,38x | 0,49x | 0,17x | 0,04x | 40,35% | 23,23% | 47.597 € |
 
-### Trayectoria Mensual Empírica y Detección del Punto Mínimo de Caja (Trough)
-
-| Mes | Etapa Estacional | Ocupación Objetivo | Facturación Mensual | Margen Contribución | Salidas Fijas (Personal + OPEX + Cuota) | Flujo Operativo Neto | Póliza de Crédito Dispuesto | Saldo Final de Tesorería |
-| :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| **Inicio (t=0)** | Cierre Financiero | - | - | - | - | - | 0,00 € | **56.750,00 €** |
-| **M1 (Ene)** | Valle Invernal | 13,50% | 5.649,75 € | 4.579,54 € | 9.646,32 € | -5.067,99 € | 0,00 € | 51.682,01 € |
-| **M2 (Feb)** | Valle Invernal | 15,30% | 5.783,40 € | 4.687,87 € | 9.646,32 € | -4.959,65 € | 0,00 € | 46.722,36 € |
-| **M3 (Mar)** | **Trough de Caja** | **21,60%** | **9.541,80 €** | **7.747,36 €** | **9.646,32 €** | **-1.900,17 €** | **0,00 €** | **44.822,18 €** |
-| **M4 (Abr)** | Despegue Primavera | 27,90% | 13.182,75 € | 10.734,42 € | 9.646,32 € | +1.086,89 € | 0,00 € | 45.909,08 € |
-| **M5 (May)** | Primavera Alta | 29,70% | 13.810,50 € | 11.230,24 € | 9.646,32 € | +1.582,71 € | 0,00 € | 47.491,78 € |
-| **M6 (Jun)** | Arranque Verano | 33,30% | 15.734,25 € | 12.812,05 € | 9.646,32 € | +3.164,52 € | 0,00 € | 50.656,31 € |
-| **M7 (Jul)** | Temporada Alta | 43,20% | 23.101,20 € | 18.855,43 € | 9.646,32 € | +9.207,90 € | 0,00 € | 59.864,21 € |
-| **M8 (Ago)** | Pico de Demanda | 48,60% | 27.118,80 € | 22.157,57 € | 9.646,32 € | +12.510,04 € | 0,00 € | 72.374,25 € |
-| **M9 (Sep)** | Vendimia y Senderismo | 32,40% | 15.309,00 € | 12.465,78 € | 9.646,32 € | +2.818,25 € | 0,00 € | 75.192,50 € |
-| **M10 (Oct)** | Otoño Micológico | 27,00% | 12.555,00 € | 10.209,31 € | 9.646,32 € | +561,78 € | 0,00 € | 75.754,28 € |
-| **M11 (Nov)** | Final de Otoño | 19,80% | 8.464,50 € | 6.872,65 € | 9.646,32 € | -2.774,87 € | 0,00 € | 72.979,40 € |
-| **M12 (Dic)** | Puentes Navideños | 25,20% | 12.889,80 € | 10.508,90 € | 9.646,32 € | +861,37 € | 0,00 € | **73.840,77 €** |
-
-### Arquitectura de Cobertura de Liquidez
-1. **Punto Mínimo de Caja (Trough):** La caja acumulada toca suelo en el **Mes 3 (Marzo) con 44.822,18 €**. Gracias al colchón inicial de 56.750 €, la tesorería nunca vulnera la política de liquidez mínima de 10.000 €.
-2. **Póliza de Crédito Disponible:** La póliza de crédito de 50.000 € permanece sin disponer (0,00 €) en el caso base, proporcionando **94.822 € de liquidez total accesible** en el momento de mayor tensión.
-3. **Inflexión de Liquidez en Año 2:**
-   - **Mes 14:** Abono de la subvención a fondo perdido LEADER (+163.000 €).
-   - **Mes 18:** Liquidación y devolución del IVA de CapEx por la AEAT (+152.250 €).
-   - La caja acumulada al cierre del Año 2 alcanza **421.784 €** (o 193.950 € tras cancelar el puente fiscal), blindando estructuralmente el proyecto.
+La cúpula Clayton captura la dependencia asimétrica de la cola inferior: en un mal año, la ocupación, el ADR y el gasto en restaurante se deterioran a la vez. El DSRA recomendado por el comité de crédito es 47.596,85 €, que cubre el déficit CVaR 99% de Clayton. El Monte Carlo gaussiano se mantiene como benchmark, no como modelo de riesgo.
 
 ---
 
-## 8. Covenants Bancarios y Matriz de Sensibilidad
+## 13. Fase II: suites de paisaje y balsa biológica
 
-### Cobertura de Deuda (DSCR)
-Calculado sobre el Flujo de Caja Disponible para el Servicio de la Deuda ($CFADS = EBITDA - \text{Impuestos}$):
+La Fase II añade dos suites de paisaje de 55 m² y una balsa biológica de 200 m³. El CapEx all-in es 359.970 € netos, más 75.593,70 € de IVA soportado, para una necesidad de caja de 435.563,70 €.
 
-$$DSCR_t = \frac{CFADS_t}{\text{Servicio de Deuda}_t} = \frac{66.086 € - 7.775 €}{43.522 €} = \mathbf{1,34x} \quad (\ge 1,25x \text{ Covenant Exigido})$$
+| Componente de CapEx | Importe |
+|---|---:|
+| Ejecución de obra (PEM) | 260.000,00 € |
+| Ejecución con honorarios e impuestos (PEC) | 309.400,00 € |
+| Honorarios de ingeniería y arquitectura | 23.400,00 € |
+| Impuestos municipales (ICIO) | 11.700,00 € |
+| Reserva de contingencia | 15.470,00 € |
+| **CapEx all-in neto** | **359.970,00 €** |
+| IVA soportado (21%) | 75.593,70 € |
+| **Necesidad de caja** | **435.563,70 €** |
 
-### Matriz 2D de Estrés: DSCR vs. Demanda y Tipos de Interés
-Evaluación del DSCR del Año 1 ante shocks simultáneos de tipos (+200 pb) y caída de ocupación (-30%):
+**Escenarios operativos (año 3 estabilizado):**
 
-![Matriz de Sensibilidad DSCR](assets/figure_2_dscr_sensitivity_heatmap.png)
+| Escenario | Ocupación | ADR | EBITDA incremental | TIR con salida 8,5% |
+|---|---:|---:|---:|---:|
+| Base (sin FTE incremental) | 50,0% | 290 € | 99.620,52 € | 40,29% |
+| Realista (1 FTE) | 45,0% | 270 € | 51.435,20 € | 19,64% |
+| Estrés (1 FTE) | 36,4% | 250 € | 25.185,88 € | 2,07% |
+| Conservador | 40,0% | 250 € | 31.870,20 € | 7,50% |
+| Optimista | 58,0% | 330 € | 142.432,65 € | 53,34% |
 
-### Umbrales de Punto Muerto de Ocupación
-- **Punto Muerto Operativo ($EBITDA = 0$):** **12,42%** de ocupación anual.
-- **Punto Muerto de Deuda ($DSCR = 1,00x$):** **19,81%** de ocupación anual.
-- **Punto Muerto de Covenant ($DSCR \ge 1,25x$):** **22,34%** de ocupación anual.
+El caso base es deliberadamente agresivo: el 50% de ocupación es más del doble de la media provincial del INE y asume cero FTE incremental. El caso realista (45% de ocupación, un FTE adicional) es el mejor anclaje de underwriting. El caso de estrés es apenas positivo.
 
----
+**Phase gate:**
 
-## 9. Análisis de Escenarios
+| Test | Valor |
+|---|---:|
+| DSCR Fase I año 3 | 1,73x (mínimo 1,25x) → pasa |
+| Caja Fase I al final del año 2 | 193.949,95 € |
+| Necesidad de caja Fase II | 435.563,70 € |
+| Gap de financiación Fase II | **−241.613,75 €** |
+| Recomendación del gate | **NO PROCEDER** — se requiere financiación adicional o un alcance menor |
 
-| Métrica Financiera | Conservador (Estrés) Y1 | Conservador (Estrés) Y3 | Caso Base Y1 | Caso Base Y3 | Optimista Y1 | Optimista Y3 |
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Multiplicador Demanda** | 0,85x | 0,85x | 1,00x | 1,00x | 1,20x | 1,20x |
-| **Multiplicador Precio (ADR)** | 0,95x | 0,95x | 1,00x | 1,00x | 1,10x | 1,10x |
-| **Inflación OPEX** | +10,0% | +10,0% | 0,0% | 0,0% | -2,0% | -2,0% |
-| **Variación Tipos** | +150 pb (5,0%) | +150 pb (5,0%) | 0 pb (3,5%) | 0 pb (3,5%) | -50 pb (3,0%) | -50 pb (3,0%) |
-| **Ventas Totales** | 124.798 € | 145.597 € | 154.548 € | 180.306 € | 204.003 € | 238.004 € |
-| **EBITDA** | 32.236 € | 50.852 € | 66.086 € | 89.140 € | 111.794 € | 142.224 € |
-| **Beneficio Neto** | -10.309 € | 10.753 € | 23.281 € | 41.993 € | 59.431 € | 83.513 € |
-| **Caja Final** | -19.923 € | 134.218 € | 10.790 € | 225.556 € | 45.927 € | 340.430 € |
-| **DSCR** | **0,67x** | **1,06x** | **1,34x** | **1,73x** | **2,19x** | **2,72x** |
-| **ICR** | **1,30x** | **2,27x** | **3,81x** | **5,77x** | **7,53x** | **10,80x** |
+El README anterior afirmaba que la Fase II estaba 100% autofinanciada con 421.784 € de tesorería bruta. Esa cifra incluía la subvención LEADER y el reembolso de IVA, ambos ya comprometidos en la Fase I. El tratamiento correcto es un phase gate: la Fase II solo puede proceder si se cumplen los covenants de la Fase I y la caja de la Fase I cubre la necesidad de la Fase II. No es el caso.
 
----
-
-## 10. Simulación Estocástica Monte Carlo ($N=1.000$)
-
-Simulación estocástica que analiza la volatilidad conjunta de:
-- Ocupación anual: Distribución Normal $\mathcal{N}(1,00; 0,10)$, acotada en $[0,65; 1,40]$
-- Precios medios (ADR): Distribución Log-normal $\mathcal{LN}(0; 0,07)$
-- Tipos de interés: Distribución Normal $\mathcal{N}(0; 0,75\%)$, acotada en $[-1,5\%; +2,5\%]$
-- Inflación de costes: Distribución Normal $\mathcal{N}(1,00; 0,05)$
-
-![Distribución Monte Carlo DSCR](assets/figure_3_monte_carlo_distribution.png)
-
-### Resultados de Riesgo Estocástico
-- **DSCR Medio Año 1:** **1,36x** | **DSCR Mediano Año 1:** **1,34x**
-- **Value at Risk (VaR 95%):** **0,88x** (peor percentil 5 bajo estrés macroeconómico)
-- **Probabilidad de Ruptura de Covenant ($DSCR < 1,25x$):** **35,4%** en Año 1, reduciéndose a **< 6,0%** tras la consolidación del Año 2.
-- **Probabilidad de Quiebra de Caja ($DSCR < 1,00x$):** **9,6%** en Año 1 sin disposición de crédito.
-- **TIR Media del Accionista (Equity IRR):** **18,4%** en horizonte de 5 años.
+Si la Fase II se financiara, los ingresos consolidados del año 3 serían 326.488,50 € y el EBITDA 188.760,39 €, con el DSCR expandiéndose de 1,73x a 4,34x (asumiendo que no hay nueva deuda senior). Es un upside real, pero condicionado a la financiación, no automático.
 
 ---
 
-## 11. Riesgo de Crédito Cuantitativo: Dependencia de Colas con Cópulas Multivariables y Dimensionamiento del DSRA
+## 14. Auditoría computada: 14 reglas, 8 pasan, 5 materiales, 1 warning
 
-Los modelos estándar de riesgo de crédito en banca minorista suelen asumir independencia estocástica o correlación lineal Gaussiana. En una cópula Gaussiana, los shocks extremos presentan independencia asintótica en colas ($\lambda_L = \lambda_U = 0$). Sin embargo, en recesiones macroeconómicas severas, la caída de demanda, la presión sobre el precio de habitación (ADR), la subida de tipos de interés (Euríbor) y la inflación de costes ocurren de manera simultánea.
+La auditoría se calcula desde el modelo, no se escribe a mano. Está permitida fallar.
 
-Para capturar esta realidad sistémica, el proyecto incorpora un **motor de cópulas multivariables vectorizado** (`src/simulation/copula_engine.py`) que ejecuta 50.000 iteraciones comparando tres estructuras de dependencia conjunta:
-1. **Cópula Gaussiana (Benchmark):** Supuesto tradicional de colas delgadas sin agrupamiento conjunto.
-2. **Cópula Student-t ($\nu=4$):** Captura colas pesadas simétricas ($\lambda_L = \lambda_U = 0,18$).
-3. **Cópula Clayton ($\theta=1,8$):** Cópula arquimediana con fuerte dependencia asimétrica en la cola inferior ($\lambda_L = 2^{-1/\theta} \approx 0,68$, $\lambda_U = 0$). Modela cómo los peores escenarios de cada variable convergen simultáneamente en situaciones de estrés económico.
+| Regla | Severidad | Estado | Valor real | Umbral |
+|---|---|---|---:|---:|
+| RULE_01_BALANCE_SHEET_EQUALITY | Material | **PASA** | 0,00 € | ≤ 0,01 € |
+| RULE_02_HOSPITALITY_VAT_RATE | Material | **PASA** | 10,0% | 10,0% |
+| RULE_03_CAPEX_INPUT_VAT | Material | **PASA** | 153.090 € | 153.090 € |
+| RULE_04_PAYROLL_HOURLY_COMPLIANCE | Material | **PASA** | 9,77 € mín. | ≥ 9,02 € |
+| RULE_05_MANAGEMENT_DSCR | Material | **PASA** | 1,34x | ≥ 1,25x |
+| RULE_06_ADJUSTED_CASH_TROUGH | Material | **FALLA** | −55.978,44 € | ≥ 0 € |
+| RULE_07_DSRA_SIZING | Warning | **PASA** | 21.768,18 € | ≥ 6 meses |
+| RULE_08_SOURCES_USES_CLOSE | Material | **FALLA** | −70.768,18 € | ≥ 0 € |
+| RULE_09_CREDIT_LINE_LIMIT | Material | **FALLA** | 143.596,37 € | ≤ 50.000 € |
+| RULE_10_OCCUPANCY_VS_INE | Warning | **FALLA** | 1,48x | ≤ 1,25x |
+| RULE_11_PHASE2_SELF_FUNDING | Material | **FALLA** | −241.613,75 € | ≥ 0 € |
+| RULE_12_RETURNS_VS_WACC | Material | **PASA** | 15,43% | ≥ 8,0% |
+| RULE_13_PROMOTER_REPLICATION | Info | **PASA** | 86.275 € / 11.297 € | exacto |
+| RULE_14_MARKET_DSCR | Material | **FALLA** | 0,40x | ≥ 1,25x |
 
-![Riesgo de Cola y Cópulas Multivariables](assets/figure_5_copula_tail_risk.png)
+**Veredicto:** `CONDITIONAL - 5 MATERIAL EXCEPTION(S)`.
 
-### Comparativa Cuantitativa de Riesgo en Colas (50.000 Iteraciones)
-
-| Métrica de Riesgo | Cópula Gaussiana (Benchmark) | Cópula Student-t (nu=4) | Cópula Clayton (theta=1,8) | Evaluación de Riesgos Bancarios |
-| :--- | :---: | :---: | :---: | :--- |
-| **Dependencia en Cola Inferior ($\lambda_L$)** | 0,00 (Independiente) | 0,18 (Simétrica) | **0,68 (Asimétrica Inferior)** | Fuerte agrupamiento en estrés conjunto |
-| **DSCR Medio Esperado** | 1,36x | 1,36x | 1,36x | Idéntica tendencia central |
-| **VaR 95% (Percentil 5)** | 0,64x | 0,64x | **0,49x** | -0,15x de erosión en colas |
-| **VaR 99% (Percentil 1)** | 0,37x | 0,35x | **0,17x** | -0,20x de severidad adicional |
-| **CVaR 99% (Expected Shortfall)** | 0,26x | 0,21x | **0,04x** | Agotamiento casi total de la caja operativa |
-| **P(Ruptura Covenant) [DSCR < 1,25x]** | 42,3% | 42,1% | 40,4% | Sensibilidad del primer año de rampa |
-| **P(Insolvencia / Default) [DSCR < 1,00x]** | 21,6% | 21,2% | **23,2%** | +1,6 pp mayor riesgo de impago |
-| **Déficit Anual en Cola CVaR 99%** | 33.906 € | 36.735 € | **47.597 €** | **+40,4% mayor necesidad de liquidez** |
-
-### Recomendación del Comité de Riesgos y Dimensionamiento del DSRA
-El análisis demuestra que los covenants bancarios estándar (que típicamente exigen una cuenta de reserva para el servicio de la deuda, DSRA, de 6 meses: 21.775 €) dejan un **déficit no cubierto de 25.822 €** en situaciones de estrés sistémico extremo.
-
-Conforme al memorando formal generado por `src/core/credit_committee.py`:
-- **DSRA Recomendado:** **47.597 €** (equivalente a ~13,1 meses de servicio de la deuda sénior), dimensionado para absorber íntegramente el Expected Shortfall al 99% de confianza (CVaR 99%).
-- **Colchón de Financiación:** Dotado en el cierre financiero mediante el buffer inicial de liquidez (56.750 €) y pignorado de forma irrevocable contra la ayuda a fondo perdido LEADER (163.000 €).
-- **Dictamen del Comité de Riesgos:** **Aprobación Condicionada** sujeta a hipoteca de 1er rango sobre la finca de 25 ha y depósito en custodia del DSRA calibrado por cópulas.
+Las cinco excepciones materiales son el gap de financiación, el valle de caja ajustada, la incoherencia de la línea de crédito, el doble gasto de la Fase II y el DSCR de mercado. El warning es el supuesto de ocupación de gestión (1,48x la media del INE). El JSON de auditoría se exporta a `data/model_audit_summary.json` y las mismas reglas se reproducen en la pestaña `Funding & Audit` del Excel.
 
 ---
 
-## 12. Capa de Integridad Programática y Auditoría Automatizada de Due Diligence
+## 15. El modelo Excel
 
-En el análisis de private equity, financiación estructurada y auditorías de compraventa (M&A), los modelos financieros deben superar estrictos controles de fiabilidad analítica. Los cuartos de datos (*data rooms*) institucionales demandan trazabilidad matemática determinista, conciliación contable sin descuadres y validación automática frente al marco estatutario fiscal y laboral.
+El libro tiene **12 pestañas** y **172 fórmulas**:
 
-Para garantizar cero circularidades, cuadre estricto de balance y cumplimiento regulatorio, el motor incorpora un módulo de auditoría automatizada (`src/core/model_audit.py`) que evalúa 17 métricas clave y verifica 7 reglas programáticas de control (*guardrails*), exportando el dictamen en [`data/model_audit_summary.json`](data/model_audit_summary.json).
+| Pestaña | Propósito |
+|---|---|
+| `Read Me & Checks` | Mapa del modelo, tres casos, comprobaciones de integridad y hallazgos principales. |
+| `Inputs` | Todos los supuestos codificados en un solo sitio (celdas azules). |
+| `Live Model` | P&L, caja, deuda y balance a 5 años con fórmulas; replica el caso de gestión. |
+| `Funding & Audit` | Fuentes y usos, gap, coherencia de la línea, phase gate de Fase II y reglas de auditoría. |
+| `Executive Scorecard` | Scorecard de underwriting de una página. |
+| `3-Statement Model` | Salida completa de Python: P&L, caja y balance. |
+| `Debt Schedule` | Amortización francesa a 15 años. |
+| `Scenario Stress-Testing` | Conservador / base / optimista y sensibilidad 2D de DSCR. |
+| `Monte Carlo Risk` | Simulación estocástica de riesgo de crédito con 1.000 iteraciones. |
+| `Credit Risk & Copula` | Comparativa de colas gaussiana / Student-t / Clayton. |
+| `Unit Economics & Runway` | RevPAR, TRevPAR, margen de contribución y stress de liquidez mensual. |
+| `Phase II Expansion` | Suites y balsa: CapEx, P&L, escenarios, phase gate e impacto consolidado. |
 
-### Catálogo de Trazabilidad Regulatoria y Reglas de Control (Guardrails)
+El `Live Model` es intencionadamente simple y transparente: los ingresos son una fórmula ligada a `Inputs`, la deuda viene de `Debt Schedule` y las comprobaciones comparan la salida viva con Python. Las 172 fórmulas son:
 
-| Identificador de Regla | Formulación Matemática / Lógica | Fuente Regulatoria / Origen | Resultado de Validación |
-| :--- | :--- | :--- | :---: |
-| `RULE_01_BALANCE_SHEET_EQUALITY` | $\|Activo_t - (Pasivo_t + PN_t)\| \le 0,01$ € | Plan General de Contabilidad (PGC) | **PASSED** (0,00 € max var) |
-| `RULE_02_HOSPITALITY_VAT_RATE` | IVA alojamiento y comidas al 10,0%, NO al 21,0% | Ley 37/1992 Art. 91.Uno.2.2º | **PASSED** (10,0% aplicado) |
-| `RULE_03_CAPEX_INPUT_VAT_ASSET` | 152.250 € de IVA CapEx activados como crédito fiscal | Ley 37/1992 Art. 92-114 (AEAT) | **PASSED** (152.250 € activo) |
-| `RULE_04_LABOR_COLLECTIVE_AGREEMENT` | Coste laboral calibrado con Convenio Hostelería Segovia + 35% SS | BOP Segovia Convenio Hostelería | **PASSED** (60.075,00 €/año) |
-| `RULE_05_BANK_COVENANT_DSCR_FLOOR` | DSCR Año 1 igual o superior al covenant bancario exigido | Hoja de Condiciones de Crédito | **PASSED** (1,34x $\ge$ 1,25x) |
-| `RULE_06_SEASONAL_LIQUIDITY_BUFFER` | Saldo de caja estrictamente positivo en el valle invernal | Gestión de Tesorería Operativa | **PASSED** (44.822 € caja mín.) |
-| `RULE_07_ASYMMETRIC_TAIL_DSRA` | DSRA dimensionado al CVaR 99% de cópula Clayton (47.597 €) | Motor Cuantitativo de Cópulas | **PASSED** (47.597 € DSRA) |
+- 161 en `Live Model`;
+- 8 en `Read Me & Checks`;
+- 3 en `Funding & Audit`.
 
-Este dictamen programático proporciona a comités de inversión, financiadores y sistemas de escaneo de due diligence una prueba inequívoca de integridad contable, solvencia en estrés y cumplimiento normativo previo a la aportación de fondos.
+Las pestañas de informe son snapshots de Python y no recalculan. El libro no tiene motor de cálculo propio; ábrelo en Excel o LibreOffice para recalcular. Las fórmulas se han validado con una réplica en Python: ingresos, EBITDA, DSCR y caja final coinciden con el modelo anual al céntimo, y la comprobación de balance está dentro de 1 € (redondeo).
 
-## 13. Expansión Fase II: Suites de Paisaje y Balsa Biológica (Estrategia Value-Add)
-
-### Tesis de Inversión Estratégica y Financiación con Recursos Propios
-El desarrollo de la Fase II de **La Dehesa del Castrillo S.L.** constituye una operación de creación de valor inmobiliario y operativo (*value-add hospitality expansion*) sobre una finca rústica de 25 hectáreas (250.000 m²) de encinar y robledal en Segovia (~75 minutos de Madrid). Mientras que la Fase I consolida la infraestructura troncal del activo (hotel boutique de 7 habitaciones, casa rural de 10-12 plazas, restaurante agrigastronómico y biopiscina con 729.000 € de CapEx inicial), la Fase II introduce un producto de ultra-lujo experiencial consistente en **dos suites de paisaje independientes (*Landscape Suites*) de 55 m² construidos cada una (110 m² totales)** orientadas a un **estanque biológico naturalizado de 200 m² de lámina de agua**.
-
-La viabilidad financiera de esta expansión descansa sobre dos catalizadores estructurales:
-1. **Financiación 100% con Recursos Propios Acumulados:** Al cierre del Mes 24 (Año 2), la sociedad acumula 421.784 € de tesorería bruta (193.950 € de caja libre neta tras cancelar la línea puente de IVA, creciendo hasta 225.556 € en el Año 3, más una póliza intacta de 50.000 €). Este punto de inflexión de liquidez proviene del cobro de la subvención a fondo perdido LEADER por **163.000 €** (Mes 14) y la devolución del crédito fiscal por IVA soportado en CapEx por parte de la AEAT de **152.250 €** (Mes 18). Ello permite acometer los **359.970,00 € de inversión total (*All-In CapEx*)** íntegramente con el excedente de caja generado por el propio complejo, sin necesidad de ampliar la hipoteca sénior existente ni diluir al accionariado.
-2. **Apalancamiento Operativo Asimétrico:** La Fase I ya absorbe la totalidad de la masa salarial estructural (60.075 €/año para 3 empleados fijos bajo el Convenio de Hostelería de Segovia) y gastos generales (12.159 €/año). Las 2 suites de paisaje operan con un coste fijo incremental mínimo de apenas 14.400 €/año, logrando convertir el **78,00% de sus ingresos brutos en margen de contribución** y el **68,15% en EBITDA neto (99.620,53 €/año en madurez)**. Una inversión marginal del 49,4% sobre el CapEx de Fase I duplica el flujo de caja operativo de toda la compañía.
-
----
-
-### Desglose Real de CapEx de Construcción y Benchmarking Paramétrico
-La determinación rigurosa de costes en España (2024–2026) exige deslindar la edificación prefabricada estándar (1.300–1.500 €/m² desde cota cero) de la arquitectura singular de alta gama (*hospitality luxury grade*) en suelo rústico que integra cimentaciones especiales, madera estructural de pino de Valsaín / madera contralaminada (CLT), mampostería tradicional de piedra segoviana, carpintería minimalista de suelo a techo con control solar, aerotermia por suelo radiante-refrescante, baño-spa con bañera exenta mineral y urbanización completa.
-
-| Capítulo / Partida Presupuestaria | Especificación Técnica y Materialidad | PEM (€) | Margen Contrata (13% GG + 6% BI) | PEC / Llave en Mano (€) | Ratio PEC (€ / m² constr.) | Peso (% s/ CapEx) |
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **1. Movimiento Tierras, Cimentación y Estructura** | Micropilotes, cámara ventilada, paneles CLT y vigas laminadas GL28h de pino de Valsaín | 38.500,00 € | 7.315,00 € | 45.815,00 € | 416,50 €/m² | 12,73% |
-| **2. Muros de Piedra y Envolvente Térmica** | Mampostería de caliza/granito segoviano, aislamiento ecológico fibra madera/corcho 160 mm | 31.000,00 € | 5.890,00 € | 36.890,00 € | 335,36 €/m² | 10,25% |
-| **3. Carpintería Minimalista y Vidrios Climalit** | Muros cortina correderos ocultos suelo a techo, triple acristalamiento laminar y control Guardian Sun | 37.500,00 € | 7.125,00 € | 44.625,00 € | 405,68 €/m² | 12,40% |
-| **4. Aerotermia, Suelo Radiante y KNX** | Bomba de calor reversible aire-agua (COP > 4,5), suelo radiante-refrescante, VMC con recuperador y KNX | 28.500,00 € | 5.415,00 € | 33.915,00 € | 308,32 €/m² | 9,42% |
-| **5. Baño-Spa Integrado de Diseño** | Bañera exenta mineral Solid Surface, ducha doble a ras, grifería empotrada y microcemento | 26.000,00 € | 4.940,00 € | 30.940,00 € | 281,27 €/m² | 8,60% |
-| **Subtotal Edificación Pura (Cap. 1 a 5)** | Obra civil e instalaciones interiores de las 2 suites (110 m² totales) | 161.500,00 € | 30.685,00 € | 192.185,00 € | 1.747,14 €/m² | 53,39% |
-| **6. Urbanización, Acometidas 25 ha y Depuración** | Zanjas PEAD soterradas, línea eléctrica BT, fibra óptica y depuradora biológica de oxidación total | 31.500,00 € | 5.985,00 € | 37.485,00 € | 340,77 €/m² | 10,41% |
-| **7. Mobiliario 5*, Porche y Tina Nórdica Exterior** | Cama King-size (200x200), chimenea nórdica, porche madera termotratada y tina nórdica climatizada | 35.000,00 € | 6.650,00 € | 41.650,00 € | 378,64 €/m² | 11,57% |
-| **8. Estanque Biológico Paisajístico (200 m²)** | Vaso excavado escalonado, EPDM 1,2 mm, biofiltro zeolitas/puzolana, bombas Oase y macrófitas | 32.000,00 € | 6.080,00 € | 38.080,00 € | 346,18 €/m² | 10,58% |
-| **TOTAL EJECUCIÓN DE OBRA (PEM / PEC)** | Suma de edificación, FF&E 5*, urbanización y estanque natural | 260.000,00 € | 49.400,00 € | 309.400,00 € | 2.812,73 €/m² | 85,95% |
-| **9. Honorarios Técnicos e Ingeniería (9% PEM)** | Proyecto Básico/Ejecución, Dirección Facultativa, Geotécnico y Proyecto específico de balsa | 23.400,00 € | — | 23.400,00 € | 212,73 €/m² | 6,50% |
-| **10. Tasas y Licencias Municipales (4,5% PEM)** | Impuesto s/ Construcciones (ICIO 3,5%) y tasa por tramitación de Uso Excepcional (1,0%) | 11.700,00 € | — | 11.700,00 € | 106,36 €/m² | 3,25% |
-| **11. Reserva de Contingencia (5,0% PEC)** | Fondo de imprevistos para desviaciones en roca granítica o suministros | 15.470,00 € | — | 15.470,00 € | 140,64 €/m² | 4,30% |
-| **TOTAL INVERSIÓN CAPEX FASE II (ALL-IN)** | Desembolso de capital requerido (neto de 21% IVA deducible) | 310.570,00 € | 49.400,00 € | 359.970,00 € | 3.272,45 €/m² | 100,00% |
+La pestaña `Funding & Audit` puede mostrar `FAIL`. Es la auditoría funcionando como debe.
 
 ---
 
-### Ingeniería Específica del Estanque Biológico Paisajístico (200 m²)
-A diferencia de una piscina ecológica de baño colectivo (>50k € para >80 m² por exigencias sanitarias de playas de hormigón y control), el estanque biológico de 200 m² cumple tres funciones esenciales: espejo de agua panorámico ante las cristaleras, microclima de refrigeración evaporativa estival y reserva permanente de agua contra incendios forestales.
-
-| Sub-partida del Estanque Biológico (200 m²) | Medición y Especificación Constructiva | PEM (€) | PEC Llave en Mano (€) | Ratio PEC (€/m² agua) | % s/ Estanque |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| **8.1 Excavación y Perfilado de Terrazas** | Excavación de ~260 m³, taludes 1:3, 3 anillos batimétricos (playa 0,3m, terraza 0,8m, foso central 2,0m) | 5.200,00 € | 6.188,00 € | 30,94 €/m² | 16,25% |
-| **8.2 Geotextil y Membrana EPDM** | Cama arena 5 cm, doble geotextil 400 g/m², lámina EPDM Firestone PondGard 1,2 mm (>40 años vida útil) | 7.800,00 € | 9.282,00 € | 46,41 €/m² | 24,38% |
-| **8.3 Biofiltro Zeolitas y Puzolana** | Lecho regeneración 95 m², gravas silíceas lavadas, puzolana volcánica y zeolitas naturales (clinoptilolita) | 6.200,00 € | 7.378,00 € | 36,89 €/m² | 19,38% |
-| **8.4 Sistema Hidráulico y Cascada** | 2 bombas sumergibles Oase Eco (<180W), 2 skimmers de superficie, PVC PN10 y cascada en piedra natural | 5.400,00 € | 6.426,00 € | 32,13 €/m² | 16,88% |
-| **8.5 Rocalla de Piedra Segoviana** | ~35 toneladas de bolos y lajas de granito y caliza local para ocultación perimetral de EPDM y pasos de fauna | 4.100,00 € | 4.879,00 € | 24,40 €/m² | 12,81% |
-| **8.6 Plantación Macrófita Fitodepuradora** | ~600 plantas acuáticas autóctonas: helófitas (*Iris*, *Typha*), oxigenantes sumergidas y nenúfares (*Nymphaea*) | 3.300,00 € | 3.927,00 € | 19,64 €/m² | 10,31% |
-| **TOTAL ESTANQUE BIOLÓGICO** | Infraestructura paisajística con depuración biológica autónoma | 32.000,00 € | 38.080,00 € | 190,40 €/m² | 100,00% |
-
----
-
-### Benchmark de Mercado y Tarifas de Referencia en el Entorno de Madrid
-
-| Operador Comparable | Ubicación y Distancia | Tipología Arquitectónica y Posicionamiento | ADR Entre Semana | ADR Fin de Semana | Estrategia Comercial |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| **Vivood Landscape Hotel & 5E Spa** | Benimantell, Alicante | Suites modulares sobre pilotes, ventanal panorámico, jacuzzi | 227,00 € | 505,00 € | Pricing dinámico (-40% enero, +198% mayo), spa 5 elementos |
-| **Miluna Open Nature Rooms** | Hormigos, Toledo (~60 min Madrid) | Burbujas astronómicas y habitaciones panorámicas, flotarium | 310,00 € | 412,00 € – 480,00 € | 100% parejas Madrid, alta tracción gastronómica y telescopio |
-| **Hotel Aire de Bardenas** | Tudela, Navarra | Cubos de diseño frente a Bardenas, bañera exterior privada | 280,00 € | 450,00 € | Posicionamiento internacional, huerto ecológico propio |
-| **Basoa Suites** | Valle de Ultzama, Navarra | Suites elevadas en robledal centenario para adultos | 195,00 € | 260,00 € – 320,00 € | Inmersión total en dosel arbóreo, cesta desayuno con polea |
-| **Cabañitas del Bosque** | Outes, A Coruña | Cabañas en árboles con jacuzzi y chimenea | 150,00 € – 170,00 € | 170,00 € – 190,00 € | Mínimo 2 noches en fin de semana, alta venta de extras |
-| **La Dehesa del Castrillo (Target Fase II)** | **Segovia (~75 min Madrid, 25 ha)** | **2 Suites 55 m², piedra local, CLT/Valsaín, tina nórdica, estanque 200 m²** | **240,00 € (Neto)** | **360,00 € (Neto)** | **ADR medio neto 290,00 € (319 € PVP inc. IVA), 85% captura gastro** |
-
-Parámetros Operativos Clave:
-- **Capacidad Anual:** 730 noches disponibles (2 suites x 365 días).
-- **Tarifas Netas:** Fin de semana: 360,00 € (frente a 505 € Vivood, 412 € Miluna). Entre semana: 240,00 €. ADR medio ponderado neto: **290,00 €** (3,4x el ADR de 85 € de Fase I).
-- **Ocupación:** Fin de semana: 88,5% (104 días). Entre semana: 34,7% (261 días). Ocupación media ponderada: **50,00% (365 noches vendidas)**.
-- **Captura Gastronómica:** 85,0% a 130,00 € de ticket medio por pareja (65 €/pax menú degustación agrigastro y maridaje).
-- **Mix de Distribución:** 70,0% Directo (web/redes/bonos al 1,5% pasarela) / 30,0% OTAs (Booking al 16,0% comisión). Coste de canal ponderado: **5,85%**.
-- **Rendimiento Unitario:** RevPAR: **145,00 €** (vs 40,13 € Fase I). TRevPAR: **200,25 €** (vs 61,75 € Fase I).
-
----
-
-### Cuenta de Resultados Incremental (P&L USALI Anual)
-
-| Partida de la Cuenta de Resultados (Sin IVA) | Escenario Conservador (40% Occ / 250 € ADR) | Caso Base Año 3 (50% Occ / 290 € ADR) | Escenario Optimista (58% Occ / 330 € ADR) | % s/ Ventas (Base) | Comportamiento del Coste |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| **Noches Vendidas (s/ 730 disponibles)** | 292,0 noches | **365,0 noches** | 423,4 noches | — | 182,5 noches ocupadas por suite/año |
-| **Ingresos Brutos Alojamiento** | 73.000,00 € | **105.850,00 €** | 139.722,00 € | 72,41% | 365 noches x 290,00 € ADR neto (10% IVA) |
-| **Ingresos Inducidos Restauración** | 27.302,00 € | **40.332,50 €** | 53.983,50 € | 27,59% | 365 noches x 85% captura x 130 € ticket |
-| **FACTURACIÓN BRUTA TOTAL** | **100.302,00 €** | **146.182,50 €** | **193.705,50 €** | **100,00%** | **73.091,25 € facturación por suite/año** |
-| (-) Comisiones OTAs y Pasarela de Pago | -5.307,10 € | **-6.192,23 €** | -6.811,45 € | -4,24% | 30% OTAs al 16% + 70% Directo al 1,5% |
-| (-) Materia Prima Alimentos (COGS 30%) | -8.190,60 € | **-12.099,75 €** | -16.195,05 € | -8,28% | 30,0% sobre facturación gastronómica |
-| (-) Lavandería, Amenities 5* y Leña | -7.008,00 € | **-8.760,00 €** | -10.161,60 € | -5,99% | 24,00 € por noche ocupada |
-| (-) Energía Variable (Aerotermia y Tina) | -4.401,90 € | **-5.110,00 €** | -5.927,60 € | -3,50% | 14,00 € por noche ocupada |
-| **TOTAL COSTES VARIABLES** | **-24.907,60 €** | **-32.161,97 €** | **-39.095,70 €** | **-22,00%** | **88,11 € coste variable por noche ocupada** |
-| **MARGEN DE CONTRIBUCIÓN** | **75.394,40 €** | **114.020,53 €** | **154.609,80 €** | **78,00%** | **312,39 € margen limpio por noche ocupada** |
-| (-) Refuerzo Estacional Limpieza | -4.800,00 € | **-4.800,00 €** | -4.800,00 € | -3,28% | Apoyo en fines de semana; plantilla base en Fase I |
-| (-) Gastos Fijos OPEX Incrementales | -9.600,00 € | **-9.600,00 €** | -9.600,00 € | -6,57% | Mantenimiento (4.500 €), seguro (1.200 €), mkt (2.400 €) |
-| **EBITDA INCREMENTAL REALIZADO** | **60.994,40 €** | **99.620,53 €** | **140.209,80 €** | **68,15%** | **49.810,26 € EBITDA por suite/año** |
-| (-) Amortización Lineal (4,5% medio) | -16.198,65 € | **-16.198,65 €** | -16.198,65 € | -11,08% | Amortización fiscal PGC (Ley 27/2014) |
-| **EBIT (Resultado Operativo)** | **44.795,75 €** | **83.421,88 €** | **124.011,15 €** | **57,07%** | **Cero gasto financiero (100% fondos propios)** |
-| (-) Impuesto sobre Sociedades (25%) | -11.198,94 € | **-20.855,47 €** | -31.002,79 € | -14,27% | Tipo general del 25% |
-| **BENEFICIO NETO (BDI)** | **33.596,81 €** | **62.566,41 €** | **93.008,36 €** | **42,80%** | **42,8% margen neto sobre ventas** |
-| (+) Amortización (-) Reserva FF&E (2%) | +14.192,61 € | **+13.275,00 €** | +12.324,54 € | +9,08% | 2.923,65 € anuales de reserva de reposición |
-| **FLUJO DE CAJA LIBRE (FCF)** | **47.789,42 €** | **75.841,41 €** | **105.332,90 €** | **51,88%** | **Caja limpia disponible para el inversor** |
-
----
-
-### Serie Quinquenal, Retornos y Arbitraje de Múltiplos en Salida
-Modelizado con una curva de rampa comercial prudente: **Año 1 al 75%** (37,5% ocupación), **Año 2 al 90%** (45,0% ocupación), **Año 3 al 100% de estabilización** (50,0% ocupación) e **indexación por IPC del +2,0% en los Años 4 y 5**.
-
-| Métrica / Magnitud Financiera | Año 1 (Rampa 75%) | Año 2 (Rampa 90%) | Año 3 (Base 100%) | Año 4 (+2% IPC) | Año 5 (+2% IPC) | Acumulado 5 Años |
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Facturación Bruta** | 109.636,88 € | 131.564,25 € | **146.182,50 €** | 149.106,15 € | 152.088,27 € | **688.578,05 €** |
-| **EBITDA** | 68.474,39 € | 87.162,07 € | **99.620,53 €** | 101.612,94 € | 103.645,20 € | **460.515,13 €** |
-| **Margen EBITDA** | 62,46% | 66,25% | **68,15%** | 68,15% | 68,15% | **66,88% (Media)** |
-| **Beneficio Neto (BDI)** | 39.206,81 € | 53.222,57 € | **62.566,41 €** | 64.060,72 € | 65.584,91 € | **284.641,42 €** |
-| **Flujo de Caja Libre (FCF)** | **53.212,72 €** | **66.789,93 €** | **75.841,41 €** | **77.277,24 €** | **78.741,80 €** | **351.863,10 €** |
-| **FCF Descontado (WACC 8,0%)** | 49.271,03 € | 57.261,60 € | **60.205,36 €** | 56.801,08 € | 53.590,34 € | **277.129,41 €** |
-
-Indicadores de Rentabilidad y Eficiencia de Capital:
-- **Payback EBITDA Simple:** **3,97 años (47,6 meses)** (356.870 € acumulados entre A1 y A4).
-- **Payback FCF Post-Impuestos:** **5,10 años (61,2 meses)** (351.863 € acumulados en A5, liquidado en M61).
-- **Payback Descontado (WACC 8,0%):** **6,67 años (80,1 meses)**.
-- **Rendimiento Bruto de Desarrollo (Yield on Cost):** **27,67%** (EBITDA 99.620 € / CapEx 359.970 €).
-- **ROIC Estabilizado (Año 3):** **17,38%** (NOPAT / CapEx = 62.566 € / 359.970 €), con un **spread EVA de +938 pb** sobre el coste de capital del 8,0%.
-- **TIR Operativa Pura a 10 Años:** **15,57%** (asumiendo valor terminal nulo).
-
-Arbitraje de Múltiplos en Salida:
-El proyecto se construye a un múltiplo implícito de **3,61x EBITDA** (359.970 € / 99.620 €). En el mercado institucional español, los hoteles singulares transaccionan a tasas de capitalización (*Exit Cap Rates*) de entre el **8,0% y el 9,0%** (11,11x a 12,50x EBITDA):
-
-| Exit Cap Rate | Múltiplo Implícito | Valoración Año 3 | Plusvalía Neta A3 | Valoración Año 5 | Plusvalía Neta A5 | TIR 5 Años con Salida | MOIC 5 Años |
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **8,0% (Prime Comp.)** | 12,50x | **1.245.256,62 €** | +885.286,62 € | **1.295.565,00 €** | +935.595,00 € | **41,43%** | **4,58x** |
-| **8,5% (Caso Base)** | 11,76x | **1.172.006,24 €** | +812.036,24 € | **1.219.355,29 €** | +859.385,29 € | **40,12%** | **4,37x** |
-| **9,0% (Conservador)** | 11,11x | **1.106.894,78 €** | +746.924,78 € | **1.151.613,33 €** | +791.643,33 € | **38,90%** | **4,18x** |
-
----
-
-### Impacto en el Balance Consolidado del Grupo y Cobertura de Deuda
-La consolidación de Fase I y Fase II bajo la matriz **La Dehesa del Castrillo S.L.** transforma radicalmente el perfil de solvencia de la compañía:
-
-| Magnitud Financiera | Fase I Standalone (A3) | Fase II Incremental (A3) | Grupo Consolidado (A3) | % Expansión |
-| :--- | :--- | :--- | :--- | :--- |
-| **Ventas Operativas Totales** | 180.306,00 € | 146.182,50 € | **326.488,50 €** | **+81,08%** |
-| **EBITDA Realizado** | 89.139,87 € (49,4%) | 99.620,53 € (68,1%) | **188.760,40 € (57,8%)** | **+111,76%** |
-| **Servicio Anual Deuda Bancaria** | 43.536,36 € | 0,00 € | **43.536,36 €** | **0,00% (Sin deuda adicional)** |
-| **Saldo Hipoteca Sénior Viva** | 426.098,24 € | 0,00 € | **426.098,24 €** | **0,00%** |
-| **Cobertura Servicio Deuda (DSCR)** | **1,73x / 2,05x** | — | **3,56x / 4,34x** | **+105,8% seguridad bancaria** |
-| **Flujo de Caja Libre Neto** | 41.993,00 € | 75.841,41 € | **117.834,41 €** | **+180,6%** |
-| **Valor de Empresa (Cap Rate 8,5%)** | 1.048.704,35 € | 1.172.006,24 € | **2.220.710,59 €** | **2,04x CapEx Histórico Total** |
-
----
-
-### Tramitación Urbanística (LOUCYL) y Secuenciación Modular Off-Site
-- **Marco Regulador Autonómico:** Regulado por la *Ley 5/1999 de Urbanismo de Castilla y León* (LOUCYL, Art. 23.2 y 25) y el *Decreto 22/2004* (RUCYL, Art. 306-308). Requiere procedimiento de **Autorización de Uso Excepcional en Suelo Rústico** resuelto por la *Comisión Territorial de Medio Ambiente y Urbanismo* (CTMAU) de Segovia.
-- **Holgura en Parámetros Urbanísticos (Finca de 25 Hectáreas):**
-  - Parcela mínima: 250.000 m² (frente a 10.000–30.000 m² exigidos).
-  - Ocupación de parcela: 860 m² totales (Fase I 550 m² + Fase II 310 m²) = **0,344% de ocupación** (frente al 2,0%–5,0% máximo legal).
-  - Retranqueos: **>120 m a linderos** (frente a 5–10 m reglamentarios) y >80 m al hotel de Fase I.
-  - Altura: 1 sola planta (3,40 m alero / 4,10 m cumbrera, oculta bajo el dosel de las encinas vs 7,00 m / 9,00 m autorizables).
-- **Construcción Industrializada Modular (85% off-site / 15% in situ):**
-  - **Semanas 1 a 10:** Fabricación industrial en taller de módulos de madera CLT/Valsaín (*Arquima*, *Room2030*, *Egoin*) con aislamiento, cristaleras y baños premontados.
-  - **Semanas 8 a 11:** Ventana quirúrgica de obra civil en finca durante los meses de menor ocupación histórica de Fase I (noviembre o febrero) para zanjas a 90 cm bajo cota de helada, micropilotes y vaso del estanque biológico de 200 m².
-  - **Semanas 12 a 14:** Izado e implantación con grúa en **24 a 72 horas entre martes y jueves** (cero interferencia con huéspedes de fin de semana de Fase I), seguido de 2 semanas de mampostería tradicional de piedra segoviana por canteros locales.
-
----
-
-## 14. Doble Calibración Operativa: Modelo LEADER vs. Benchmark INE
-
-Para garantizar máxima trazabilidad entre los documentos preliminares y el motor de mercado, el repositorio soporta dos modos conmutables:
-1. **Modo LEADER Consolidado (`calibration_mode='leader_excel'`):** Replica las cifras de la presentación original `Presentacion_La_Dehesa.xlsx` (Año 1: 96.628 € ventas, Año 2: 126.855 €, Año 3: 159.863 €, caja acumulada: 60.750 €).
-2. **Modo Mercado INE (`calibration_mode='ine_market'`):** Modelo empírico completo alimentado por la serie mensual de Segovia del INE (Año 1: 154.548 € ventas creciendo a 180.306 €, EBITDA 66k a 89k €).
-
----
-
-## 15. Estructura del Repositorio
+## 16. Arquitectura del repositorio
 
 ```
 proyecto-dehesa-del-castrillo/
-├── assets/                               # Figuras institucionales de alta resolución (300 DPI)
-│   ├── figure_1_seasonality_ine.png      # Curva empírica INE Segovia
-│   ├── figure_2_dscr_sensitivity_heatmap.png # Matriz de estrés 2D DSCR
-│   ├── figure_3_monte_carlo_distribution.png # Densidad Monte Carlo y VaR 95%
-│   ├── figure_4_cash_flow_waterfall.png  # Conciliación fiscal de IVA y puente de liquidez
-│   ├── figure_5_copula_tail_risk.png     # Dependencia de colas con cópulas y CVaR
-│   └── figure_6_monthly_cash_runway.png  # Runway de tesorería mensual a 24 meses y trough
-├── data/                                 # Entregables cuantitativos
-│   ├── La_Dehesa_del_Castrillo_Financial_Model.xlsx # Modelo maestro estructurado en 8 pestañas
-│   └── model_audit_summary.json          # Resumen de Auditoría Programática e Integridad
-├── raw_data/                             # Archivos Excel originales de origen
-│   ├── La_Dehesa_de_Castrillo_Proyecto.xlsx
-│   └── Presentacion_La_Dehesa.xlsx
-├── src/                                  # Motor financiero cuantitativo modular
-│   ├── config/                           # Parámetros institucionales y microdatos INE
-│   │   ├── assumptions.py
-│   │   └── ine_weights.py
-│   ├── core/                             # Deuda, Fiscalidad, Estados, Unit Economics y Auditoría
-│   │   ├── credit_committee.py           # Memorando automatizado de comité de crédito
-│   │   ├── debt.py                       # Cuadro de amortización francés
-│   │   ├── expansion.py                  # Motor de Expansión Fase II: Suites de Paisaje y Estanque
-│   │   ├── metrics.py                    # Covenants, puntos muertos y TIR/VAN
-│   │   ├── model_audit.py                # Verificación de integridad y auditoría de modelo
-│   │   ├── monthly_cash.py               # Simulación mensual de tesorería y trough
-│   │   ├── statements.py                 # Modelo integrado de 3 estados contables
-│   │   ├── tax.py                        # Motor de IVA e Impuesto sobre Sociedades
-│   │   └── unit_economics.py             # RevPAR, TRevPAR y margen de contribución
-│   ├── data/                             # Extracción de datos y exportador Excel
-│   ├── scenarios/                        # Análisis de escenarios y matriz 2D
-│   ├── simulation/                       # Motores estocásticos de Monte Carlo y Cópulas
-│   │   ├── copula_engine.py              # Cópulas Gaussiana, Student-t y Clayton
-│   │   └── monte_carlo.py                # Simulación de 1.000 iteraciones
-│   └── visualization/                    # Exportador de gráficos institucionales
-├── tests/                                # Suite de tests automatizados (pytest)
+├── main.py                       # Pipeline de 14 pasos
+├── README.md / README_ES.md
+├── requirements.txt
+├── src/
+│   ├── config/
+│   │   ├── assumptions.py        # CapEx, nómina, deuda, opex, casos, campos de financiación
+│   │   └── ine_weights.py        # Serie mensual INE Segovia (calibrada al 21,24%)
+│   ├── core/
+│   │   ├── statements.py         # Motor de tres estados, tres casos, réplica del promotor
+│   │   ├── debt.py               # Amortización francesa
+│   │   ├── tax.py                # IVA e impuesto de sociedades
+│   │   ├── metrics.py            # DSCR, ICR, TIR (Newton + bisección), retornos con salida
+│   │   ├── funding.py            # Fuentes y usos, gap, línea de crédito, phase gate
+│   │   ├── unit_economics.py     # Unit economics USALI y puntos muertos
+│   │   ├── monthly_cash.py       # Stress de liquidez mensual (sin/con inyección)
+│   │   ├── expansion.py          # CapEx Fase II, escenarios, phase gate
+│   │   ├── credit_committee.py   # DSRA y memo de underwriting
+│   │   └── model_audit.py        # Auditoría computada, 14 reglas, export JSON
+│   ├── data/
+│   │   ├── extract_raw.py        # Reconciliación con el Excel original
+│   │   ├── export_excel.py       # Libro de 12 pestañas
+│   │   └── live_excel.py         # Pestañas vivas con fórmulas
+│   ├── scenarios/
+│   │   └── scenario_analysis.py  # Conservador / base / optimista
+│   ├── simulation/
+│   │   ├── monte_carlo.py        # Monte Carlo gaussiano naïve
+│   │   └── copula_engine.py      # Gaussiana / Student-t / Clayton
+│   └── visualization/
+│       └── charts.py             # Figuras institucionales
+├── tests/
 │   ├── test_assumptions.py
-│   ├── test_copula.py                    # Tests de marginales, orden y DSRA
-│   ├── test_expansion.py                 # Tests de CapEx, P&L, retornos y consolidación Fase II
+│   ├── test_cases.py             # Tests de tres casos y retornos
+│   ├── test_funding.py           # Fuentes y usos, gap, phase gate
+│   ├── test_model_audit.py       # Auditoría: 8/14, 5 materiales, 1 warning
+│   ├── test_expansion.py         # Escenarios de Fase II y phase gate
 │   ├── test_financial_engine.py
-│   ├── test_model_audit.py               # Tests de auditoría y guardrails del modelo
+│   ├── test_unit_economics_monthly.py
 │   ├── test_simulation.py
-│   └── test_unit_economics_monthly.py    # Tests de unit economics y runway mensual
-├── main.py                               # Pipeline integral de ejecución (10 pasos automatizados)
-├── README.md                             # Memorando de inversión en inglés
-├── README_ES.md                          # Memorando de inversión en español
-└── .gitignore                            # Reglas de exclusión de Git
+│   └── test_copula.py
+├── data/
+│   ├── La_Dehesa_del_Castrillo_Financial_Model.xlsx
+│   └── model_audit_summary.json
+└── assets/
+    └── figure_*.png
 ```
 
 ---
 
-## 16. Instalación y Ejecución
+## 17. Instalación y ejecución
 
 ```bash
-# Clonar el repositorio
 git clone https://github.com/magnumjpg/la-dehesa-financial-due-diligence.git
 cd la-dehesa-financial-due-diligence
+pip install -r requirements.txt
 
-# Instalar dependencias requeridas
-pip install pandas numpy scipy openpyxl matplotlib seaborn pytest
-
-# Ejecutar el pipeline financiero completo (análisis institucional de 10 pasos)
+# Pipeline completo (14 pasos, gráficos, Excel, JSON de auditoría)
 python main.py
 
-# Ejecutar la batería de tests automatizados (30 tests de cuadre financiero, cópulas y métricas de expansión)
-python -m pytest tests/
+# Sin generación de gráficos
+python main.py --no-charts
+
+# Batería de tests (41 tests)
+python -m pytest tests/ -q
 ```
+
+**Salidas:**
+
+- `data/La_Dehesa_del_Castrillo_Financial_Model.xlsx` — 12 pestañas, 172 fórmulas.
+- `data/model_audit_summary.json` — auditoría computada, schema 3.0.0.
+- `assets/figure_*.png` — figuras institucionales.
+
+El pipeline es determinista por defecto; el Monte Carlo y las cúpulas usan semilla fija (42).
 
 ---
 
-## 17. Referencias Regulatorias y Metodológicas
-- **IVA:** *Ley 37/1992, de 28 de diciembre, del Impuesto sobre el Valor Añadido* (Art. 90, Art. 91.Uno.2.2º).
-- **Impuesto sobre Sociedades:** *Ley 27/2014, de 27 de noviembre, del Impuesto sobre Sociedades* (Art. 12, Art. 26 - BINs).
-- **Convenio Colectivo:** *Convenio Colectivo Provincial de Hostelería de Segovia* (BOP Segovia).
-- **Estadísticas Oficiales de Turismo:** *Instituto Nacional de Estadística* (INE) - *Encuesta de Ocupación en Alojamientos de Turismo Rural* (EOTR), Serie Provincial Segovia.
-- **Urbanismo Autonómico:** *Ley 5/1999, de 8 de abril, de Urbanismo de Castilla y León* (LOUCYL, Art. 23.2 y 25) y *Decreto 22/2004, de 29 de enero, por el que se aprueba el Reglamento de Urbanismo de Castilla y León* (RUCYL, Art. 306 a 308).
-- **Normativa de Turismo Rural:** *Ley 14/2010, de 9 de diciembre, de Turismo de Castilla y León* y *Decreto 75/2013, de 28 de noviembre, regulador de los establecimientos de alojamiento de turismo rural*.
+## 18. Limitaciones y siguientes pasos
 
+Este es un modelo de portfolio, no un memorando de inversión. Las limitaciones principales son explícitas:
 
+1. **El caso de gestión es un upside.** El 31,36% de ocupación es 1,48x la media provincial del INE. Debe presentarse como caso de gestión, no como caso base.
+2. **El motor mensual es un stress de liquidez independiente.** Usa ADR estacional e incluye comisiones OTA y amenities; el modelo anual usa ADR plano y una estructura de costes más simple. No es una reconciliación línea a línea del modelo anual de tres estados.
+3. **El Monte Carlo es gaussiano naïve.** El motor de cúpulas es la herramienta de riesgo de cola; la simulación gaussiana se mantiene como benchmark.
+4. **El DSRA es incoherente.** El motor de financiación usa seis meses (21.768 €); el comité de crédito recomienda 47.597 € según CVaR 99%. El term sheet debería usar la cifra mayor, que amplía el gap al cierre hasta unos 96.597 €.
+5. **El CapEx de Fase II es una estimación pretender.** No hay ofertas de construcción vinculantes; la contingencia es el 5% del PEC.
+6. **El modelo fiscal es simplificado.** Usa un tipo de sociedades del 25%, sin grupo de IVA, sin deducciones autonómicas y sin calendario de BINs más allá del año corriente.
+7. **El modelo de nómina es a tiempo parcial.** Los precios/hora cumplen, pero quedan riesgos de planificación, cobertura y rotación.
+8. **La subvención se asume concedida.** No hay carta de concesión en el repositorio; el timing LEADER se modela en el mes 14.
+9. **Los Excel originales no se redistribuyen.** El caso promotor está codificado a partir de los valores auditados y replicado en `statements.py`.
+10. **El P&L anual todavía usa una pila de costes simplificada.** Incluye COGS de restaurante (30%), pero no las comisiones OTA (9% del alojamiento), amenities (35 €/día) ni el coste del desayuno que sí incluye el motor de unit economics. Añadirlos reduciría el EBITDA de gestión en unos 23,5 k€ (hasta ~42,6 k€) y llevaría el DSCR por debajo de 1,25x. Es la primera prioridad de la siguiente iteración.
+11. **El OPEX es bajo para el activo.** Los 12.159 € de opex fijo son finos para un hotel de 550 m² con restaurante y biopiscina; un rango realista es 30.000–40.000 €. El puente de EBITDA de la auditoría muestra el efecto.
+12. **No hay reserva de FF&E, periodo de construcción, IDC ni carencia.** Se asume que la reforma abre inmediatamente después del cierre, y el CapEx de reforma de 440.000 € (800 €/m²) está por debajo del rango de mercado de 1.200–1.800 €/m². Ambos son materiales.
+13. **La demanda del restaurante es solo de huéspedes.** El modelo asume 21 cubiertos/día de clientes del hotel, sin cubiertos exteriores, eventos ni bebida. El restaurante es el 35% de los ingresos y no está suscrito de forma independiente.
 
+**Siguientes pasos que daría en un mandato real:**
+
+- Sustituir el ADR plano por una curva de reservas y un competitive set riguroso.
+- Integrar el motor mensual en el modelo de tres estados con un waterfall de caja.
+- Modelar el DSRA, el puente de IVA y la línea de crédito como facilidades separadas con covenants.
+- Ejecutar una optimización de debt sizing y un test de lock-up de distribuciones.
+- Encargar ofertas de construcción vinculantes y un informe de quantity surveyor para la Fase II.
+- Estresar la nómina con un escenario de plantilla a tiempo completo y una inflación salarial del 10%.
+
+---
+
+## 19. Referencias
+
+- **INE**, *Encuesta de Ocupación en Alojamientos de Turismo Rural* (EOTR), tabla 2070, Segovia, 2023–2025.
+- **Ley 37/1992**, *Impuesto sobre el Valor Añadido*, art. 91.Uno.2.2ª (tipo del 10% para hostelería) y arts. 92–114 (IVA soportado deducible).
+- **Ley 27/2014**, *Impuesto sobre Sociedades*, tipo del 25%.
+- **Convenio Colectivo Provincial de Hostelería de Segovia** (2026), tablas salariales de cocineros, camareros y auxiliares.
+- **Real Decreto 126/2026**, SMI 2026 (17.094 € brutos/año, 14 pagas de 1.221 €).
+- **LEADER / Diputación de Segovia**, marco de ayudas al desarrollo rural (163.000 € asumidos).
+- **USALI** (Uniform System of Accounts for the Lodging Industry), 11ª edición, para la estructura de unit economics.
+- **Benchmark:** Vivood Landscape Hotel (Alicante), Miluna Open Nature Rooms (Toledo), Basoa Suites (Navarra), Cabañitas del Bosque (A Coruña).
+
+---
+
+### Nota sobre autoría y propósito
+
+Los archivos Excel y Word originales son mi propio trabajo universitario. La capa Python se añadió para demostrar modelización financiera asistida por IA, no para reclamar la autoría del estudio original. El valor del modelo no es que haga que el proyecto parezca mejor; es que hace visibles, cuantificables y testeables sus debilidades. El veredicto `CONDITIONAL` de la auditoría es la salida honesta.

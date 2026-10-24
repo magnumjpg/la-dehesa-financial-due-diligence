@@ -2,11 +2,20 @@
 Main entry point for La Dehesa del Castrillo quantitative financial model.
 
 Executes:
-1. Raw data extraction & due diligence reconciliation.
-2. 5-year Three-Statement financial projection & credit covenant audit.
-3. Scenario stress-testing (Conservative, Base, Optimistic).
-4. Monte Carlo simulation (N=1,000) for credit risk and returns.
-5. Generation of institutional research figures in /assets.
+ 1. Raw data extraction & due diligence reconciliation.
+ 2. 5-year Three-Statement financial projection & credit covenant audit.
+ 3. Three-case comparison: management (upside), INE market, original promoter.
+ 4. Unit economics & contribution margin audit.
+ 5. Monthly cash flow, runway & cash trough audit.
+ 6. Scenario stress-testing (Conservative, Base, Optimistic).
+ 7. Sources & Uses / funding-gap analysis.
+ 8. Returns: project and equity IRR with and without exit.
+ 9. Monte Carlo simulation (N=1,000) for credit risk.
+10. Multivariate copula tail-risk engine (50,000 draws).
+11. Bank credit committee underwriting memorandum & DSRA sizing.
+12. Phase II expansion & phase-gate test.
+13. Computed model audit & data-room integrity verification.
+14. Excel export & chart generation.
 
 Usage:
     python main.py
@@ -27,6 +36,7 @@ from src.data.extract_raw import generate_reconciliation_summary
 from src.data.export_excel import export_institutional_excel
 from src.core.statements import FinancialModelEngine
 from src.core.metrics import CreditMetricsEngine
+from src.core.funding import SourcesUsesEngine
 from src.config.assumptions import SCENARIOS
 from src.scenarios.scenario_analysis import ScenarioEngine
 from src.simulation.monte_carlo import MonteCarloSimulator
@@ -41,16 +51,16 @@ def run_executive_pipeline(generate_charts: bool = True):
     print()
 
     # Step 1: Raw Data Audit & Reconciliation
-    print("[1/4] AUDIT RECONCILIATION: ORIGINAL EXCEL VS. REFINED MODEL")
+    print("[1/14] AUDIT RECONCILIATION: ORIGINAL EXCEL VS. REFINED MODEL")
     print("-" * 88)
     df_audit = generate_reconciliation_summary()
     print(df_audit.to_string(index=False))
     print()
 
-    # Step 2: 5-Year Baseline 3-Statement Forecast
-    print("[2/4] BASELINE 5-YEAR PROJECTION & CREDIT COVENANT COMPLIANCE (DSCR >= 1.25x)")
+    # Step 2: 5-Year Baseline 3-Statement Forecast (management case)
+    print("[2/14] MANAGEMENT-CASE 5-YEAR PROJECTION & CREDIT COVENANT COMPLIANCE (DSCR >= 1.25x)")
     print("-" * 88)
-    engine = FinancialModelEngine(scenario=SCENARIOS["base"])
+    engine = FinancialModelEngine(case="management", scenario=SCENARIOS["base"])
     df_proj = engine.run_projection(projection_years=5)
     debt_sched = engine.debt_engine.get_annual_schedule_df()
 
@@ -58,66 +68,119 @@ def run_executive_pipeline(generate_charts: bool = True):
     df_kpi = credit.compute_credit_kpis(df_proj, debt_sched)
 
     display_cols = [
-        "year",
-        "total_revenue",
-        "ebitda",
-        "ebit",
-        "net_income",
-        "cfo",
-        "ending_cash",
-        "total_debt",
-        "dscr",
-        "icr",
-        "dscr_covenant_pass",
+        "year", "total_revenue", "ebitda", "ebit", "net_income",
+        "cfo", "ending_cash", "total_debt", "dscr", "icr", "dscr_covenant_pass",
     ]
     df_display = df_kpi[display_cols].copy()
     df_display.columns = [
-        "Year",
-        "Revenue (€)",
-        "EBITDA (€)",
-        "EBIT (€)",
-        "Net Inc (€)",
-        "CFO (€)",
-        "End Cash (€)",
-        "Debt (€)",
-        "DSCR",
-        "ICR",
-        "Covenant",
+        "Year", "Revenue (€)", "EBITDA (€)", "EBIT (€)", "Net Inc (€)",
+        "CFO (€)", "End Cash (€)", "Debt (€)", "DSCR", "ICR", "Covenant",
     ]
     print(df_display.to_string(index=False))
     print()
 
-    # Check Balance Sheet Equality
     max_bs_diff = df_kpi["balance_sheet_discrepancy"].abs().max()
     print(f"-> Balance Sheet Strict Equality Test (Assets == Liab + Equity): PASSED (Max variance: {max_bs_diff:.4f} €)")
     print()
 
-    # Step 3: Unit Economics & Contribution Margin Audit
-    print("[3/9] UNIT ECONOMICS & CONTRIBUTION MARGIN AUDIT (USALI & MARGINAL COSTING)")
+    # Step 3: Three-case comparison
+    print("[3/14] THREE-CASE COMPARISON: MANAGEMENT (UPSIDE) vs. INE MARKET vs. PROMOTER")
+    print("-" * 88)
+    case_rows = []
+    for case in ("management", "market", "promoter"):
+        c_engine = FinancialModelEngine(case=case, scenario=SCENARIOS["base"])
+        c_df = c_engine.run_projection(projection_years=5)
+        c_debt = c_engine.debt_engine.get_annual_schedule_df()
+        c_kpi = credit.compute_credit_kpis(c_df, c_debt)
+        c_returns = credit.compute_returns_summary(
+            c_df,
+            initial_equity=c_engine.financing.sponsor_equity,
+            initial_capex=c_engine.capex.total_capex,
+        )
+        y1 = c_kpi.iloc[0]
+        case_rows.append({
+            "Case": case,
+            "Revenue Y1": round(float(y1["total_revenue"]), 2),
+            "EBITDA Y1": round(float(y1["ebitda"]), 2),
+            "DSCR Y1": round(float(y1["dscr"]), 2),
+            "Cash Y1": round(float(y1["ending_cash"]), 2),
+            "Project IRR (no exit)": round(float(c_returns["project_irr"] or 0.0) * 100, 2),
+            "Project IRR (8.5% exit)": round(float(c_returns["project_irr_exit"] or 0.0) * 100, 2),
+            "Equity IRR (8.5% exit)": round(float(c_returns["equity_irr_exit"] or 0.0) * 100, 2),
+        })
+    df_cases = pd.DataFrame(case_rows)
+    print(df_cases.to_string(index=False))
+    print("-> The management case is an upside case (31.36% mature occupancy, 1.48x the INE market average).")
+    print("-> The INE market case (21.24%) is the independent benchmark; the promoter case replicates the original Excel.")
+    print()
+
+    # Step 4: Unit Economics & Contribution Margin Audit
+    print("[4/14] UNIT ECONOMICS & CONTRIBUTION MARGIN AUDIT (USALI & MARGINAL COSTING)")
     print("-" * 88)
     from src.core.unit_economics import UnitEconomicsEngine
     ue_engine = UnitEconomicsEngine()
     ue_engine.print_terminal_summary()
     print()
 
-    # Step 4: Monthly Cash Flow, Runway & Cash Trough Audit
-    print("[4/9] YEAR 1 & 2 MONTHLY CASH FLOW, RUNWAY & CASH TROUGH AUDIT")
+    # Step 5: Monthly Cash Flow, Runway & Cash Trough Audit
+    print("[5/14] MONTHLY OPERATING LIQUIDITY STRESS (UNFUNDED VS. FUNDED)")
     print("-" * 88)
     from src.core.monthly_cash import MonthlyCashEngine
     mc_engine = MonthlyCashEngine()
     mc_engine.print_terminal_summary()
     print()
 
-    # Step 5: Scenario Stress-Testing
-    print("[5/9] SCENARIO STRESS-TESTING (CONSERVATIVE vs. BASE vs. OPTIMISTIC)")
+    # Step 6: Scenario Stress-Testing
+    print("[6/14] SCENARIO STRESS-TESTING (CONSERVATIVE vs. BASE vs. OPTIMISTIC)")
     print("-" * 88)
     sc_engine = ScenarioEngine(target_dscr=1.25, projection_years=3)
     df_scenarios = sc_engine.generate_scenario_comparison_table()
     print(df_scenarios.to_string(index=False))
     print()
 
-    # Step 6: Monte Carlo Credit Risk Simulation
-    print("[6/9] NAIVE GAUSSIAN MONTE CARLO SIMULATION (N=1,000 ITERATIONS)")
+    # Step 7: Sources & Uses / Funding Gap
+    print("[7/14] SOURCES & USES, FUNDING GAP & CREDIT-LINE CONSISTENCY")
+    print("-" * 88)
+    funding_rows = []
+    for case in ("management", "market", "promoter"):
+        f = SourcesUsesEngine(case=case).compute()
+        funding_rows.append({
+            "Case": case,
+            "Uses at close": f.total_uses_at_close,
+            "Sources at close": f.total_sources_at_close,
+            "Gap at close": f.funding_gap_at_close,
+            "Adj. cash Y1": f.cash_y1_adjusted,
+            "DSCR Y1": f.dscr_y1,
+            "Credit line drawn": f.model_credit_line_drawn_y1,
+            "Status": f.funding_status,
+        })
+    df_funding = pd.DataFrame(funding_rows)
+    print(df_funding.to_string(index=False))
+    print()
+    SourcesUsesEngine(case="management").print_terminal_summary()
+    print()
+
+    # Step 8: Returns
+    print("[8/14] RETURNS: PROJECT & EQUITY IRR WITH AND WITHOUT EXIT (8.5% CAP RATE)")
+    print("-" * 88)
+    returns = credit.compute_returns_summary(
+        df_proj,
+        initial_equity=engine.financing.sponsor_equity,
+        initial_capex=engine.capex.total_capex,
+        exit_cap_rate=0.085,
+    )
+    print(f"Project IRR (no exit):            {returns['project_irr']*100:>8.2f}%" if returns['project_irr'] is not None else "Project IRR (no exit):            n/a")
+    print(f"Project IRR (8.5% exit):          {returns['project_irr_exit']*100:>8.2f}%" if returns['project_irr_exit'] is not None else "Project IRR (8.5% exit):          n/a")
+    print(f"Equity IRR (no exit):             {returns['equity_irr']*100:>8.2f}%" if returns['equity_irr'] is not None else "Equity IRR (no exit):             n/a")
+    print(f"Equity IRR (8.5% exit):           {returns['equity_irr_exit']*100:>8.2f}%" if returns['equity_irr_exit'] is not None else "Equity IRR (8.5% exit):           n/a")
+    print(f"Terminal value (8.5% cap rate):   €{returns['terminal_value']:>12,.2f}")
+    print(f"Project MOIC:                     {returns['project_moic']:>8.2f}x")
+    print(f"Equity MOIC:                      {returns['equity_moic']:>8.2f}x")
+    print("-> Without an exit, the 5-year operating cash flow does not recover the CapEx; the exit is what drives the IRR.")
+    print()
+
+    # Step 9: Monte Carlo Credit Risk Simulation
+    print("[9/14] NAIVE GAUSSIAN MONTE CARLO SIMULATION (N=1,000 ITERATIONS)")
     print("-" * 88)
     sim = MonteCarloSimulator(iterations=1000, random_seed=42)
     _, summary = sim.run_simulation()
@@ -130,8 +193,8 @@ def run_executive_pipeline(generate_charts: bool = True):
     print(f"P(Insolvency Default) [DSCR < 1]: {summary.prob_cash_insolvency_y1*100:.1f}%")
     print()
 
-    # Step 7: Multivariate Copula Tail Risk Engine (50,000 draws)
-    print("[7/9] MULTIVARIATE COPULA TAIL RISK ENGINE (50,000 DRAWS: GAUSSIAN vs. STUDENT-T vs. CLAYTON)")
+    # Step 10: Multivariate Copula Tail Risk Engine
+    print("[10/14] MULTIVARIATE COPULA TAIL RISK ENGINE (50,000 DRAWS: GAUSSIAN vs. STUDENT-T vs. CLAYTON)")
     print("-" * 88)
     from src.simulation.copula_engine import CopulaSimulationEngine
     from src.core.credit_committee import CreditCommitteeMemo
@@ -142,15 +205,37 @@ def run_executive_pipeline(generate_charts: bool = True):
     print(df_copula_summary.to_string(index=False))
     print()
 
-    # Step 8: Bank Credit Committee Underwriting Memorandum & DSRA Sizing
-    print("[8/9] BANK CREDIT COMMITTEE UNDERWRITING MEMORANDUM & DSRA SIZING")
+    # Step 11: Bank Credit Committee Underwriting Memorandum & DSRA Sizing
+    print("[11/14] BANK CREDIT COMMITTEE UNDERWRITING MEMORANDUM & DSRA SIZING")
     print("-" * 88)
     memo = CreditCommitteeMemo(copula_results=copula_results)
     memo.print_terminal_summary()
     print()
 
-    # Step 9: Programmatic Model Audit & Data Room Integrity Verification
-    print("[9/10] PROGRAMMATIC MODEL AUDIT & DATA ROOM INTEGRITY VERIFICATION")
+    # Step 12: Phase II Expansion & Phase Gate
+    print("[12/14] PHASE II EXPANSION & PHASE-GATE TEST (LANDSCAPE SUITES & BIOLOGICAL POND)")
+    print("-" * 88)
+    from src.core.expansion import ExpansionFinancialEngine
+    exp_engine = ExpansionFinancialEngine()
+    phase1_cash_y2 = float(df_kpi.iloc[1]["ending_cash"])
+    phase1_dscr_y3 = float(df_kpi.iloc[2]["dscr"])
+    gate = exp_engine.compute_phase_gate(phase1_cash_y2, phase1_dscr_y3)
+    consolidated = exp_engine.compute_consolidated_underwriting(
+        phase1_cash_end_y2=phase1_cash_y2,
+        phase1_dscr_y3=phase1_dscr_y3,
+    )
+    exp_engine.print_terminal_summary(phase1_cash_end_y2=phase1_cash_y2, phase1_dscr_y3=phase1_dscr_y3)
+    print()
+    print("PHASE-GATE SUMMARY:")
+    print(f"  Phase I cash at end of Year 2:   €{gate['phase1_cash_end_y2']:,.2f}")
+    print(f"  Phase II cash need:              €{gate['phase2_cash_need']:,.2f}")
+    print(f"  Phase II funding gap:            €{gate['phase2_funding_gap']:,.2f}")
+    print(f"  Phase II proceed:                {gate['phase2_proceed']}")
+    print(f"  Recommendation:                  {gate['recommendation']}")
+    print()
+
+    # Step 13: Programmatic Model Audit
+    print("[13/14] COMPUTED MODEL AUDIT & DATA ROOM INTEGRITY VERIFICATION")
     print("-" * 88)
     from src.core.model_audit import ModelAuditEngine
     audit_engine = ModelAuditEngine()
@@ -159,15 +244,9 @@ def run_executive_pipeline(generate_charts: bool = True):
     print(f"-> Exported Model Audit Summary JSON: {audit_json_path.name} ({audit_json_path.stat().st_size / 1024:.1f} KB)")
     print()
 
-    # Step 10: Phase II Expansion & Value-Add Underwriting
-    print("[10/10] PHASE II EXPANSION & VALUE-ADD UNDERWRITING (LANDSCAPE SUITES & BIOLOGICAL POND)")
+    # Step 14: Visual Assets & Excel Deliverables
+    print("[14/14] DELIVERABLES: CHARTS & EXCEL MODEL")
     print("-" * 88)
-    from src.core.expansion import ExpansionFinancialEngine
-    exp_engine = ExpansionFinancialEngine()
-    exp_engine.print_terminal_summary()
-    print()
-
-    # Visual Assets & Deliverables
     if generate_charts:
         print("-> Generating Institutional Charts in /assets (Figures 1 to 6)...")
         figs = generate_all_figures()
@@ -175,15 +254,14 @@ def run_executive_pipeline(generate_charts: bool = True):
             print(f"   [OK] {f.name} ({f.stat().st_size / 1024:.1f} KB)")
         print()
 
-    print("-> Exporting Master 8-Tab Excel Model in /data...")
+    print("-> Exporting Master Excel Model in /data...")
     excel_path = export_institutional_excel()
     print(f"   [OK] {excel_path.name} ({excel_path.stat().st_size / 1024:.1f} KB)")
     print()
 
     print("=" * 88)
-    print(" EXECUTION COMPLETED: ALL AUDIT IDENTITIES CONFIRMED & PORTFOLIO ASSETS READY")
+    print(" EXECUTION COMPLETED: MODEL, FUNDING GAP, RETURNS & AUDIT EXCEPTIONS REPORTED")
     print("=" * 88)
-
 
 
 if __name__ == "__main__":

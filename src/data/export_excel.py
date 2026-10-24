@@ -36,6 +36,7 @@ from src.core.credit_committee import CreditCommitteeMemo
 from src.core.unit_economics import UnitEconomicsEngine
 from src.core.monthly_cash import MonthlyCashEngine
 from src.core.expansion import ExpansionFinancialEngine
+from src.data.live_excel import add_live_model_tabs
 
 
 def get_data_dir() -> Path:
@@ -83,7 +84,7 @@ def export_institutional_excel(filename: str = "La_Dehesa_del_Castrillo_Financia
     ws1.title = "Executive Scorecard"
     ws1.views.sheetView[0].showGridLines = True
 
-    ws1["A1"] = "LA DEHESA DEL CASTRILLO S.L. - INVESTMENT MEMORANDUM & UNDERWRITING SCORECARD"
+    ws1["A1"] = "LA DEHESA DEL CASTRILLO S.L. - MANAGEMENT (UPSIDE) CASE & UNDERWRITING SCORECARD"
     ws1["A1"].font = title_font
     ws1["A2"] = "Location: Segovia, Spain | CapEx: 729,000 € | Capital Structure: 70% Senior Mortgage / 30% Sponsor Equity"
     ws1["A2"].font = Font(name="Calibri", size=10, italic=True, color="64748B")
@@ -96,10 +97,10 @@ def export_institutional_excel(filename: str = "La_Dehesa_del_Castrillo_Financia
         cell.alignment = Alignment(horizontal="center", vertical="center")
 
     summary_rows = [
-        ("Gross Revenue (€)", f"{df_kpi.iloc[0]['total_revenue']:,.2f}", f"{df_kpi.iloc[1]['total_revenue']:,.2f}", f"{df_kpi.iloc[2]['total_revenue']:,.2f}", "Calibrated with INE Segovia"),
+        ("Gross Revenue (€)", f"{df_kpi.iloc[0]['total_revenue']:,.2f}", f"{df_kpi.iloc[1]['total_revenue']:,.2f}", f"{df_kpi.iloc[2]['total_revenue']:,.2f}", "Management 31.36%; INE market 21.24%"),
         ("EBITDA (€)", f"{df_kpi.iloc[0]['ebitda']:,.2f}", f"{df_kpi.iloc[1]['ebitda']:,.2f}", f"{df_kpi.iloc[2]['ebitda']:,.2f}", "Margin: 42.8% to 49.4%"),
-        ("Net Income (€)", f"{df_kpi.iloc[0]['net_income']:,.2f}", f"{df_kpi.iloc[1]['net_income']:,.2f}", f"{df_kpi.iloc[2]['net_income']:,.2f}", "Linear fiscal depreciation shield"),
-        ("Ending Cash (€)", f"{df_kpi.iloc[0]['ending_cash']:,.2f}", f"{df_kpi.iloc[1]['ending_cash']:,.2f}", f"{df_kpi.iloc[2]['ending_cash']:,.2f}", "Solvency confirmed; LEADER grant"),
+        ("Net Income (€)", f"{df_kpi.iloc[0]['net_income']:,.2f}", f"{df_kpi.iloc[1]['net_income']:,.2f}", f"{df_kpi.iloc[2]['net_income']:,.2f}", "25% tax; no BIN shield in this case"),
+        ("Ending Cash (€)", f"{df_kpi.iloc[0]['ending_cash']:,.2f}", f"{df_kpi.iloc[1]['ending_cash']:,.2f}", f"{df_kpi.iloc[2]['ending_cash']:,.2f}", "Before omitted close-day uses; see Funding & Audit"),
         ("Senior Debt Balance (€)", f"{df_kpi.iloc[0]['total_debt']:,.2f}", f"{df_kpi.iloc[1]['total_debt']:,.2f}", f"{df_kpi.iloc[2]['total_debt']:,.2f}", "15-year French mortgage (€507.5k)"),
         ("Debt Service Coverage (DSCR)", f"{df_kpi.iloc[0]['dscr']:.2f}x", f"{df_kpi.iloc[1]['dscr']:.2f}x", f"{df_kpi.iloc[2]['dscr']:.2f}x", "Bank Covenant Floor >= 1.25x"),
         ("Interest Coverage (ICR)", f"{df_kpi.iloc[0]['icr']:.2f}x", f"{df_kpi.iloc[1]['icr']:.2f}x", f"{df_kpi.iloc[2]['icr']:.2f}x", "Conservative interest coverage"),
@@ -385,7 +386,14 @@ def export_institutional_excel(filename: str = "La_Dehesa_del_Castrillo_Financia
     exp_pnl = exp_engine.compute_stabilized_pnl(scenario="base")
     df_exp_5y = exp_engine.compute_5year_schedule()
     exp_metrics = exp_engine.compute_investment_metrics()
-    exp_cons = exp_engine.compute_consolidated_underwriting()
+    exp_realistic = exp_engine.compute_investment_metrics(scenario="realistic")
+    exp_stress = exp_engine.compute_investment_metrics(scenario="stress")
+    phase1_cash_y2 = float(df_kpi.iloc[1]["ending_cash"])
+    phase1_dscr_y3 = float(df_kpi.iloc[2]["dscr"])
+    exp_cons = exp_engine.compute_consolidated_underwriting(
+        phase1_cash_end_y2=phase1_cash_y2,
+        phase1_dscr_y3=phase1_dscr_y3,
+    )
 
     # Section 1: All-In CapEx Schedule
     ws8["A3"] = "1. PHASE II ALL-IN CAPEX & EXECUTION BUDGET (110 M² SUITES + 200 M² POND)"
@@ -402,7 +410,7 @@ def export_institutional_excel(filename: str = "La_Dehesa_del_Castrillo_Financia
         ("Municipal Taxes, Urban Fees & ICIO (4.5% PEM)", f"{exp_capex.municipal_taxes_icio:,.2f} EUR", "Segovia rural municipality rate"),
         ("Contingency Reserve (5.0% PEC)", f"{exp_capex.contingency_reserve:,.2f} EUR", "Granite rock & unforeseen works"),
         ("TOTAL ALL-IN EXPANSION CAPEX (Net of Deductible VAT)", f"{exp_capex.total_all_in_capex:,.2f} EUR", "179,985.00 EUR all-in per suite"),
-        ("Financing Structure (Zero New Senior Debt)", "100% Retained Cash", "Year 2 LEADER (163k) + VAT Refund (152.2k)"),
+        ("Financing Structure (Phase-Gated)", f"{exp_cons['phase2_funding_gap']:,.2f} EUR gap", "Phase I cash < Phase II need; do not double-count LEADER + VAT"),
     ]
 
     ws8.cell(row=4, column=1, value="CapEx Investment Chapter").fill = navy_fill
@@ -438,8 +446,13 @@ def export_institutional_excel(filename: str = "La_Dehesa_del_Castrillo_Financia
         ("Simple Post-Tax FCF Payback Period", f"{exp_metrics['simple_fcf_payback_years']:.2f} Years", "61.2 months recovery"),
         ("Year 5 Exit Valuation @ 8.5% Cap Rate", f"{exp_metrics['exit_val_85bps']:,.2f} EUR", f"Net gain: +{exp_metrics['net_gain_85bps']:,.2f} EUR"),
         ("5-Year Post-Tax IRR with Exit (8.5% Cap Rate)", f"{exp_metrics['irr_85bps']*100:.2f}%", f"MOIC: {exp_metrics['moic_85bps']:.2f}x"),
-        ("Consolidated Group EBITDA (Phase 1 + 2)", f"{exp_cons['consolidated_ebitda_y3']:,.2f} EUR", "+111.76% surge vs Phase 1 baseline"),
-        ("Consolidated Debt Service Coverage (DSCR)", f"{exp_cons['consolidated_dscr_y3']:.2f}x", "Expands from 2.05x to 4.34x (Zero debt add)"),
+        ("Realistic Scenario EBITDA (45% occ + 1 FTE)", f"{exp_realistic['ebitda_y3']:,.2f} EUR", f"IRR: {exp_realistic['irr_85bps']*100:.1f}%"),
+        ("Stress Scenario EBITDA (36.4% occ + 1 FTE)", f"{exp_stress['ebitda_y3']:,.2f} EUR", f"IRR: {exp_stress['irr_85bps']*100:.1f}%"),
+        ("Phase II Cash Need (net CapEx + VAT)", f"{exp_cons['phase2_cash_need']:,.2f} EUR", "€359,970 + €75,593.70"),
+        ("Phase I Cash at End of Year 2", f"{phase1_cash_y2:,.2f} EUR", "Available for Phase II"),
+        ("Phase II Funding Gap", f"{exp_cons['phase2_funding_gap']:,.2f} EUR", "Negative = not self-funded; raise additional funding"),
+        ("Consolidated Group EBITDA (Phase 1 + 2)", f"{exp_cons['consolidated_ebitda_y3']:,.2f} EUR", "+111.8% vs Phase 1 baseline (if funded)"),
+        ("Consolidated Debt Service Coverage (DSCR)", f"{exp_cons['consolidated_dscr_y3']:.2f}x", f"{phase1_dscr_y3:.2f}x to {exp_cons['consolidated_dscr_y3']:.2f}x (no new senior debt)"),
     ]
 
     ws8.cell(row=4, column=5, value="Return / Underwriting Parameter").fill = navy_fill
@@ -461,7 +474,7 @@ def export_institutional_excel(filename: str = "La_Dehesa_del_Castrillo_Financia
         c3.border = thin_border
 
     # Section 3: 5-Year Trajectory Schedule
-    start_row_traj = 18
+    start_row_traj = 25
     ws8.cell(row=start_row_traj, column=1, value="3. 5-YEAR COMMERCIAL RAMP-UP & CASH FLOW TRAJECTORY SCHEDULE").font = bold_font
 
     traj_display_cols = [
@@ -496,12 +509,19 @@ def export_institutional_excel(filename: str = "La_Dehesa_del_Castrillo_Financia
             cell.font = regular_font
             cell.border = thin_border
 
-    # Auto-adjust column widths across all sheets
+    # Add the live, formula-driven tabs (Inputs, Live Model, Funding & Audit, Read Me)
+    add_live_model_tabs(wb, engine, df_proj, df_kpi, debt_sched)
+
+    # Auto-adjust column widths across the report tabs. The live tabs set their
+    # own widths, and formulas should not inflate the column width.
+    live_tabs = {"Read Me & Checks", "Inputs", "Live Model", "Funding & Audit"}
     for ws in wb.worksheets:
+        if ws.title in live_tabs:
+            continue
         for col in ws.columns:
             max_len = max(len(str(cell.value or "")) for cell in col)
             col_letter = get_column_letter(col[0].column)
-            ws.column_dimensions[col_letter].width = max(max_len + 3, 12)
+            ws.column_dimensions[col_letter].width = min(max(max_len + 3, 12), 42)
 
     wb.save(output_path)
     return output_path

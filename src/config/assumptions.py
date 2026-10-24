@@ -103,8 +103,16 @@ class FinancingStructure:
     equity_share: float = 0.30
     credit_line_limit: float = 50_000.0
     credit_line_interest: float = 0.055  # 5.5% annual on drawn amount
+    initial_credit_line_draw: float = 0.0  # Promoter case: 20,000 € opening draw
     leader_subsidy_amount: float = 163_000.0  # LEADER EU rural development grant
     leader_disbursement_month: int = 14  # Typical administrative review delay
+
+    # Close-day funding requirements that the original model omitted.
+    pre_opening_costs: float = 25_000.0      # Pre-opening staff, permits, launch marketing
+    initial_working_capital: float = 20_000.0  # Opening inventory, deposits, utilities
+    dsra_months: int = 6                     # Debt service reserve account (months)
+    vat_bridge_limit: float = 153_090.0      # Dedicated VAT refund bridge facility
+    vat_refund_month: int = 18               # Conservative AEAT refund timing (M18)
 
     # Senior Debt parameters (Mortgage loan)
     loan_tenure_years: int = 15
@@ -129,11 +137,19 @@ class EmployeeRole:
     """
     Employee compensation under the Segovia Provincial Hospitality Agreement.
     BOCyL - Convenio Colectivo Provincial de Hostelería de Segovia.
+
+    The original university report (Trabajo Control Presupuestario) documents
+    part-time contracts adapted to production: two cooks share ~1,900 hours
+    and the housekeeper works 1,792 hours. The annual gross amounts below are
+    therefore *part-time* annual costs, not full-time convenio salaries. The
+    model records the hours and FTE equivalent explicitly so that the hourly
+    cost can be audited against the SMI and the convenio tables.
     """
     title: str
     group: str
     headcount: int
     base_gross_annual: float
+    annual_hours: float = 1_764.0  # Full-time equivalent hours (1,764 h/year)
     employer_social_security_rate: float = 0.35  # 35.0% SS Patronal
 
     @property
@@ -144,10 +160,35 @@ class EmployeeRole:
     def total_annual_cost(self) -> float:
         return self.headcount * self.annual_employer_cost_per_employee
 
+    @property
+    def fte(self) -> float:
+        """Full-time equivalent of the contracted hours (1,764 h/year)."""
+        return self.annual_hours / 1_764.0
+
+    @property
+    def hourly_gross_cost(self) -> float:
+        return self.base_gross_annual / self.annual_hours if self.annual_hours > 0 else 0.0
+
+    @property
+    def hourly_employer_cost(self) -> float:
+        return self.annual_employer_cost_per_employee / self.annual_hours if self.annual_hours > 0 else 0.0
+
+
+# Statutory reference values (2026).
+SMI_2026_ANNUAL: float = 17_094.0          # 14 payments x 1,221 € (RD 126/2026)
+SMI_2026_HOURLY: float = 9.69               # 17,094 / 1,764 h
+CONVENIO_SEGOVIA_2026_HOURLY: Dict[str, float] = {
+    "Jefe de Cocina": 19_641.89 / 1_764.0,   # 11.13 €/h
+    "Cocinero": 17_844.16 / 1_764.0,         # 10.12 €/h
+    "Camarero": 17_844.16 / 1_764.0,         # 10.12 €/h
+    "Auxiliar de pisos": 15_916.22 / 1_764.0,  # 9.02 €/h
+    "Recepcionista": 18_713.66 / 1_764.0,    # 10.61 €/h
+}
+
 
 @dataclass(frozen=True)
 class LaborStructure:
-    """Labor structure aligned with Segovia Hospitality Collective Agreement."""
+    """Labor structure aligned with the original part-time contract design."""
     roles: List[EmployeeRole] = field(
         default_factory=lambda: [
             EmployeeRole(
@@ -155,6 +196,7 @@ class LaborStructure:
                 group="Grupo II - Producción Hostelería",
                 headcount=1,
                 base_gross_annual=13_500.0,
+                annual_hours=950.0,
                 employer_social_security_rate=0.35,
             ),
             EmployeeRole(
@@ -162,6 +204,7 @@ class LaborStructure:
                 group="Grupo II - Apoyo Sala y Eventos",
                 headcount=1,
                 base_gross_annual=13_500.0,
+                annual_hours=950.0,
                 employer_social_security_rate=0.35,
             ),
             EmployeeRole(
@@ -169,6 +212,7 @@ class LaborStructure:
                 group="Grupo III - Mantenimiento e Higiene",
                 headcount=1,
                 base_gross_annual=17_500.0,
+                annual_hours=1_792.0,
                 employer_social_security_rate=0.35,
             ),
         ]
@@ -179,6 +223,39 @@ class LaborStructure:
         """Total annual labor expense including employer social security (60.075 €)."""
         return sum(role.total_annual_cost for role in self.roles)
 
+    @property
+    def total_fte(self) -> float:
+        """Total full-time equivalent headcount (2.09 FTE, not 3 FTE)."""
+        return sum(role.headcount * role.fte for role in self.roles)
+
+    @property
+    def total_hours(self) -> float:
+        return sum(role.headcount * role.annual_hours for role in self.roles)
+
+    @property
+    def hourly_compliance(self) -> List[Dict[str, float]]:
+        """Per-role hourly cost vs. SMI and convenio reference rates."""
+        result = []
+        for role in self.roles:
+            convenio_key = (
+                "Jefe de Cocina" if "Jefa" in role.title
+                else "Cocinero" if "Cocina" in role.title
+                else "Auxiliar de pisos"
+            )
+            reference = CONVENIO_SEGOVIA_2026_HOURLY.get(convenio_key, SMI_2026_HOURLY)
+            result.append({
+                "role": role.title,
+                "annual_hours": role.annual_hours,
+                "fte": role.fte,
+                "hourly_gross": round(role.hourly_gross_cost, 2),
+                "hourly_employer": round(role.hourly_employer_cost, 2),
+                "smi_hourly": SMI_2026_HOURLY,
+                "convenio_hourly": round(reference, 2),
+                "compliant_smi": role.hourly_gross_cost >= SMI_2026_HOURLY,
+                "compliant_convenio": role.hourly_gross_cost >= reference,
+            })
+        return result
+
 
 @dataclass(frozen=True)
 class FixedOpexStructure:
@@ -188,6 +265,7 @@ class FixedOpexStructure:
     utilities: float = 3_659.0     # Water, grid electricity, biomass pellets
     marketing_seo: float = 2_500.0 # OTA commissions optimization, local SEO, website
     pms_software: float = 1_200.0  # Cloud PMS, smart lock API, channel manager
+    purchases: float = 0.0         # Original promoter case: F&B purchases booked as opex
 
     @property
     def total_fixed_opex(self) -> float:
@@ -197,6 +275,7 @@ class FixedOpexStructure:
             + self.utilities
             + self.marketing_seo
             + self.pms_software
+            + self.purchases
         )
 
 
@@ -235,7 +314,35 @@ class RevenueModelConfig:
     adr_factor_year_2: float = 0.95 # 5% promotional discount in Year 2
     mpi_year_3: float = 1.00        # 100% mature market occupancy
     adr_factor_year_3: float = 1.00 # 100% mature rack rate
-    calibration_mode: str = "ine_market" # 'ine_market' or 'leader_excel'
+
+    # Case selector:
+    # - "ine_market" / "management": current Python base (31.36% mature occupancy,
+    #   one on-site meal per guest per day, €25 ticket). This is an UPSIDE case.
+    # - "market": INE Segovia 2025 (21.24%) with the original unit economics
+    #   (€85 room, €380 house, €20 ticket, 859 meals at 19.2% scaled to 21.24%).
+    # - "promoter": exact original university simulator (491 rooms, 72 house,
+    #   859 meals, €85/€380/€20, +25% Y2, +20% Y3).
+    calibration_mode: str = "ine_market"
+
+    # Original promoter simulator (La_Dehesa_de_Castrillo.xlsx, "Plan y Simulador Completo")
+    promoter_room_nights_y1: int = 491
+    promoter_house_nights_y1: int = 72
+    promoter_meals_y1: int = 859
+    promoter_room_adr: float = 85.0
+    promoter_house_adr: float = 380.0
+    promoter_restaurant_ticket: float = 20.0
+    promoter_growth_y2: float = 1.25
+    promoter_growth_y3: float = 1.20
+
+    # INE market case: original unit economics scaled from 19.2% to 21.24%.
+    market_room_nights_y1: int = 543
+    market_house_nights_y1: int = 80
+    market_meals_y1: int = 950
+    market_room_adr: float = 85.0
+    market_house_adr: float = 380.0
+    market_restaurant_ticket: float = 20.0
+    market_growth_y2: float = 1.25
+    market_growth_y3: float = 1.20
 
 
 @dataclass(frozen=True)

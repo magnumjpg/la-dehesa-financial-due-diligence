@@ -87,7 +87,7 @@ class CreditCommitteeMemo:
 **Borrower:** La Dehesa del Castrillo S.L.  
 **Sponsor:** Private Hospitality Developers (Segovia, Spain)  
 **Security:** Senior First-Demand Mortgage on 25-Hectare Rural Estate and 550 m2 Renovated Hotel Asset  
-**Date:** October 2026 | Risk Rating: BB+ (Investment Grade with DSRA Enhancement)
+**Date:** October 2026 | Risk Rating: BB+ (Sub-Investment Grade; DSRA Enhancement)
 
 ---
 

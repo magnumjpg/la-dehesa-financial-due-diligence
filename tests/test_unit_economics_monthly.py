@@ -51,21 +51,39 @@ def test_revpar_trevpar_schedule():
 
 
 def test_monthly_cash_flow_schedule():
-    mc = MonthlyCashEngine(initial_cash_buffer=56_750.0)
+    # Unfunded: opening cash is the adjusted close cash (-€55,978.44), so the
+    # €50k line is maxed and the winter trough is negative. This is the honest
+    # downside that the old €56,750 "buffer" hid.
+    mc = MonthlyCashEngine()
     df_monthly = mc.run_monthly_schedule(horizon_months=24)
 
     assert len(df_monthly) == 24
     assert (df_monthly["month_index"] == list(range(1, 25))).all()
-
-    # Cash balance must remain positive at all times
-    assert (df_monthly["ending_cash_balance"] >= 0.0).all()
-
-    # Credit line must not exceed limit
     assert (df_monthly["credit_line_drawn"] <= 50_000.0).all()
 
     summary = mc.get_runway_summary(df_monthly)
     assert isinstance(summary, MonthlyRunwaySummary)
-    assert summary.liquidity_cushion_never_breached is True
-    assert summary.year1_trough_month_index in [1, 2, 3]  # Winter trough in Jan-Feb-Mar
-    assert summary.year1_trough_cash_balance > 0.0
+    assert summary.liquidity_cushion_never_breached is False
+    assert summary.year1_trough_month_index == 3  # March
+    assert summary.year1_trough_cash_balance == pytest.approx(-17_906.26, abs=0.01)
+    assert summary.year1_max_credit_line_draw == 50_000.0
+    assert summary.year1_ending_cash > 0
     assert summary.year2_ending_cash > summary.year1_ending_cash
+
+
+def test_monthly_cash_flow_after_equity_injection():
+    # Funded: add the recommended €70,768.18 equity injection. The trough sits
+    # at the €10,000 policy floor and the line draw is only €7,138.08.
+    mc = MonthlyCashEngine(initial_cash_buffer=-55_978.44 + 70_768.18)
+    df_monthly = mc.run_monthly_schedule(horizon_months=24)
+    summary = mc.get_runway_summary(df_monthly)
+
+    assert summary.year1_trough_cash_balance == pytest.approx(10_000.00, abs=0.01)
+    assert summary.year1_max_credit_line_draw == pytest.approx(7_138.08, abs=0.01)
+    assert summary.liquidity_cushion_never_breached is True
+    assert summary.year1_ending_cash > 0
+
+    # The AEAT refund repays the VAT bridge: it is not a second inflow.
+    m18 = df_monthly[df_monthly["month_index"] == 18].iloc[0]
+    assert m18["tax_bridge_inflows"] == pytest.approx(143_596.37, abs=0.01)
+    assert m18["vat_bridge_repayment"] == pytest.approx(-143_596.37, abs=0.01)

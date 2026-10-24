@@ -2,13 +2,16 @@
 Data extraction and audit reconciliation pipeline for raw Excel files.
 
 Sources audited:
-1. raw_data/La_Dehesa_de_Castrillo_Proyecto.xlsx (Baseline plan & formulas)
-2. raw_data/Presentacion_La_Dehesa.xlsx (Segovia collective agreement & VAT correction)
+1. raw_data/La_Dehesa_de_Castrillo_Proyecto.xlsx (original plan & formulas)
+2. raw_data/Presentacion_La_Dehesa.xlsx (Segovia collective agreement & costs)
 
 Highlights:
-- Verifies exact cell values and formulas.
-- Documents the VAT 21% vs 10% discrepancy (the "paper trap").
-- Checks labor costs against Segovia hospitality collective agreement.
+- Reconciles the original university Excel (promoter case) with the refined
+  management (upside) and INE market cases.
+- The original Excel did not apply 21% output VAT to sales; the "VAT paper
+  trap" was a narrative claim, not a spreadsheet error. The refined model
+  applies the statutory 10% hospitality rate and a 21% input-VAT bridge.
+- Checks part-time labor hours against the Segovia hospitality agreement.
 """
 
 from pathlib import Path
@@ -144,22 +147,97 @@ def extract_raw_excel_data() -> Dict[str, Any]:
 
 
 def generate_reconciliation_summary() -> pd.DataFrame:
-    """Generates an executive reconciliation audit table."""
-    data = extract_raw_excel_data()
-    cb = data["capex_base"]
-    lb = data["labor_base"]
-    sl = data["segovia_labor"]
-    vc = data["vat_comparison"]
+    """
+    Executive reconciliation of the original university Excel and the three
+    refined cases.
+
+    The original Excel is the promoter case. The Python layer adds an
+    independent INE market case and a management/upside case. The table is
+    computed from the model, not from stale hard-coded cells.
+    """
+    from src.config.assumptions import SCENARIOS
+    from src.core.metrics import CreditMetricsEngine
+    from src.core.statements import FinancialModelEngine
+
+    metrics = CreditMetricsEngine()
+    cases: Dict[str, Dict[str, float]] = {}
+    for case in ("management", "market", "promoter"):
+        engine = FinancialModelEngine(case=case, scenario=SCENARIOS["base"])
+        df = engine.run_projection(5)
+        debt = engine.debt_engine.get_annual_schedule_df()
+        kpi = metrics.compute_credit_kpis(df, debt)
+        y1 = kpi.iloc[0]
+        cases[case] = {
+            "revenue": float(y1["total_revenue"]),
+            "ebitda": float(y1["ebitda"]),
+            "cash": float(y1["ending_cash"]),
+            "dscr": float(y1["dscr"]),
+        }
+
+    def triple(key: str, fmt: str) -> str:
+        return " / ".join(fmt.format(cases[c][key]) for c in ("management", "market", "promoter"))
 
     rows = [
-        {"Category": "Total CapEx Base", "Original Excel": f"{cb['total_capex']:,.2f} €", "Refined Model": "725,000.00 €", "Notes": "Land 250k, Works 440k, Pool 35k"},
-        {"Category": "Digitalization (Kit Digital)", "Original Excel": "N/A in Sheet 1", "Refined Model": "4,000.00 €", "Notes": "PMS, Smart locks, Web portal"},
-        {"Category": "Senior Debt (70%)", "Original Excel": f"{cb['total_capex']*0.7:,.2f} €", "Refined Model": "507,500.00 €", "Notes": "Mortgage backed by 25 ha real estate"},
-        {"Category": "Sponsor Equity (30%)", "Original Excel": f"{cb['total_capex']*0.3:,.2f} €", "Refined Model": "217,500.00 €", "Notes": "Initial partner equity contributions"},
-        {"Category": "Labor Cost (Annual)", "Original Excel": f"{lb['cooks_payroll'] + lb['cleaning_payroll']:,.2f} €", "Refined Model": f"{sl['total_payroll']:,.2f} €", "Notes": "Convenio Segovia: 2 Cook II + 1 Cleaning III @ 35% SS"},
-        {"Category": "Input VAT on CapEx", "Original Excel": "Excluded / Misclassified", "Refined Model": "152,250.00 €", "Notes": "21% deductible tax credit"},
-        {"Category": "Hospitality Sales VAT", "Original Excel": "21.0% (Flawed standard)", "Refined Model": "10.0% (Statutory Ley IVA)", "Notes": "Accommodation and catering standard rate"},
-        {"Category": "Year 1 Cash Balance", "Original Excel": f"{vc['cash_balance_y1_error']:,.2f} €", "Refined Model": f"{vc['cash_balance_y1_correct']:,.2f} €", "Notes": f"Diff: +{vc['cash_balance_y1_delta']:,.2f} € (Solvency confirmed)"},
+        {
+            "Category": "Occupancy (mature)",
+            "Original Excel": "19.20%",
+            "Refined: mgmt / market / promoter": "31.36% / 21.24% / 19.20%",
+            "Notes": "Management is 1.48x INE; promoter is the original.",
+        },
+        {
+            "Category": "Year 1 revenue",
+            "Original Excel": "86,275.00 €",
+            "Refined: mgmt / market / promoter": triple("revenue", "{:,.0f} €"),
+            "Notes": "Management adds 1 meal/guest/day at €25.",
+        },
+        {
+            "Category": "Year 1 EBITDA",
+            "Original Excel": "11,297.00 €",
+            "Refined: mgmt / market / promoter": triple("ebitda", "{:,.0f} €"),
+            "Notes": "Promoter matches the original to the euro.",
+        },
+        {
+            "Category": "Year 1 ending cash",
+            "Original Excel": "-2,560.00 € (approx.)",
+            "Refined: mgmt / market / promoter": triple("cash", "{:,.0f} €"),
+            "Notes": "Original negative cash is a real funding gap.",
+        },
+        {
+            "Category": "Year 1 DSCR",
+            "Original Excel": "n/a (no DSCR line)",
+            "Refined: mgmt / market / promoter": triple("dscr", "{:.2f}x"),
+            "Notes": "Only management clears 1.25x.",
+        },
+        {
+            "Category": "CapEx",
+            "Original Excel": "725,000.00 €",
+            "Refined: mgmt / market / promoter": "729,000.00 €",
+            "Notes": "Includes €4k Kit Digital.",
+        },
+        {
+            "Category": "Payroll (annual)",
+            "Original Excel": "58,740.00 €",
+            "Refined: mgmt / market / promoter": "60,075.00 €",
+            "Notes": "Part-time hours; employer SS included.",
+        },
+        {
+            "Category": "Input VAT on CapEx",
+            "Original Excel": "Not modeled",
+            "Refined: mgmt / market / promoter": "153,090 / 143,596 €",
+            "Notes": "21% deductible; bridge is financing.",
+        },
+        {
+            "Category": "Output VAT",
+            "Original Excel": "Not modeled (net revenue)",
+            "Refined: mgmt / market / promoter": "10.0% statutory",
+            "Notes": "Original sheet did not apply 21% to sales.",
+        },
+        {
+            "Category": "Balance sheet",
+            "Original Excel": "Single sheet, no balance sheet",
+            "Refined: mgmt / market / promoter": "Assets = L + E (0.00 €)",
+            "Notes": "Strict double-entry, 5 years, 3 cases.",
+        },
     ]
 
     return pd.DataFrame(rows)

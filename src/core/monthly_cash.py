@@ -1,11 +1,14 @@
 """
 Monthly Cash Flow, Runway & Working Capital Engine for La Dehesa del Castrillo S.L.
 
-Solves the seasonal liquidity and cash trough dilemma in rural hospitality:
-1. Translates annual projections into empirical month-by-month cash burn and runway.
+Standalone operating-liquidity stress:
+1. Translates annual projections into month-by-month cash burn and runway.
 2. Models Segovia winter trough (Jan-Feb), spring lift, and summer cash surge.
-3. Identifies the exact Cash Trough month in Year 1 and verifies liquidity cushion integrity.
-4. Simulates the €50,000 revolving credit line drawdown and repayment upon AEAT VAT refund and LEADER grant collection.
+3. Identifies the exact Cash Trough month in Year 1.
+4. Tests two funding states: unfunded (adjusted cash at close is negative) and
+   funded after the recommended €70,768.18 equity injection.
+5. Treats the AEAT VAT refund as a repayment of the VAT bridge, not as a second
+   inflow. The LEADER grant (€163,000) is a genuine post-close inflow.
 """
 
 from dataclasses import dataclass
@@ -39,6 +42,7 @@ class MonthlyCashRecord:
     senior_debt_service: float
     net_operating_cash_flow: float
     tax_bridge_inflows: float     # AEAT VAT refund, LEADER grant, or equity
+    vat_bridge_repayment: float   # Refund used to retire the VAT bridge (negative)
     credit_line_drawn: float      # Utilization of €50k revolving facility
     ending_cash_balance: float
     liquidity_buffer_total: float # Ending cash + undrawn credit line
@@ -67,8 +71,9 @@ class MonthlyCashEngine:
         labor: LaborStructure = LaborStructure(),
         opex: FixedOpexStructure = FixedOpexStructure(),
         rev_cfg: RevenueModelConfig = RevenueModelConfig(),
-        initial_cash_buffer: float = 56_750.0,
+        initial_cash_buffer: float = -55_978.44,
         minimum_cash_policy: float = 10_000.0,
+        vat_refund_amount: float = 143_596.37,
     ):
         self.capex = capex
         self.financing = financing
@@ -77,6 +82,7 @@ class MonthlyCashEngine:
         self.rev_cfg = rev_cfg
         self.initial_cash_buffer = initial_cash_buffer
         self.minimum_cash_policy = minimum_cash_policy
+        self.vat_refund_amount = vat_refund_amount
 
         # Monthly senior debt payment (15Y French amortization @ 3.5%, 507.5k)
         r_m = self.financing.loan_interest_rate / 12.0
@@ -129,15 +135,19 @@ class MonthlyCashEngine:
             # Net operational cash before financing/subsidies
             net_op_cf = cm - monthly_payroll - monthly_opex - self.monthly_debt_service
 
-            # One-off liquidity bridge milestones
+            # One-off liquidity bridge milestones. The AEAT refund is received
+            # and immediately used to retire the VAT bridge, so the net cash
+            # effect is zero. The LEADER grant is a genuine post-close inflow.
             extra_inflows = 0.0
+            bridge_repayment = 0.0
             if m_idx == 14:  # Year 2 Month 2: LEADER rural grant disbursed
                 extra_inflows += self.financing.leader_subsidy_amount  # €163,000.0
             elif m_idx == 18:  # Year 2 Month 6: AEAT CapEx VAT refund received
-                extra_inflows += self.capex.total_input_vat  # €152,250.0
+                extra_inflows += self.vat_refund_amount
+                bridge_repayment = -self.vat_refund_amount
 
             # Cash progression
-            available_cash = current_cash + net_op_cf + extra_inflows
+            available_cash = current_cash + net_op_cf + extra_inflows + bridge_repayment
 
             # Credit line management
             credit_draw_change = 0.0
@@ -175,6 +185,7 @@ class MonthlyCashEngine:
                 senior_debt_service=round(self.monthly_debt_service, 2),
                 net_operating_cash_flow=round(net_op_cf, 2),
                 tax_bridge_inflows=round(extra_inflows, 2),
+                vat_bridge_repayment=round(bridge_repayment, 2),
                 credit_line_drawn=round(current_credit_draw, 2),
                 ending_cash_balance=round(current_cash, 2),
                 liquidity_buffer_total=round(total_liquidity, 2),
@@ -217,15 +228,44 @@ class MonthlyCashEngine:
         summary = self.get_runway_summary(df_monthly)
 
         print("=" * 88)
-        print(" YEAR 1 & YEAR 2 MONTHLY CASH FLOW, RUNWAY & CASH TROUGH AUDIT")
+        print(" YEAR 1 & YEAR 2 MONTHLY OPERATING LIQUIDITY (STANDALONE STRESS)")
         print("=" * 88)
-        print(f"Initial Launch Cash Buffer:      €{summary.initial_cash_cushion:,.2f}")
-        print(f"Year 1 Cash Trough:              {summary.year1_trough_month} (Month {summary.year1_trough_month_index})")
-        print(f"Cash Trough Balance:             €{summary.year1_trough_cash_balance:,.2f} (Strictly Solvency Protected)")
-        print(f"Max Revolving Credit Draw (Y1):  €{summary.year1_max_credit_line_draw:,.2f} (Facility limit: €{self.financing.credit_line_limit:,.2f})")
-        print(f"Year 1 Closing Cash:             €{summary.year1_ending_cash:,.2f}")
-        print(f"Year 2 Closing Cash:             €{summary.year2_ending_cash:,.2f} (Post-LEADER & AEAT VAT refund)")
-        print(f"Minimum Available Liquidity:     €{summary.lowest_headroom_eur:,.2f} (Never breached safety policy)")
+        print(f"Opening cash at close (unfunded):  €{self.initial_cash_buffer:>14,.2f}")
+        print(f"Recommended equity injection:      €{70_768.18:>14,.2f}")
+        print(f"Opening cash after injection:      €{self.initial_cash_buffer + 70_768.18:>14,.2f}")
+        print("-" * 88)
+        print("UNFUNDED SCENARIO (default):")
+        print(f"  Year 1 Cash Trough:              {summary.year1_trough_month} (Month {summary.year1_trough_month_index})")
+        print(f"  Cash Trough Balance:             €{summary.year1_trough_cash_balance:>14,.2f}")
+        print(f"  Max Revolving Credit Draw (Y1):  €{summary.year1_max_credit_line_draw:>14,.2f} (limit €{self.financing.credit_line_limit:,.2f})")
+        print(f"  Year 1 Closing Cash:             €{summary.year1_ending_cash:>14,.2f}")
+        print(f"  Year 2 Closing Cash:             €{summary.year2_ending_cash:>14,.2f}")
+        print(f"  Liquidity policy respected:      {summary.liquidity_cushion_never_breached}")
+        print("-" * 88)
+        funded = MonthlyCashEngine(
+            capex=self.capex,
+            financing=self.financing,
+            labor=self.labor,
+            opex=self.opex,
+            rev_cfg=self.rev_cfg,
+            initial_cash_buffer=self.initial_cash_buffer + 70_768.18,
+            minimum_cash_policy=self.minimum_cash_policy,
+            vat_refund_amount=self.vat_refund_amount,
+        )
+        df_funded = funded.run_monthly_schedule(horizon_months=24)
+        summary_funded = funded.get_runway_summary(df_funded)
+        print("FUNDED SCENARIO (€70,768.18 equity injection):")
+        print(f"  Year 1 Cash Trough:              {summary_funded.year1_trough_month} (Month {summary_funded.year1_trough_month_index})")
+        print(f"  Cash Trough Balance:             €{summary_funded.year1_trough_cash_balance:>14,.2f}")
+        print(f"  Max Revolving Credit Draw (Y1):  €{summary_funded.year1_max_credit_line_draw:>14,.2f} (limit €{self.financing.credit_line_limit:,.2f})")
+        print(f"  Year 1 Closing Cash:             €{summary_funded.year1_ending_cash:>14,.2f}")
+        print(f"  Year 2 Closing Cash:             €{summary_funded.year2_ending_cash:>14,.2f}")
+        print(f"  Liquidity policy respected:      {summary_funded.liquidity_cushion_never_breached}")
+        print("-" * 88)
+        print("Note: this is a standalone liquidity stress, not a line-by-line")
+        print("decomposition of the annual three-statement model. It uses seasonal")
+        print("ADR and includes OTA commissions and amenities; the annual model uses")
+        print("flat ADR and a simpler cost stack. The VAT refund repays the bridge.")
         print("-" * 88)
 
         cols_y1 = [

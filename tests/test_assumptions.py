@@ -89,4 +89,24 @@ def test_raw_excel_extraction_integrity():
     assert data["vat_comparison"]["cash_balance_y1_delta"] == 213_000.0
 
     df_summary = generate_reconciliation_summary()
-    assert len(df_summary) == 8
+    assert len(df_summary) == 10
+    assert list(df_summary.columns) == [
+        "Category",
+        "Original Excel",
+        "Refined: mgmt / market / promoter",
+        "Notes",
+    ]
+
+    by_cat = {r["Category"]: r for _, r in df_summary.iterrows()}
+    assert "31.36% / 21.24% / 19.20%" in by_cat["Occupancy (mature)"]["Refined: mgmt / market / promoter"]
+    assert "154,548" in by_cat["Year 1 revenue"]["Refined: mgmt / market / promoter"]
+    assert "66,086" in by_cat["Year 1 EBITDA"]["Refined: mgmt / market / promoter"]
+    assert "-2,553" in by_cat["Year 1 ending cash"]["Refined: mgmt / market / promoter"]
+    assert "1.34x / 0.40x / 0.33x" in by_cat["Year 1 DSCR"]["Refined: mgmt / market / promoter"]
+    assert "0.00" in by_cat["Balance sheet"]["Refined: mgmt / market / promoter"]
+
+    # The old "VAT paper trap" and "solvency confirmed" claims must be gone.
+    text = df_summary.to_string()
+    assert "Flawed standard" not in text
+    assert "Solvency confirmed" not in text
+    assert "did not apply 21%" in text
