@@ -222,7 +222,7 @@ class UnitEconomicsEngine:
         df_schedule = self.compute_revpar_trevpar_schedule()
 
         print("=" * 88)
-        print(" UNIT ECONOMICS & CONTRIBUTION MARGIN AUDIT (askRIA CFO SPECIFICATION)")
+        print(" UNIT ECONOMICS & CONTRIBUTION MARGIN AUDIT (USALI & MARGINAL COSTING)")
         print("=" * 88)
         print(f"Capacity:                        8 Keys (7 Double Rooms + 1 Country House) = 2,920 Unit-Nights/yr")
         print(f"Daily Gross Revenue @ 100% Occ:  €{m.daily_gross_revenue:,.2f} (€{m.daily_lodging_revenue:,.2f} Lodging + €{m.daily_restaurant_revenue:,.2f} F&B)")

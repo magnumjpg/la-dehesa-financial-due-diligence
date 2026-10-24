@@ -1,16 +1,16 @@
 """
-Unit tests for AICFOGroundTruthExporter and audit guardrails.
+Unit tests for ModelAuditEngine and programmatic due diligence audit guardrails.
 """
 
 from pathlib import Path
 import json
 import pytest
-from src.core.ai_cfo_export import AICFOGroundTruthExporter
+from src.core.model_audit import ModelAuditEngine
 
 
-def test_ai_cfo_payload_generation():
-    exporter = AICFOGroundTruthExporter()
-    payload = exporter.generate_ground_truth_payload()
+def test_model_audit_payload_generation():
+    engine = ModelAuditEngine()
+    payload = engine.generate_audit_payload()
 
     assert "meta" in payload
     assert "ground_truth_metrics" in payload
@@ -48,9 +48,9 @@ def test_ai_cfo_payload_generation():
     assert payload["execution_status"]["total_rules_failed"] == 0
 
 
-def test_ai_cfo_json_export_file(tmp_path: Path):
-    exporter = AICFOGroundTruthExporter(export_dir=tmp_path)
-    exported_path = exporter.export_json()
+def test_model_audit_json_export_file(tmp_path: Path):
+    engine = ModelAuditEngine(export_dir=tmp_path)
+    exported_path = engine.export_json()
 
     assert exported_path.exists()
     assert exported_path.is_file()

@@ -10,9 +10,9 @@
       "Convenio Colectivo Provincial de Hostelería de Segovia (BOCyL)",
       "Instituto Nacional de Estadística (EOTR Segovia)"
     ],
-    "export_timestamp_utc": "2026-10-24T16:28:01.139895+00:00",
+    "export_timestamp_utc": "2026-10-24T17:39:54.545113+00:00",
     "schema_version": "2.1.0",
-    "designed_for": "askRIA.ai LLM CFO Training, Ground-Truth Verification & Audit Agents"
+    "framework": "Institutional Data Room Audit & Model Integrity Verification"
   },
   "ground_truth_metrics": {
     "capex_total": {
@@ -101,7 +101,7 @@
       "value": 34.4,
       "unit": "EUR/available_key_night",
       "formula": "Total Lodging Revenue (€100,438) / 2,920 Available Key-Nights",
-      "statutory_source": "Hospitality Industry Standard (USALI)",
+      "statutory_source": "Uniform System of Accounts for the Lodging Industry (USALI)",
       "category": "Unit Economics",
       "tolerance": 0.01
     },
@@ -111,7 +111,7 @@
       "value": 52.93,
       "unit": "EUR/available_key_night",
       "formula": "Total Revenue (€154,548) / 2,920 Available Key-Nights",
-      "statutory_source": "Hospitality Industry Standard (USALI)",
+      "statutory_source": "Uniform System of Accounts for the Lodging Industry (USALI)",
       "category": "Unit Economics",
       "tolerance": 0.01
     },
@@ -263,6 +263,6 @@
     "total_rules_evaluated": 7,
     "total_rules_passed": 7,
     "total_rules_failed": 0,
-    "audit_verdict": "INSTITUTIONAL GRADE - VERIFIED FOR LLM CFO DEPLOYMENT"
+    "audit_verdict": "INSTITUTIONAL GRADE - VERIFIED FOR DATA ROOM DEPLOYMENT"
   }
 }

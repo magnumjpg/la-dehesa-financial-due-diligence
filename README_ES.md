@@ -4,15 +4,15 @@
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Tests: Pytest Passed](https://img.shields.io/badge/tests-26%20passed-brightgreen.svg)](https://docs.pytest.org/)
-[![AI Ground-Truth: Verified](https://img.shields.io/badge/AI%20CFO%20Audit-7%2F7%20Passed-blue.svg)](data/ai_cfo_ground_truth.json)
-[![Deliverable: Excel Model](https://img.shields.io/badge/Modelo%20Excel-6%20Pestañas%20.XLSX-success.svg)](data/La_Dehesa_del_Castrillo_Financial_Model.xlsx)
+[![Model Audit: Verified](https://img.shields.io/badge/Model%20Audit-7%2F7%20Passed-blue.svg)](data/model_audit_summary.json)
+[![Deliverable: Excel Model](https://img.shields.io/badge/Modelo%20Excel-7%20Pestañas%20.XLSX-success.svg)](data/La_Dehesa_del_Castrillo_Financial_Model.xlsx)
 
 [English](README.md) | [Español](README_ES.md)
 
 **Autor:** Jaime Pérez  
 **Especialidad:** Real Estate Private Equity, Due Diligence Operativa y Análisis de Crédito Bancario  
 **Alcance del Proyecto:** Finca Rural de 25 Hectáreas | Segovia, España | Inversión: 729.000 € | Financiación 70/30 Deuda/Capital  
-**Entregables Principales:** Motor Financiero Modular en Python (`/src`), Motor de Unit Economics y Runway Mensual (`unit_economics.py`, `monthly_cash.py`), Capa de Ground-Truth y Guardrails para IA (`ai_cfo_ground_truth.json`), Motor de Cópulas Multivariables (`copula_engine.py`), Memorando para Comité de Riesgos (`credit_committee.py`), Figuras Institucionales de Alta Resolución (`/assets`), Batería de Tests Unitarios (`/tests`) y Modelo Financiero en Excel de 6 pestañas (`data/La_Dehesa_del_Castrillo_Financial_Model.xlsx`).
+**Entregables Principales:** Motor Financiero Modular en Python (`/src`), Motor de Unit Economics y Runway Mensual (`unit_economics.py`, `monthly_cash.py`), Capa de Auditoría Programática e Integridad de Modelo (`model_audit_summary.json`), Motor de Cópulas Multivariables (`copula_engine.py`), Memorando para Comité de Riesgos (`credit_committee.py`), Figuras Institucionales de Alta Resolución (`/assets`), Batería de Tests Unitarios (`/tests`) y Modelo Maestro en Excel de 7 pestañas (`data/La_Dehesa_del_Castrillo_Financial_Model.xlsx`).
 
 
 ```
@@ -113,8 +113,8 @@ En vez de supuestos lineales, el modelo incorpora la serie de estacionalidad men
 - **Ocupación Ponderada Provincial:** Media anual de **31,36%** (114,5 días ocupados equivalentes al año).
 - **Facturación Anual de Régimen:** $114,5 \times 1.500 € = \text{171.720 €}$ en régimen estabilizado (Año 2), con 154.548 € en el Año 1 (rampa del 90%) y 180.306 € en el Año 3.
 
-### Análisis de Unit Economics y Margen de Contribución (Marco askRIA CFO)
-Un principio fundamental en el análisis de compañías en etapas tempranas es que las cuentas de resultados anuales agregadas pueden esconder fragilidad operativa si los unit economics no demuestran apalancamiento operativo real (*"la métrica a vigilar es cómo se comporta el margen de contribución conforme escalas"*).
+### Análisis de Unit Economics y Margen de Contribución (Marco de Costeo Marginal y USALI)
+Un principio fundamental en el análisis institucional y private equity inmobiliario es que las cuentas de resultados anuales agregadas pueden esconder fragilidad operativa si los unit economics no demuestran apalancamiento operativo real. En este análisis, la métrica central a evaluar es cómo se expande el margen de contribución conforme aumenta la ocupación, aislando con precisión los costes variables de canal y servicio respecto a la carga fija estructural.
 
 A través del motor modular (`src/core/unit_economics.py`), cada día ocupado y noche de habitación se desagrega en ingresos brutos, costes variables de captación y contribución marginal neta:
 
@@ -321,12 +321,11 @@ Conforme al memorando formal generado por `src/core/credit_committee.py`:
 
 ---
 
-## 12. Capa de Preparación para IA: Ground-Truth Estructurado y Reglas de Auditoría (askRIA Specification)
+## 12. Capa de Integridad Programática y Auditoría Automatizada de Due Diligence
 
-Uno de los mayores retos en la creación de herramientas de infraestructura autónoma y modelos de "AI CFO" radica en la **trazabilidad de datos y la eliminación de alucinaciones en modelos de lenguaje**:
-> *"¿Podemos confiar en las respuestas? ¿De dónde sale cada cifra? Las empresas no necesitan otra IA que produzca texto; necesitan sistemas que concilien evidencia, auditen riesgos y soporten un examen riguroso."*
+En el análisis de private equity, financiación estructurada y auditorías de compraventa (M&A), los modelos financieros deben superar estrictos controles de fiabilidad analítica. Los cuartos de datos (*data rooms*) institucionales demandan trazabilidad matemática determinista, conciliación contable sin descuadres y validación automática frente al marco estatutario fiscal y laboral.
 
-Para servir de entorno de pruebas y entrenamiento de agentes LLM CFO, el motor exporta un esquema institucional validado en [`data/ai_cfo_ground_truth.json`](data/ai_cfo_ground_truth.json) (`src/core/ai_cfo_export.py`).
+Para garantizar cero circularidades, cuadre estricto de balance y cumplimiento regulatorio, el motor incorpora un módulo de auditoría automatizada (`src/core/model_audit.py`) que evalúa 17 métricas clave y verifica 7 reglas programáticas de control (*guardrails*), exportando el dictamen en [`data/model_audit_summary.json`](data/model_audit_summary.json).
 
 ### Catálogo de Trazabilidad Regulatoria y Reglas de Control (Guardrails)
 
@@ -340,7 +339,7 @@ Para servir de entorno de pruebas y entrenamiento de agentes LLM CFO, el motor e
 | `RULE_06_SEASONAL_LIQUIDITY_BUFFER` | Saldo de caja estrictamente positivo en el valle invernal | Gestión de Tesorería Operativa | **PASSED** (44.822 € caja mín.) |
 | `RULE_07_ASYMMETRIC_TAIL_DSRA` | DSRA dimensionado al CVaR 99% de cópula Clayton (47.597 €) | Motor Cuantitativo de Cópulas | **PASSED** (47.597 € DSRA) |
 
-Este entregable provee la verdad fundamental (*ground truth*) requerida para calibrar modelos de IA financiera, verificar la resiliencia ante errores de cálculo y ejecutar auditorías automáticas de riesgo de inversión.
+Este dictamen programático proporciona a comités de inversión, financiadores y sistemas de escaneo de due diligence una prueba inequívoca de integridad contable, solvencia en estrés y cumplimiento normativo previo a la aportación de fondos.
 
 ---
 
@@ -364,8 +363,8 @@ proyecto-dehesa-del-castrillo/
 │   ├── figure_5_copula_tail_risk.png     # Dependencia de colas con cópulas y CVaR
 │   └── figure_6_monthly_cash_runway.png  # Runway de tesorería mensual a 24 meses y trough
 ├── data/                                 # Entregables cuantitativos
-│   ├── La_Dehesa_del_Castrillo_Financial_Model.xlsx # Modelo estructurado en 6 pestañas
-│   └── ai_cfo_ground_truth.json          # Capa de Ground-Truth y Guardrails para IA
+│   ├── La_Dehesa_del_Castrillo_Financial_Model.xlsx # Modelo maestro estructurado en 7 pestañas
+│   └── model_audit_summary.json          # Resumen de Auditoría Programática e Integridad
 ├── raw_data/                             # Archivos Excel originales de origen
 │   ├── La_Dehesa_de_Castrillo_Proyecto.xlsx
 │   └── Presentacion_La_Dehesa.xlsx
@@ -373,11 +372,11 @@ proyecto-dehesa-del-castrillo/
 │   ├── config/                           # Parámetros institucionales y microdatos INE
 │   │   ├── assumptions.py
 │   │   └── ine_weights.py
-│   ├── core/                             # Deuda, Fiscalidad, Estados, Unit Economics y Capa IA
-│   │   ├── ai_cfo_export.py              # Exportador de ground-truth y guardrails
+│   ├── core/                             # Deuda, Fiscalidad, Estados, Unit Economics y Auditoría
 │   │   ├── credit_committee.py           # Memorando automatizado de comité de crédito
 │   │   ├── debt.py                       # Cuadro de amortización francés
 │   │   ├── metrics.py                    # Covenants, puntos muertos y TIR/VAN
+│   │   ├── model_audit.py                # Verificación de integridad y auditoría de modelo
 │   │   ├── monthly_cash.py               # Simulación mensual de tesorería y trough
 │   │   ├── statements.py                 # Modelo integrado de 3 estados contables
 │   │   ├── tax.py                        # Motor de IVA e Impuesto sobre Sociedades
@@ -389,10 +388,10 @@ proyecto-dehesa-del-castrillo/
 │   │   └── monte_carlo.py                # Simulación de 1.000 iteraciones
 │   └── visualization/                    # Exportador de gráficos institucionales
 ├── tests/                                # Suite de tests automatizados (pytest)
-│   ├── test_ai_cfo.py                    # Tests de validación de esquema y guardrails
 │   ├── test_assumptions.py
 │   ├── test_copula.py                    # Tests de marginales, orden y DSRA
 │   ├── test_financial_engine.py
+│   ├── test_model_audit.py               # Tests de auditoría y guardrails del modelo
 │   ├── test_simulation.py
 │   └── test_unit_economics_monthly.py    # Tests de unit economics y runway mensual
 ├── main.py                               # Pipeline integral de ejecución

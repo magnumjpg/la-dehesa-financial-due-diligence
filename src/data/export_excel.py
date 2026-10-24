@@ -9,6 +9,8 @@ Containing:
 3. Debt Amortization Schedule (French System 180 Months)
 4. Scenario Stress-Testing & 2D Sensitivity Matrix
 5. Monte Carlo Stochastic Simulation (N=1,000)
+6. Credit Risk & Copula Tail Underwriting
+7. Unit Economics & Monthly Runway (RevPAR, TRevPAR, 24M Trough)
 """
 
 from pathlib import Path
@@ -30,6 +32,8 @@ from src.scenarios.scenario_analysis import ScenarioEngine
 from src.simulation.monte_carlo import MonteCarloSimulator
 from src.simulation.copula_engine import CopulaSimulationEngine
 from src.core.credit_committee import CreditCommitteeMemo
+from src.core.unit_economics import UnitEconomicsEngine
+from src.core.monthly_cash import MonthlyCashEngine
 
 
 def get_data_dir() -> Path:
@@ -258,6 +262,115 @@ def export_institutional_excel(filename: str = "La_Dehesa_del_Castrillo_Financia
         c2.font = bold_font
         c1.border = thin_border
         c2.border = thin_border
+
+    # Tab 7: Unit Economics, Contribution Margin & 24-Month Monthly Runway
+    ws7 = wb.create_sheet(title="Unit Economics & Runway")
+    ws7.views.sheetView[0].showGridLines = True
+    ws7["A1"] = "UNIT ECONOMICS, CONTRIBUTION MARGIN & 24-MONTH MONTHLY CASH RUNWAY"
+    ws7["A1"].font = title_font
+
+    ue_engine = UnitEconomicsEngine()
+    ue_metrics = ue_engine.compute_unit_metrics()
+    df_revpar = ue_engine.compute_revpar_trevpar_schedule()
+
+    mc_engine = MonthlyCashEngine()
+    df_runway = mc_engine.run_monthly_schedule(horizon_months=24)
+    runway_summary = mc_engine.get_runway_summary(df_runway)
+
+    # Section 1: Unit Economics & Marginal Costing Structure
+    ws7["A3"] = "1. UNIT ECONOMICS & CONTRIBUTION MARGIN (USALI STANDARDS)"
+    ws7["A3"].font = bold_font
+
+    unit_kpis = [
+        ("Daily Gross Revenue @ 100% Occ", f"{ue_metrics.daily_gross_revenue:,.2f} EUR", "8 keys: Lodging 975 EUR + F&B 525 EUR"),
+        ("Variable Costs per Occupied Day", f"{ue_metrics.daily_total_variable_cost:,.2f} EUR", f"{ue_metrics.daily_variable_cost_ratio*100:.1f}% variable cost ratio"),
+        ("  - F&B COGS (30% spend)", f"{ue_metrics.daily_cogs_restaurant:,.2f} EUR", "30% of daily F&B turnover"),
+        ("  - OTA Commissions (60% OTA @ 15%)", f"{ue_metrics.daily_ota_commission:,.2f} EUR", "15% on 60% OTA booking mix"),
+        ("  - Amenities & Guest Supplies", f"{ue_metrics.daily_amenities_cleaning:,.2f} EUR", "Direct consumables per occupied day"),
+        ("Unit Contribution Margin (Day)", f"{ue_metrics.unit_contribution_margin_eur:,.2f} EUR", f"{ue_metrics.unit_contribution_margin_pct*100:.2f}% contribution margin"),
+        ("Room-Night Unit Margin", f"{ue_metrics.room_contribution_margin_eur:,.2f} EUR", f"{ue_metrics.room_contribution_margin_pct*100:.2f}% per room-night"),
+        ("Annual Fixed Overhead (Payroll + OPEX)", f"{ue_metrics.annual_fixed_overhead:,.2f} EUR", "Base operational fixed costs"),
+        ("Annual Senior Debt Service", f"{ue_metrics.annual_senior_debt_service:,.2f} EUR", "15Y French amortization @ 3.5%"),
+        ("Annual Total Fixed Burden", f"{ue_metrics.annual_total_fixed_burden:,.2f} EUR", "Overhead + full debt service"),
+        ("Operating Break-Even Occupied Days", f"{ue_metrics.operating_breakeven_days:.1f} Days", f"{(ue_metrics.operating_breakeven_days / 365)*100:.1f}% annual occupancy"),
+        ("Cash Debt Break-Even Occupied Days", f"{ue_metrics.cash_debt_breakeven_days:.1f} Days", f"{(ue_metrics.cash_debt_breakeven_days / 365)*100:.1f}% annual occupancy"),
+        ("Bank Covenant 1.25x Break-Even Days", f"{ue_metrics.covenant_125_breakeven_days:.1f} Days", f"{(ue_metrics.covenant_125_breakeven_days / 365)*100:.1f}% annual occupancy"),
+    ]
+
+    ws7.cell(row=4, column=1, value="Metric / Cost Category").fill = navy_fill
+    ws7.cell(row=4, column=1).font = header_font
+    ws7.cell(row=4, column=2, value="Value").fill = navy_fill
+    ws7.cell(row=4, column=2).font = header_font
+    ws7.cell(row=4, column=3, value="Operational / Statutory Basis").fill = navy_fill
+    ws7.cell(row=4, column=3).font = header_font
+
+    for r_idx, (k, v, basis) in enumerate(unit_kpis, start=5):
+        c1 = ws7.cell(row=r_idx, column=1, value=k)
+        c2 = ws7.cell(row=r_idx, column=2, value=v)
+        c3 = ws7.cell(row=r_idx, column=3, value=basis)
+        c1.font = regular_font
+        c2.font = bold_font
+        c3.font = regular_font
+        c1.border = thin_border
+        c2.border = thin_border
+        c3.border = thin_border
+
+    # Section 2: RevPAR & TRevPAR Schedule
+    ws7["E3"] = "2. RevPAR & TRevPAR PERFORMANCE SCHEDULE (YEARS 1 TO 3)"
+    ws7["E3"].font = bold_font
+
+    revpar_cols = [c.replace("_", " ").title() for c in df_revpar.columns]
+    for col_idx, col_name in enumerate(revpar_cols, start=5):
+        cell = ws7.cell(row=4, column=col_idx, value=col_name)
+        cell.fill = navy_fill
+        cell.font = header_font
+
+    for r_idx, (_, r) in enumerate(df_revpar.iterrows(), start=5):
+        for c_idx, val in enumerate(r, start=5):
+            cell = ws7.cell(row=r_idx, column=c_idx, value=round(val, 2) if isinstance(val, (int, float)) else val)
+            cell.font = regular_font
+            cell.border = thin_border
+
+    # Section 3: 24-Month Monthly Cash Flow & Runway Schedule
+    start_row_runway = 18
+    ws7.cell(row=start_row_runway, column=1, value="3. 24-MONTH EMPIRICAL CASH RUNWAY & CASH TROUGH SCHEDULE (SEGOVIA EMPIRICAL WEIGHTS)").font = bold_font
+
+    runway_display_cols = [
+        ("month_index", "Month"),
+        ("month_name", "Period"),
+        ("occupancy_pct", "Occupancy (%)"),
+        ("gross_revenue", "Revenue (EUR)"),
+        ("variable_costs", "Var Costs (EUR)"),
+        ("contribution_margin", "Contr Margin (EUR)"),
+        ("fixed_payroll", "Payroll (EUR)"),
+        ("fixed_opex", "Fixed OPEX (EUR)"),
+        ("senior_debt_service", "Debt Svc (EUR)"),
+        ("net_operating_cash_flow", "Net Op CF (EUR)"),
+        ("tax_bridge_inflows", "Grant/VAT Inflow (EUR)"),
+        ("credit_line_drawn", "Credit Drawn (EUR)"),
+        ("ending_cash_balance", "Ending Cash (EUR)"),
+        ("liquidity_buffer_total", "Total Liquidity (EUR)"),
+    ]
+
+    header_row = start_row_runway + 1
+    for col_idx, (_, col_title) in enumerate(runway_display_cols, start=1):
+        cell = ws7.cell(row=header_row, column=col_idx, value=col_title)
+        cell.fill = navy_fill
+        cell.font = header_font
+
+    for r_idx, (_, r) in enumerate(df_runway.iterrows(), start=header_row + 1):
+        is_trough = (r["month_index"] == runway_summary.year1_trough_month_index)
+        for c_idx, (col_key, _) in enumerate(runway_display_cols, start=1):
+            val = r[col_key]
+            if isinstance(val, float):
+                val = round(val, 2)
+            cell = ws7.cell(row=r_idx, column=c_idx, value=val)
+            if is_trough:
+                cell.fill = PatternFill(start_color="FEF3C7", end_color="FEF3C7", fill_type="solid")
+                cell.font = bold_font
+            else:
+                cell.font = regular_font
+            cell.border = thin_border
 
     # Auto-adjust column widths across all sheets
     for ws in wb.worksheets:
