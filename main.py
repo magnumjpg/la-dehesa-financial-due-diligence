@@ -93,7 +93,7 @@ def run_executive_pipeline(generate_charts: bool = True):
     print()
 
     # Step 3: Unit Economics & Contribution Margin Audit
-    print("[3/9] UNIT ECONOMICS & CONTRIBUTION MARGIN AUDIT (askRIA CFO SPECIFICATION)")
+    print("[3/9] UNIT ECONOMICS & CONTRIBUTION MARGIN AUDIT (USALI & MARGINAL COSTING)")
     print("-" * 88)
     from src.core.unit_economics import UnitEconomicsEngine
     ue_engine = UnitEconomicsEngine()
@@ -149,14 +149,14 @@ def run_executive_pipeline(generate_charts: bool = True):
     memo.print_terminal_summary()
     print()
 
-    # Step 9: AI CFO Ground-Truth & Audit Rules Export
-    print("[9/9] AI-READINESS: STRUCTURED GROUND-TRUTH & AUDIT LAYER EXPORT")
+    # Step 9: Programmatic Model Audit & Data Room Integrity Verification
+    print("[9/9] PROGRAMMATIC MODEL AUDIT & DATA ROOM INTEGRITY VERIFICATION")
     print("-" * 88)
-    from src.core.ai_cfo_export import AICFOGroundTruthExporter
-    ai_exporter = AICFOGroundTruthExporter()
-    ai_json_path = ai_exporter.export_json()
-    ai_exporter.print_terminal_summary()
-    print(f"-> Exported AI Ground-Truth JSON: {ai_json_path.name} ({ai_json_path.stat().st_size / 1024:.1f} KB)")
+    from src.core.model_audit import ModelAuditEngine
+    audit_engine = ModelAuditEngine()
+    audit_json_path = audit_engine.export_json()
+    audit_engine.print_terminal_summary()
+    print(f"-> Exported Model Audit Summary JSON: {audit_json_path.name} ({audit_json_path.stat().st_size / 1024:.1f} KB)")
     print()
 
     # Visual Assets & Deliverables
@@ -167,7 +167,7 @@ def run_executive_pipeline(generate_charts: bool = True):
             print(f"   [OK] {f.name} ({f.stat().st_size / 1024:.1f} KB)")
         print()
 
-    print("-> Exporting Institutional 6-Tab Excel Model in /data...")
+    print("-> Exporting Institutional 7-Tab Excel Model in /data...")
     excel_path = export_institutional_excel()
     print(f"   [OK] {excel_path.name} ({excel_path.stat().st_size / 1024:.1f} KB)")
     print()

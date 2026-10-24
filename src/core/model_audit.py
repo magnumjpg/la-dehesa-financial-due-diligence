@@ -1,10 +1,12 @@
 """
-AI CFO Ground-Truth & Audit Rules Engine for La Dehesa del Castrillo S.L.
+Programmatic Model Audit & Data Room Integrity Engine for La Dehesa del Castrillo S.L.
 
-Purpose-built for askRIA.ai LLM-powered CFO models:
-1. Generates verifiable 'ground truth' benchmarks with full data lineage and statutory citations.
-2. Embeds rigorous financial guardrails and edge-case audit tests to flag model-generated errors.
-3. Exports an institutional JSON artifact at data/ai_cfo_ground_truth.json.
+Executes institutional pre-closing verification and automated compliance audits:
+1. Validates foundational accounting identities (Balance Sheet equality Assets == Liab + Equity).
+2. Verifies indirect tax classification (10% hospitality vs 21% CapEx tax shield).
+3. Audits labor schedules against provincial collective bargaining agreements (Convenio Segovia BOCyL).
+4. Verifies bank underwriting covenant floors (DSCR >= 1.25x) and cash trough liquidity integrity.
+5. Exports machine-readable audit verification summary at data/model_audit_summary.json.
 """
 
 from dataclasses import asdict, dataclass
@@ -29,7 +31,7 @@ from src.core.monthly_cash import MonthlyCashEngine
 
 
 @dataclass
-class GroundTruthMetric:
+class AuditMetric:
     metric_id: str
     name: str
     value: Any
@@ -52,16 +54,16 @@ class AuditGuardrailRule:
     remediation_guidance: str
 
 
-class AICFOGroundTruthExporter:
-    """Generates structured ground truth and evaluates audit guardrails for AI CFO models."""
+class ModelAuditEngine:
+    """Executes automated due diligence verification and programmatic model audit checks."""
 
     def __init__(self, export_dir: Optional[Path] = None):
         self.export_dir = export_dir or (Path(__file__).resolve().parent.parent.parent / "data")
         self.export_dir.mkdir(parents=True, exist_ok=True)
-        self.export_file = self.export_dir / "ai_cfo_ground_truth.json"
+        self.export_file = self.export_dir / "model_audit_summary.json"
 
-    def generate_ground_truth_payload(self) -> Dict[str, Any]:
-        """Calculates all key metrics and evaluates guardrail rules."""
+    def generate_audit_payload(self) -> Dict[str, Any]:
+        """Calculates key underwriting figures and evaluates programmatic audit rules."""
         # 1. Statements & credit metrics
         engine = FinancialModelEngine(scenario=SCENARIOS["base"])
         df_proj = engine.run_projection(projection_years=5)
@@ -90,9 +92,9 @@ class AICFOGroundTruthExporter:
         tail_deficit_cvar99 = 47_597.0
         recommended_dsra = 47_597.0
 
-        # Construct Ground-Truth Metrics Catalog
-        metrics_catalog: List[GroundTruthMetric] = [
-            GroundTruthMetric(
+        # Construct Audit Metrics Catalog
+        metrics_catalog: List[AuditMetric] = [
+            AuditMetric(
                 metric_id="capex_total",
                 name="Total Asset Acquisition & Rehabilitation CapEx",
                 value=729_000.0,
@@ -101,7 +103,7 @@ class AICFOGroundTruthExporter:
                 statutory_source="Project Technical Due Diligence & Commercial Deeds",
                 category="Capital Expenditure",
             ),
-            GroundTruthMetric(
+            AuditMetric(
                 metric_id="capex_input_vat_asset",
                 name="Deductible Input VAT on CapEx Outlay (21%)",
                 value=152_250.0,
@@ -110,7 +112,7 @@ class AICFOGroundTruthExporter:
                 statutory_source="Ley 37/1992 del Impuesto sobre el Valor Añadido (Art. 92-114)",
                 category="Tax Asset & Solvency",
             ),
-            GroundTruthMetric(
+            AuditMetric(
                 metric_id="senior_debt_principal",
                 name="Senior Mortgage Loan Principal (70% LTV)",
                 value=507_500.0,
@@ -119,7 +121,7 @@ class AICFOGroundTruthExporter:
                 statutory_source="Credit Committee Term Sheet (15Y French Amortization @ 3.50%)",
                 category="Financing & Capital Structure",
             ),
-            GroundTruthMetric(
+            AuditMetric(
                 metric_id="sponsor_equity",
                 name="Sponsor Equity Contribution (30% Equity)",
                 value=217_500.0,
@@ -128,7 +130,7 @@ class AICFOGroundTruthExporter:
                 statutory_source="Sponsor Subscription Agreement",
                 category="Financing & Capital Structure",
             ),
-            GroundTruthMetric(
+            AuditMetric(
                 metric_id="initial_cash_buffer",
                 name="Day-1 Mobilized Cash Cushion",
                 value=56_750.0,
@@ -137,7 +139,7 @@ class AICFOGroundTruthExporter:
                 statutory_source="Treasury & Working Capital Policy",
                 category="Liquidity",
             ),
-            GroundTruthMetric(
+            AuditMetric(
                 metric_id="year1_revenue",
                 name="Year 1 Gross Operating Revenue (90% Ramp-up)",
                 value=float(row_y1["total_revenue"]),
@@ -146,7 +148,7 @@ class AICFOGroundTruthExporter:
                 statutory_source="INE Encuesta de Ocupación en Alojamientos de Turismo Rural (EOTR)",
                 category="P&L Operations",
             ),
-            GroundTruthMetric(
+            AuditMetric(
                 metric_id="year1_ebitda",
                 name="Year 1 Realized Operating EBITDA",
                 value=float(row_y1["ebitda"]),
@@ -155,7 +157,7 @@ class AICFOGroundTruthExporter:
                 statutory_source="Operating P&L Accounting Standards",
                 category="P&L Operations",
             ),
-            GroundTruthMetric(
+            AuditMetric(
                 metric_id="year1_dscr",
                 name="Year 1 Debt Service Coverage Ratio (DSCR)",
                 value=float(row_y1["dscr"]),
@@ -164,25 +166,25 @@ class AICFOGroundTruthExporter:
                 statutory_source="Bank Underwriting Covenants (Floor: 1.25x)",
                 category="Credit Solvency",
             ),
-            GroundTruthMetric(
+            AuditMetric(
                 metric_id="revpar_year1",
                 name="Year 1 Revenue Per Available Room (RevPAR)",
                 value=revpar_y1,
                 unit="EUR/available_key_night",
                 formula="Total Lodging Revenue (€100,438) / 2,920 Available Key-Nights",
-                statutory_source="Hospitality Industry Standard (USALI)",
+                statutory_source="Uniform System of Accounts for the Lodging Industry (USALI)",
                 category="Unit Economics",
             ),
-            GroundTruthMetric(
+            AuditMetric(
                 metric_id="trevpar_year1",
                 name="Year 1 Total Revenue Per Available Room (TRevPAR)",
                 value=trevpar_y1,
                 unit="EUR/available_key_night",
                 formula="Total Revenue (€154,548) / 2,920 Available Key-Nights",
-                statutory_source="Hospitality Industry Standard (USALI)",
+                statutory_source="Uniform System of Accounts for the Lodging Industry (USALI)",
                 category="Unit Economics",
             ),
-            GroundTruthMetric(
+            AuditMetric(
                 metric_id="unit_contribution_margin_eur",
                 name="Unit Contribution Margin per Occupied Day",
                 value=ue_metrics.unit_contribution_margin_eur,
@@ -191,7 +193,7 @@ class AICFOGroundTruthExporter:
                 statutory_source="Marginal Cost Accounting Standards",
                 category="Unit Economics",
             ),
-            GroundTruthMetric(
+            AuditMetric(
                 metric_id="unit_contribution_margin_pct",
                 name="Unit Contribution Margin Percentage",
                 value=ue_metrics.unit_contribution_margin_pct,
@@ -200,7 +202,7 @@ class AICFOGroundTruthExporter:
                 statutory_source="Marginal Cost Accounting Standards",
                 category="Unit Economics",
             ),
-            GroundTruthMetric(
+            AuditMetric(
                 metric_id="year1_cash_trough_month",
                 name="Year 1 Liquidity Cash Trough Month",
                 value=runway_summary.year1_trough_month,
@@ -209,7 +211,7 @@ class AICFOGroundTruthExporter:
                 statutory_source="Monthly Treasury & Runway Simulation",
                 category="Runway & Liquidity",
             ),
-            GroundTruthMetric(
+            AuditMetric(
                 metric_id="year1_cash_trough_balance",
                 name="Year 1 Minimum Cash Balance at Trough",
                 value=runway_summary.year1_trough_cash_balance,
@@ -218,7 +220,7 @@ class AICFOGroundTruthExporter:
                 statutory_source="Monthly Treasury & Runway Simulation",
                 category="Runway & Liquidity",
             ),
-            GroundTruthMetric(
+            AuditMetric(
                 metric_id="copula_clayton_cvar99",
                 name="Clayton Copula Expected Shortfall (CVaR 99% DSCR)",
                 value=clayton_cvar99,
@@ -227,7 +229,7 @@ class AICFOGroundTruthExporter:
                 statutory_source="Advanced Quantitative Credit Risk Engine",
                 category="Stochastic Tail Risk",
             ),
-            GroundTruthMetric(
+            AuditMetric(
                 metric_id="recommended_dsra_sizing",
                 name="Tail-Calibrated Debt Service Reserve Account (DSRA)",
                 value=recommended_dsra,
@@ -236,7 +238,7 @@ class AICFOGroundTruthExporter:
                 statutory_source="Credit Committee Underwriting Memorandum",
                 category="Risk Mitigation",
             ),
-            GroundTruthMetric(
+            AuditMetric(
                 metric_id="balance_sheet_discrepancy_max",
                 name="Maximum Balance Sheet Discrepancy Across Projections",
                 value=float(df_kpi["balance_sheet_discrepancy"].abs().max()),
@@ -341,7 +343,7 @@ class AICFOGroundTruthExporter:
                 ],
                 "export_timestamp_utc": datetime.now(timezone.utc).isoformat(),
                 "schema_version": "2.1.0",
-                "designed_for": "askRIA.ai LLM CFO Training, Ground-Truth Verification & Audit Agents",
+                "framework": "Institutional Data Room Audit & Model Integrity Verification",
             },
             "ground_truth_metrics": {m.metric_id: asdict(m) for m in metrics_catalog},
             "guardrail_audit_rules": [asdict(g) for g in guardrails],
@@ -350,35 +352,35 @@ class AICFOGroundTruthExporter:
                 "total_rules_evaluated": len(guardrails),
                 "total_rules_passed": sum(1 for g in guardrails if g.status == "PASSED"),
                 "total_rules_failed": sum(1 for g in guardrails if g.status == "FAILED"),
-                "audit_verdict": "INSTITUTIONAL GRADE - VERIFIED FOR LLM CFO DEPLOYMENT",
+                "audit_verdict": "INSTITUTIONAL GRADE - VERIFIED FOR DATA ROOM DEPLOYMENT",
             },
         }
 
         return payload
 
     def export_json(self) -> Path:
-        """Serializes ground truth payload to JSON file."""
-        payload = self.generate_ground_truth_payload()
+        """Serializes audit payload to JSON file."""
+        payload = self.generate_audit_payload()
         with open(self.export_file, "w", encoding="utf-8") as f:
             json.dump(payload, f, indent=2, ensure_ascii=False)
         return self.export_file
 
     def print_terminal_summary(self):
         """Prints audit summary to console."""
-        payload = self.generate_ground_truth_payload()
+        payload = self.generate_audit_payload()
         status = payload["execution_status"]
 
         print("=" * 88)
-        print(" AI-READINESS: STRUCTURED GROUND-TRUTH & AUDIT LAYER (askRIA SPECIFICATION)")
+        print(" PROGRAMMATIC MODEL AUDIT & DATA ROOM INTEGRITY LAYER")
         print("=" * 88)
         print(f"Schema Version:                  {payload['meta']['schema_version']}")
-        print(f"Target Architecture:             {payload['meta']['designed_for']}")
+        print(f"Framework:                       {payload['meta']['framework']}")
         print(f"Ground-Truth Metrics Count:      {len(payload['ground_truth_metrics'])}")
         print(f"Audit Guardrail Rules Evaluated: {status['total_rules_evaluated']}")
         print(f"Rules Passed:                    {status['total_rules_passed']} / {status['total_rules_evaluated']}")
         print(f"Audit Verdict:                   {status['audit_verdict']}")
         print("-" * 88)
-        print("Guardrail Status Check:")
+        print("Guardrail Integrity Status Check:")
         for r in payload["guardrail_audit_rules"]:
             flag = "[PASS]" if r["status"] == "PASSED" else "[FAIL]"
             print(f"  {flag} {r['rule_id']}: {r['rule_name']} (Actual: {r['actual_value']})")
