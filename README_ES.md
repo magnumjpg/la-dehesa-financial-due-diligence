@@ -5,6 +5,10 @@
 **Modelo financiero de portfolio construido a partir de mi propio trabajo de fin de grado.**
 Python 3.11 · 41 tests automatizados · modelo Excel de 12 pestañas · pipeline de 14 pasos
 
+[![tests](https://github.com/magnumjpg/la-dehesa-financial-due-diligence/actions/workflows/tests.yml/badge.svg)](https://github.com/magnumjpg/la-dehesa-financial-due-diligence/actions/workflows/tests.yml)
+![Python 3.11](https://img.shields.io/badge/python-3.11-blue)
+![License: MIT](https://img.shields.io/badge/license-MIT-green)
+
 > **Lee esto primero.** Esto no es un pitch de "operación segura". El caso promotor original genera 86.275 € de ingresos en el año 1, 11.297 € de EBITDA y caja negativa. Con la ocupación oficial del INE para Segovia (21,24%), el proyecto no cubre el servicio de deuda en el año 1 (DSCR 0,40x). El caso principal en Python (31,36% de ocupación madura, 28,23% en el año 1) es un **caso de gestión / upside**, no una previsión de mercado, y es el único que cumple el covenant de 1,25x. La auditoría está deliberadamente permitida fallar: **pasan 8 de 14 reglas, quedan 5 excepciones materiales y 1 warning**, y el veredicto es `CONDITIONAL - 5 MATERIAL EXCEPTION(S)`.
 
 ---

@@ -25,7 +25,6 @@ Rules:
 """
 
 from dataclasses import asdict, dataclass
-from datetime import datetime, timezone
 import json
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -424,9 +423,9 @@ class ModelAuditEngine:
                     "Instituto Nacional de Estadística (EOTR Segovia)",
                     "Real Decreto 126/2026 (SMI 2026)",
                 ],
-                "export_timestamp_utc": datetime.now(timezone.utc).isoformat(),
                 "schema_version": "3.0.0",
                 "framework": "Computed Model Audit & Funding-Gap Verification",
+                "deterministic_output": True,
             },
             "case_summary": {
                 "management": {

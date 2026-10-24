@@ -5,6 +5,10 @@
 **A portfolio-grade financial model built from my own university feasibility study.**
 Python 3.11 · 41 automated tests · 12-tab Excel model · 14-step pipeline
 
+[![tests](https://github.com/magnumjpg/la-dehesa-financial-due-diligence/actions/workflows/tests.yml/badge.svg)](https://github.com/magnumjpg/la-dehesa-financial-due-diligence/actions/workflows/tests.yml)
+![Python 3.11](https://img.shields.io/badge/python-3.11-blue)
+![License: MIT](https://img.shields.io/badge/license-MIT-green)
+
 > **Read this first.** This is not a "safe deal" pitch. The original promoter case produces €86,275 of Year 1 revenue, €11,297 of EBITDA and negative Year 1 cash. At the official INE Segovia occupancy (21.24%), the project does not cover debt service in Year 1 (DSCR 0.40x). The headline Python case (31.36% mature occupancy, 28.23% in Year 1) is an **upside / management case**, not a market forecast, and it is the only case that clears the 1.25x covenant. The audit is deliberately allowed to fail: **8 of 14 rules pass, 5 material exceptions and 1 warning remain open**, and the verdict is `CONDITIONAL - 5 MATERIAL EXCEPTION(S)`.
 
 ---

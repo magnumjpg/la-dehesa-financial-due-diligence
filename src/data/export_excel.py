@@ -1,19 +1,22 @@
 """
 Institutional multi-tab Excel model exporter.
 
-Generates:
-data/La_Dehesa_del_Castrillo_Financial_Model.xlsx
-Containing:
-1. Executive Summary & Underwriting Scorecard
-2. Three-Statement Projections (P&L, CF, Balance Sheet)
-3. Debt Amortization Schedule (French System 180 Months)
-4. Scenario Stress-Testing & 2D Sensitivity Matrix
-5. Monte Carlo Stochastic Simulation (N=1,000)
-6. Credit Risk & Copula Tail Underwriting
-7. Unit Economics & Monthly Runway (RevPAR, TRevPAR, 24M Trough)
-8. Phase II Expansion & Value-Add (Landscape Suites & Biological Pond)
+Generates data/La_Dehesa_del_Castrillo_Financial_Model.xlsx with 12 tabs:
+1. Read Me & Checks
+2. Inputs
+3. Live Model
+4. Funding & Audit
+5. Executive Scorecard
+6. 3-Statement Model
+7. Debt Schedule
+8. Scenario Stress-Testing
+9. Monte Carlo Risk
+10. Credit Risk & Copula
+11. Unit Economics & Runway
+12. Phase II Expansion
 """
 
+from datetime import datetime
 from pathlib import Path
 import sys
 
@@ -45,6 +48,46 @@ def get_data_dir() -> Path:
     return data_dir
 
 
+def _normalise_xlsx_timestamps(path: Path) -> None:
+    """Rewrite the xlsx zip with fixed member and document timestamps.
+
+    openpyxl stamps every zip member with the current time and refreshes the
+    docProps/core.xml timestamps on save, so two runs of the same model produce
+    different bytes. Fixed timestamps keep the committed workbook reproducible.
+    """
+    import os
+    import re
+    import zipfile
+
+    fixed = (2026, 1, 1, 0, 0, 0)
+    fixed_iso = "2026-01-01T00:00:00Z"
+    tmp = path.with_name(path.name + ".tmp")
+    with zipfile.ZipFile(path) as src:
+        members = [
+            (info.filename, info.compress_type, src.read(info))
+            for info in src.infolist()
+        ]
+    with zipfile.ZipFile(tmp, "w", zipfile.ZIP_DEFLATED) as dst:
+        for name, compress_type, data in members:
+            if name == "docProps/core.xml":
+                text = data.decode("utf-8")
+                text = re.sub(
+                    r"(<dcterms:created[^>]*>)[^<]*(</dcterms:created>)",
+                    rf"\g<1>{fixed_iso}\g<2>",
+                    text,
+                )
+                text = re.sub(
+                    r"(<dcterms:modified[^>]*>)[^<]*(</dcterms:modified>)",
+                    rf"\g<1>{fixed_iso}\g<2>",
+                    text,
+                )
+                data = text.encode("utf-8")
+            info = zipfile.ZipInfo(name, date_time=fixed)
+            info.compress_type = compress_type
+            dst.writestr(info, data)
+    os.replace(tmp, path)
+
+
 def export_institutional_excel(filename: str = "La_Dehesa_del_Castrillo_Financial_Model.xlsx") -> Path:
     output_path = get_data_dir() / filename
 
@@ -64,6 +107,10 @@ def export_institutional_excel(filename: str = "La_Dehesa_del_Castrillo_Financia
     df_sim, summary = sim.run_simulation()
 
     wb = openpyxl.Workbook()
+    wb.properties.creator = "Jaime Pérez"
+    wb.properties.lastModifiedBy = "Jaime Pérez"
+    wb.properties.created = datetime(2026, 1, 1)
+    wb.properties.modified = datetime(2026, 1, 1)
 
     # Style definitions
     navy_fill = PatternFill(start_color="1E3A8A", end_color="1E3A8A", fill_type="solid")
@@ -524,6 +571,7 @@ def export_institutional_excel(filename: str = "La_Dehesa_del_Castrillo_Financia
             ws.column_dimensions[col_letter].width = min(max(max_len + 3, 12), 42)
 
     wb.save(output_path)
+    _normalise_xlsx_timestamps(output_path)
     return output_path
 
 

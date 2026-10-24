@@ -11,9 +11,9 @@
       "Instituto Nacional de Estadística (EOTR Segovia)",
       "Real Decreto 126/2026 (SMI 2026)"
     ],
-    "export_timestamp_utc": "2026-10-24T21:33:54.875837+00:00",
     "schema_version": "3.0.0",
-    "framework": "Computed Model Audit & Funding-Gap Verification"
+    "framework": "Computed Model Audit & Funding-Gap Verification",
+    "deterministic_output": true
   },
   "case_summary": {
     "management": {
