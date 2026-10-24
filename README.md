@@ -3,16 +3,16 @@
 
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Tests: Pytest Passed](https://img.shields.io/badge/tests-26%20passed-brightgreen.svg)](https://docs.pytest.org/)
+[![Tests: Pytest Passed](https://img.shields.io/badge/tests-30%20passed-brightgreen.svg)](https://docs.pytest.org/)
 [![Model Audit: Verified](https://img.shields.io/badge/Model%20Audit-7%2F7%20Passed-blue.svg)](data/model_audit_summary.json)
-[![Deliverable: Excel Model](https://img.shields.io/badge/Excel%20Model-7%20Tabs%20.XLSX-success.svg)](data/La_Dehesa_del_Castrillo_Financial_Model.xlsx)
+[![Deliverable: Excel Model](https://img.shields.io/badge/Excel%20Model-8%20Tabs%20.XLSX-success.svg)](data/La_Dehesa_del_Castrillo_Financial_Model.xlsx)
 
 [English](README.md) | [Español](README_ES.md)
 
 **Author:** Jaime Pérez  
 **Focus:** Real Estate Private Equity, Hospitality Due Diligence & Corporate Credit Underwriting  
-**Corporate Scope:** 25-Hectare Rural Estate | Segovia, Spain | €729,000 CapEx | 70/30 Senior Debt/Equity Structure  
-**Primary Deliverables:** Fully Modular Financial Engine (`/src`), Unit Economics & Monthly Runway Engine (`unit_economics.py`, `monthly_cash.py`), Programmatic Model Audit & Data Room Integrity Verification (`model_audit_summary.json`), Multivariate Copula Tail Risk Engine (`copula_engine.py`), Credit Committee Underwriting Memorandum (`credit_committee.py`), Institutional Visual Artifacts (`/assets`), Automated Test Suite (`/tests`), and Master 7-Tab Financial Model (`data/La_Dehesa_del_Castrillo_Financial_Model.xlsx`).
+**Corporate Scope:** 25-Hectare Rural Estate | Segovia, Spain | €729k Phase I + €360k Phase II CapEx | Self-Funded Equity Expansion  
+**Primary Deliverables:** Fully Modular Financial Engine (`/src`), Phase II Expansion Engine (`expansion.py`), Unit Economics & Monthly Runway Engine (`unit_economics.py`, `monthly_cash.py`), Programmatic Model Audit & Data Room Integrity Verification (`model_audit_summary.json`), Multivariate Copula Tail Risk Engine (`copula_engine.py`), Credit Committee Underwriting Memorandum (`credit_committee.py`), Institutional Visual Artifacts (`/assets`), Automated Test Suite (`/tests`), and Master 8-Tab Financial Model (`data/La_Dehesa_del_Castrillo_Financial_Model.xlsx`).
 
 
 ```
@@ -356,9 +356,164 @@ To ensure zero circularities, strict balance sheet equality, and regulatory comp
 
 This programmatic verification payload provides investment committees, lenders, and automated diligence scanners with unambiguous proof of model integrity, statutory compliance, and covenant safety prior to capital deployment.
 
+## 13. Phase II Expansion: Landscape Hotel Suites & Biological Reservoir (Value-Add Strategy)
+
+### Strategic Investment Thesis & Self-Funded Capital Allocation
+The Phase II expansion of **La Dehesa del Castrillo S.L.** represents an institutional value-add hospitality project within the 25-hectare (250,000 m²) oak forest estate in Segovia (~75 minutes from Madrid). While Phase I establishes the core operating asset (7-key boutique hotel, 10-12 pax country house, 21-seat agrigastro restaurant, and natural swimming biopool under a €729,000 initial CapEx), Phase II introduces an ultra-luxury experiential product: **two standalone Landscape Hotel Suites of 55 m² built each (110 m² total)** oriented toward a **naturalized 200 m² biological pond reservoir**.
+
+The financial feasibility of Phase II rests on two structural pillars:
+1. **100% Self-Funded Equity Allocation:** At the close of Month 24 (Year 2), the company accumulates €421,784 in gross treasury (€193,950 net free cash after settling the VAT bridge facility, expanding to €225,556 in Year 3, plus an undrawn €50k credit facility). This liquidity surge is driven by the disbursement of the €163,000 non-refundable European LEADER grant (Month 14) and the €152,250 input VAT tax refund by the Spanish tax agency (AEAT, Month 18). Consequently, the entire **€359,970.00 All-In CapEx** is funded via retained earnings, requiring zero mortgage debt expansion and zero equity dilution.
+2. **Asymmetric Operating Leverage:** Phase I absorbs 100% of the estate's fixed labor (€60,075/yr across 3 FTEs under the Segovia Collective Agreement) and administrative overhead (€12,159/yr). The 2 landscape suites incur only €14,400/yr in incremental fixed costs, transforming **78.00% of gross revenues into contribution margin** and **68.15% into EBITDA (€99,620.53/yr at Year 3 maturity)**. A 49.4% incremental capital outlay doubles total company EBITDA.
+
 ---
 
-## 13. Dual Operational Calibration: LEADER vs. INE Benchmark
+### Real Construction Cost Schedule (CapEx Breakdown & Benchmarking)
+Pricing luxury rural architecture in Spain (2024–2026) requires distinguishing standard prefabricated residential cabins (€1,300–€1,500/m² ex-ground) from high-end hospitality grade structures incorporating groundworks in rustic land, Valsaín pine structural timber / cross-laminated timber (CLT), traditional Segovian stone masonry, floor-to-ceiling solar-control minimalist glass, aerothermal radiant floors, freestanding solid-surface spa bathrooms, and extensive infrastructure.
+
+| Chapter / Budget Work Package | Technical Specification & Materiality | PEM (€) | Contractor Margin (13% GG + 6% BI) | PEC / Turnkey (€) | Ratio PEC (€ / m² built) | % of CapEx |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **1. Groundworks, Foundations & Structure** | Micro-piles, elevated ventilated crawl space, CLT panels and GL28h laminated timber beams (Valsaín pine) | €38,500.00 | €7,315.00 | €45,815.00 | €416.50/m² | 12.73% |
+| **2. Stone Masonry & Thermal Envelope** | Traditional Segovian limestone/granite masonry, 160 mm ecological wood-fiber/cork insulation, high-spec roof | €31,000.00 | €5,890.00 | €36,890.00 | €335.36/m² | 10.25% |
+| **3. Minimalist Curtain Walls & Glass** | Floor-to-ceiling concealed-profile lift-and-slide glass, triple-pane acoustic argon glass, Guardian Sun control | €37,500.00 | €7,125.00 | €44,625.00 | €405.68/m² | 12.40% |
+| **4. Aerotermia, Radiant Floor & KNX** | Reversible air-to-water heat pump (COP > 4.5), radiant-cooling floor, mechanical ventilation, KNX/DALI | €28,500.00 | €5,415.00 | €33,915.00 | €308.32/m² | 9.42% |
+| **5. Integrated Spa-Grade Bathrooms** | Freestanding solid-surface bathtub with forest view, walk-in double shower, microcement, suspended sanitaryware | €26,000.00 | €4,940.00 | €30,940.00 | €281.27/m² | 8.60% |
+| **Subtotal Pure Building (Ch. 1-5)** | Obra civil and interior installations (110 m² total built) | €161,500.00 | €30,685.00 | €192,185.00 | €1,747.14/m² | 53.39% |
+| **6. Urbanization, Utilities & Sanitation** | 25-ha underground HDPE trenches, low-voltage power, optical fiber, biological oxidation septic tank | €31,500.00 | €5,985.00 | €37,485.00 | €340.77/m² | 10.41% |
+| **7. 5-Star FF&E, Deck & Outdoor Hot Tub** | King-size bed (200x200), design wood-burning stove, thermowood cantilevered deck, 2-pax heated outdoor Nordic tub | €35,000.00 | €6,650.00 | €41,650.00 | €378.64/m² | 11.57% |
+| **8. Biological Pond Reservoir (200 m²)** | Excavated terraced basin, 1.2 mm EPDM liner, zeolites/pozzolana biofilter, Oase pumps, Segovian rockery & macrophytes | €32,000.00 | €6,080.00 | €38,080.00 | €346.18/m² | 10.58% |
+| **TOTAL CONTRACTOR WORK (PEM / PEC)** | Comprehensive civil works, FF&E, utilities and natural pond | €260,000.00 | €49,400.00 | €309,400.00 | €2,812.73/m² | 85.95% |
+| **9. Technical Architecture & Engineering** | Detailed architectural design, site supervision, health & safety, geotechnical study, specific reservoir project (9% PEM) | €23,400.00 | — | €23,400.00 | €212.73/m² | 6.50% |
+| **10. Municipal Building Permits & ICIO** | Municipal construction tax (ICIO 3.5%) and exceptional rural use processing fee (1.0% PEM) | €11,700.00 | — | €11,700.00 | €106.36/m² | 3.25% |
+| **11. Contingency Reserve (5.0% PEC)** | Unforeseen reserve for rocky granite subsoil or supply chain variations | €15,470.00 | — | €15,470.00 | €140.64/m² | 4.30% |
+| **TOTAL ALL-IN CAPEX (PHASE II)** | Total capital deployment (net of 21% deductible VAT) | €310,570.00 | €49,400.00 | €359,970.00 | €3,272.45/m² | 100.00% |
+
+---
+
+### Biological Reservoir Engineering (200 m² Water Mirror)
+Unlike collective public swimming biopools (which exceed €50k for >80 m² due to reinforced perimeter slabs and bath regulations), the 200 m² biological pond serves a triple function: landscape water mirror fronting the suites, summer evaporative microclimate cooling, and a certified wild-fire retention pond for regional forest protection.
+
+| Component / Sub-package | Technical Dimension & Specification | PEM (€) | PEC (€) | Ratio (€/m² water) | % of Pond |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **8.1 Earthworks & Terracing** | ~260 m³ mechanical excavation, 1:3 slopes, 3 bathymetric rings (0.3m beach, 0.8m terrace, 2.0m thermal pit) | €5,200.00 | €6,188.00 | €30.94/m² | 16.25% |
+| **8.2 Geotextile & EPDM Membrane** | 5 cm sand bed, double 400 g/m² non-woven geotextile, 1.2 mm Firestone PondGard EPDM (>40-yr design life) | €7,800.00 | €9,282.00 | €46.41/m² | 24.38% |
+| **8.3 Zeolite & Pozzolana Biofilter** | 95 m² regeneration bed, silica gravel, porous volcanic pozzolana, natural clinoptilolite zeolites (phosphate capture) | €6,200.00 | €7,378.00 | €36.89/m² | 19.38% |
+| **8.4 Hydraulics, Pumps & Cascade** | 2 Oase AquaMax Eco variable pumps (<180W), 2 surface skimmers, pressure PVC, natural stone oxygenating cascade | €5,400.00 | €6,426.00 | €32.13/m² | 16.88% |
+| **8.5 Segovian Stone Rockery** | ~35 tons of local weathered granite and limestone boulders concealing EPDM margins, wildlife access ramps | €4,100.00 | €4,879.00 | €24.40/m² | 12.81% |
+| **8.6 Macrophytic Phytodepuration** | ~600 native helophytes (*Iris pseudacorus*, *Typha*), submerged oxygenators (*Ceratophyllum*), water lilies (*Nymphaea alba*) | €3,300.00 | €3,927.00 | €19.64/m² | 10.31% |
+| **TOTAL BIOLOGICAL POND** | Naturalized self-purifying wetland ecosystem | €32,000.00 | €38,080.00 | €190.40/m² | 100.00% |
+
+---
+
+### Hospitality Benchmark & Revenue Underwriting
+
+| Comparable Operator | Location & Market Distance | Architecture & Positioning | Midweek ADR (Net) | Weekend ADR (Net) | Commercial Model |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Vivood Landscape Hotel & 5E Spa** | Benimantell, Alicante | Modular pilotis, floor-to-ceiling glass, private jacuzzi suites | €227.00 | €505.00 | Dynamic pricing (-40% Jan, +198% May), 5-element wellness |
+| **Miluna Open Nature Rooms** | Hormigos, Toledo (~60 min Madrid) | Astronomical bubbles & panoramic cabins, private flotarium | €310.00 | €412.00–€480.00 | 100% couple escapes from Madrid, high culinary attachment |
+| **Aire de Bardenas** | Tudela, Navarra | Architectural cubes, exterior baths facing Bardenas Reales | €280.00 | €450.00 | International design icon, organic farm-to-table |
+| **Basoa Suites** | Ultzama Valley, Navarra | Elevated treehouse suites in centennial oak forest | €195.00 | €260.00–€320.00 | Adults-only canopy immersion, gourmet breakfast basket |
+| **Cabañitas del Bosque** | Outes, A Coruña | Elevated timber cabins with hot tub and fireplace | €150.00–€170.00 | €170.00–€190.00 | 2-night minimum stay weekend, intensive ancillary monetization |
+| **La Dehesa del Castrillo (Phase II Target)** | **Segovia (~75 min Madrid, 25 ha)** | **2 Suites 55 m², local stone, CLT/Valsaín timber, hot tub, 200 m² pond** | **€240.00 (Net)** | **€360.00 (Net)** | **Weighted Net ADR: €290.00 (€319 PVP VAT inc.), 85% F&B capture** |
+
+Operational Parameters:
+- **Available Capacity:** 730 suite-nights/year (2 suites x 365 days).
+- **Pricing:** Base Weekend Net ADR: €360.00 (vs. €505 Vivood, €412 Miluna). Base Midweek Net ADR: €240.00. Realized Weighted Net ADR: **€290.00** (ex-VAT).
+- **Occupancy:** Weekend: 88.5% (104 days). Midweek: 34.7% (261 days). Blended Annual Occupancy: **50.00% (365 nights sold)**.
+- **Ancillary Gastronomy:** 85.0% capture rate @ €130.00 net ticket per couple (€65/pax agrigastro dinner & pairings).
+- **Distribution Mix:** 70.0% Direct (web, social, gift vouchers @ 1.5% gateway cost) / 30.0% OTA (Booking.com @ 16.0% commission). Weighted distribution cost: **5.85%**.
+- **Unit Yield:** Base RevPAR: **€145.00** (vs €40.13 in Phase I). Base TRevPAR: **€200.25** (vs €61.75 in Phase I).
+
+---
+
+### Incremental USALI Operating P&L (Annual Basis)
+
+| P&L Line Item (Ex-VAT) | Conservative (40% Occ / €250 ADR) | Base Case Y3 (50% Occ / €290 ADR) | Optimistic (58% Occ / €330 ADR) | % of Sales (Base) | Driver & Cost Behavior |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Nights Sold (out of 730)** | 292.0 nights | **365.0 nights** | 423.4 nights | — | 182.5 occupied nights per suite/yr |
+| **Gross Accommodation Revenue** | €73,000.00 | **€105,850.00** | €139,722.00 | 72.41% | 365 nights x €290.00 ADR (10% VAT) |
+| **Induced Food & Beverage Revenue** | €27,302.00 | **€40,332.50** | €53,983.50 | 27.59% | 365 nights x 85% capture x €130 ticket |
+| **TOTAL GROSS REVENUE** | **€100,302.00** | **€146,182.50** | **€193,705.50** | **100.00%** | **€73,091.25 revenue per suite/yr** |
+| (-) Distribution & Payment Gateway | -€5,307.10 | **-€6,192.23** | -€6,811.45 | -4.24% | 30% OTAs @ 16% + 70% Direct @ 1.5% |
+| (-) F&B Raw Materials (COGS 30%) | -€8,190.60 | **-€12,099.75** | -€16,195.05 | -8.28% | 30.0% of dining & breakfast sales |
+| (-) Laundry, 5* Amenities, Firewood | -€7,008.00 | **-€8,760.00** | -€10,161.60 | -5.99% | €24.00 per occupied night |
+| (-) Variable Utilities (Aerotermia & Hot Tub) | -€4,401.90 | **-€5,110.00** | -€5,927.60 | -3.50% | €14.00 per occupied night |
+| **TOTAL VARIABLE COSTS** | **-€24,907.60** | **-€32,161.97** | **-€39,095.70** | **-22.00%** | **€88.11 variable cost per occupied night** |
+| **CONTRIBUTION MARGIN** | **€75,394.40** | **€114,020.53** | **€154,609.80** | **78.00%** | **€312.39 clean margin per occupied night** |
+| (-) Seasonal Housekeeping Reinforcement | -€4,800.00 | **-€4,800.00** | -€4,800.00 | -3.28% | Weekend turnover support; base staff in Phase I |
+| (-) Incremental Fixed OPEX | -€9,600.00 | **-€9,600.00** | -€9,600.00 | -6.57% | Maintenance (€4.5k), Ins (€1.2k), Mkt (€2.4k), Power (€1.5k) |
+| **REALIZED INCREMENTAL EBITDA** | **€60,994.40** | **€99,620.53** | **€140,209.80** | **68.15%** | **€49,810.26 EBITDA per suite/yr** |
+| (-) Depreciation (4.5% blended) | -€16,198.65 | **-€16,198.65** | -€16,198.65 | -11.08% | Linear statutory depreciation (Ley 27/2014) |
+| **EBIT (Operating Income)** | **€44,795.75** | **€83,421.88** | **€124,011.15** | **57.07%** | **Zero financial expense (100% equity funded)** |
+| (-) Corporate Income Tax (25.0%) | -€11,198.94 | **-€20,855.47** | -€31,002.79 | -14.27% | General Spanish CIT rate |
+| **NET INCOME (EAT)** | **€33,596.81** | **€62,566.41** | **€93,008.36** | **42.80%** | **42.8% net income margin** |
+| (+) Depreciation (-) FF&E Reserve (2%) | +€14,192.61 | **+€13,275.00** | +€12,324.54 | +9.08% | €2,923.65 annual replacement escrow |
+| **FREE CASH FLOW TO EQUITY (FCF)** | **€47,789.42** | **€75,841.41** | **€105,332.90** | **51.88%** | **Net cash available to investors** |
+
+---
+
+### 5-Year Trajectory Schedule & Return Underwriting
+Modeled with an institutional ramp-up curve: **Year 1 at 75%** (37.5% occupancy), **Year 2 at 90%** (45.0% occupancy), **Year 3 at 100% maturity** (50.0% occupancy), and **+2.0% annual inflation in Years 4 and 5**.
+
+| Metric / Financial Line | Year 1 (Ramp 75%) | Year 2 (Ramp 90%) | Year 3 (Base 100%) | Year 4 (+2% IPC) | Year 5 (+2% IPC) | 5-Year Cumulative |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **Gross Revenue** | €109,636.88 | €131,564.25 | **€146,182.50** | €149,106.15 | €152,088.27 | **€688,578.05** |
+| **EBITDA** | €68,474.39 | €87,162.07 | **€99,620.53** | €101,612.94 | €103,645.20 | **€460,515.13** |
+| **EBITDA Margin** | 62.46% | 66.25% | **68.15%** | 68.15% | 68.15% | **66.88% (Avg)** |
+| **Net Income (EAT)** | €39,206.81 | €53,222.57 | **€62,566.41** | €64,060.72 | €65,584.91 | **€284,641.42** |
+| **Free Cash Flow (FCF)** | **€53,212.72** | **€66,789.93** | **€75,841.41** | **€77,277.24** | **€78,741.80** | **€351,863.10** |
+| **Discounted FCF (WACC 8.0%)** | €49,271.03 | €57,261.60 | **€60,205.36** | €56,801.08 | €53,590.34 | **€277,129.41** |
+
+Capital Allocation & Profitability Metrics:
+- **Simple EBITDA Payback:** **3.97 years (47.6 months)** (€356,870 EBITDA generated in Y1-Y4).
+- **Simple Post-Tax FCF Payback:** **5.10 years (61.2 months)** (€351,863 accumulated by Y5, fully paid in M61).
+- **Discounted Payback (WACC 8.0%):** **6.67 years (80.1 months)**.
+- **Development EBITDA Yield on Cost:** **27.67%** (€99,620.53 EBITDA / €359,970 CapEx).
+- **Stabilized ROIC (Year 3):** **17.38%** (NOPAT / CapEx = €62,566 / €359,970), generating an **EVA spread of +938 bps** above the 8.0% cost of capital.
+- **10-Year Unlevered Operating IRR:** **15.57%** (assuming zero terminal value at end of life).
+
+---
+
+### Exit Valuation & Multiples Arbitrage
+Phase II is constructed at an implied development multiple of **3.61x EBITDA** (€359,970 / €99,620). Institutional rural and landscape hospitality transactions in Spain trade at Exit Cap Rates between **8.0% and 9.0%** (11.11x to 12.50x EBITDA), creating immediate capital appreciation upon operational stabilization:
+
+| Exit Cap Rate | Implied EV/EBITDA | Year 3 Valuation | Year 3 Net Gain | Year 5 Valuation | Year 5 Net Gain | 5-Year Exit IRR | 5-Year MOIC |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **8.0% (Prime Comp.)** | 12.50x | **€1,245,256.62** | +€885,286.62 | **€1,295,565.00** | +€935,595.00 | **41.43%** | **4.58x** |
+| **8.5% (Base Underwriting)** | 11.76x | **€1,172,006.24** | +€812,036.24 | **€1,219,355.29** | +€859,385.29 | **40.12%** | **4.37x** |
+| **9.0% (Conservative)** | 11.11x | **€1,106,894.78** | +€746,924.78 | **€1,151,613.33** | +€791,643.33 | **38.90%** | **4.18x** |
+
+---
+
+### Consolidated Group Underwriting & Credit Risk Impact
+Consolidating Phase I and Phase II under **La Dehesa del Castrillo S.L.** profoundly transforms the company's financial profile:
+
+| Financial Metric | Phase I Standalone (Y3) | Phase II Incremental (Y3) | Consolidated Group (Y3) | % Expansion |
+| :--- | :--- | :--- | :--- | :--- |
+| **Gross Operating Revenue** | €180,306.00 | €146,182.50 | **€326,488.50** | **+81.08%** |
+| **Realized EBITDA** | €89,139.87 (49.4%) | €99,620.53 (68.1%) | **€188,760.40 (57.8%)** | **+111.76%** |
+| **Annual Senior Debt Service** | €43,536.36 | €0.00 | **€43,536.36** | **0.00% (No debt increase)** |
+| **Senior Mortgage Outstanding** | €426,098.24 | €0.00 | **€426,098.24** | **0.00%** |
+| **Debt Service Coverage (DSCR)** | **1.73x / 2.05x** | — | **3.56x / 4.34x** | **+105.8% covenant safety** |
+| **Net Corporate Cash Flow** | €41,993.00 | €75,841.41 | **€117,834.41** | **+180.6%** |
+| **Enterprise Value (@ 8.5% Cap)** | €1,048,704.35 | €1,172,006.24 | **€2,220,710.59** | **2.04x Total Historical CapEx** |
+
+---
+
+### Permitting Framework & Off-Site Modular Sequencing
+- **Regional Urban Planning:** Regulated under *Ley 5/1999 de Urbanismo de Castilla y León* (LOUCYL, Art. 23.2 & 25) and *Decreto 22/2004* (RUCYL, Art. 306-308). The project requires an **Autorización de Uso Excepcional en Suelo Rústico** before the *Comisión Territorial de Medio Ambiente y Urbanismo* (CTMAU) of Segovia.
+- **Urban Planning Parameters:** 25-hectare plot offers massive statutory compliance headroom:
+  - Parcela mínima: 250,000 m² (vs. 10,000–30,000 m² requirement).
+  - Building Footprint: 860 m² total (Fase I 550 m² + Fase II 310 m²) = **0.344% parcel coverage** (vs. 2.0%–5.0% statutory ceiling).
+  - Setbacks: **>120 m to boundaries** (vs. 5–10 m legal minimum) and >80 m to Phase I hotel.
+  - Height: Single story (3.40 m eave / 4.10 m ridge, concealed under the oak canopy vs. 7.00 m / 9.00 m allowance).
+- **Industrialized Off-Site Construction (85% off-site / 15% on-site):**
+  - **Weeks 1–10:** Factory manufacturing of CLT/timber modules by certified suppliers (*Arquima*, *Room2030*, *Egoin* + Valsaín Km 0 pine) with full insulation, glass, and spa bathrooms pre-assembled.
+  - **Weeks 8–11:** Civil works window in the 25-ha estate scheduled during historical low-season months (November or February) to dig 90 cm frost-protected utility trenches, assemble the 200 m² biological pond, and install steel/concrete micro-piles.
+  - **Weeks 12–14:** Mobile crane module lifting onto micro-piles completed in **24 to 72 hours between Tuesday and Thursday** (zero guest disruption to Phase I weekend operations), followed by 2 weeks of dry-stone masonry cladding by local Segovian craftsmen.
+
+---
+
+## 14. Dual Operational Calibration: LEADER vs. INE Benchmark
 
 To ensure full transparency between the initial preliminary pitch sheets and the quantitative market engine, the repository supports two switchable calibration modes:
 
@@ -367,7 +522,7 @@ To ensure full transparency between the initial preliminary pitch sheets and the
 
 ---
 
-## 14. Repository Architecture
+## 15. Repository Architecture
 
 ```
 proyecto-dehesa-del-castrillo/
@@ -379,7 +534,7 @@ proyecto-dehesa-del-castrillo/
 │   ├── figure_5_copula_tail_risk.png     # Multivariate copula tail dependence & CVaR
 │   └── figure_6_monthly_cash_runway.png  # 24-Month cash runway & winter cash trough
 ├── data/                                 # Institutional deliverables
-│   ├── La_Dehesa_del_Castrillo_Financial_Model.xlsx # Master 7-Tab Structured Model
+│   ├── La_Dehesa_del_Castrillo_Financial_Model.xlsx # Master 8-Tab Structured Model
 │   └── model_audit_summary.json          # Programmatic Model Audit & Integrity Summary
 ├── raw_data/                             # Original source Excel files
 │   ├── La_Dehesa_de_Castrillo_Proyecto.xlsx
@@ -391,6 +546,7 @@ proyecto-dehesa-del-castrillo/
 │   ├── core/                             # Debt, Tax, Statements, Unit Economics & Audit
 │   │   ├── credit_committee.py           # Automated bank committee memorandum
 │   │   ├── debt.py                       # French amortization schedule
+│   │   ├── expansion.py                  # Phase II Landscape Suites & Biological Pond Engine
 │   │   ├── metrics.py                    # Covenants, break-even & IRR/NPV
 │   │   ├── model_audit.py                # Automated Model Audit & Guardrail Verification
 │   │   ├── monthly_cash.py               # Monthly cash runway & trough simulation
@@ -406,11 +562,12 @@ proyecto-dehesa-del-castrillo/
 ├── tests/                                # Automated unit test suite (pytest)
 │   ├── test_assumptions.py
 │   ├── test_copula.py                    # Copula marginals, ordering & DSRA tests
+│   ├── test_expansion.py                 # Phase II CapEx, P&L, returns & consolidated underwriting
 │   ├── test_financial_engine.py
 │   ├── test_model_audit.py               # Model audit & guardrail tests
 │   ├── test_simulation.py
 │   └── test_unit_economics_monthly.py    # RevPAR, contribution margin & runway tests
-├── main.py                               # End-to-end execution pipeline
+├── main.py                               # End-to-end execution pipeline (10 automated steps)
 ├── README.md                             # English Investment Memorandum
 ├── README_ES.md                          # Spanish Investment Memorandum
 └── .gitignore                            # Version control exclusion rules
@@ -418,7 +575,7 @@ proyecto-dehesa-del-castrillo/
 
 ---
 
-## 15. Installation & Execution
+## 16. Installation & Execution
 
 ```bash
 # Clone the repository
@@ -428,18 +585,20 @@ cd la-dehesa-financial-due-diligence
 # Install Python dependencies
 pip install pandas numpy scipy openpyxl matplotlib seaborn pytest
 
-# Run the complete end-to-end financial pipeline
+# Run the complete end-to-end financial pipeline (10-step institutional analysis)
 python main.py
 
-# Run the automated test suite (26 tests verifying financial identities, copula tails & AI guardrails)
+# Run the automated test suite (30 tests verifying financial identities, copula tails & expansion metrics)
 python -m pytest tests/
 ```
 
 ---
 
-## 16. Statutory & Methodological References
+## 17. Statutory & Methodological References
 - **Indirect Taxation (VAT):** *Ley 37/1992, de 28 de diciembre, del Impuesto sobre el Valor Añadido* (Art. 90, Art. 91.Uno.2.2º).
 - **Direct Corporate Taxation:** *Ley 27/2014, de 27 de noviembre, del Impuesto sobre Sociedades* (Art. 12, Art. 26 - Bases Imponibles Negativas).
 - **Labor Regulations:** *Convenio Colectivo Provincial de Hostelería de Segovia* (Boletín Oficial de la Provincia de Segovia).
 - **Official Tourism Statistics:** *Instituto Nacional de Estadística* (INE) - *Encuesta de Ocupación en Alojamientos de Turismo Rural* (EOTR), Serie Provincial Segovia.
+- **Regional Urban Planning:** *Ley 5/1999, de 8 de abril, de Urbanismo de Castilla y León* (LOUCYL, Art. 23.2 y 25) y *Decreto 22/2004, de 29 de enero, por el que se aprueba el Reglamento de Urbanismo de Castilla y León* (RUCYL, Art. 306 a 308).
+- **Rural Hospitality Regulations:** *Ley 14/2010, de 9 de diciembre, de Turismo de Castilla y León* y *Decreto 75/2013, de 28 de noviembre, regulador de los establecimientos de alojamiento de turismo rural*.
 
