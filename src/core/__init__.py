@@ -6,6 +6,11 @@ from src.core.metrics import CreditMetricsEngine, calculate_npv, calculate_irr
 from src.core.unit_economics import UnitEconomicsEngine, UnitEconomicsMetrics
 from src.core.monthly_cash import MonthlyCashEngine, MonthlyCashRecord, MonthlyRunwaySummary
 from src.core.model_audit import ModelAuditEngine, AuditMetric, AuditGuardrailRule
+from src.core.expansion import (
+    ExpansionFinancialEngine,
+    ExpansionCapExBreakdown,
+    ExpansionOperatingAssumptions,
+)
 
 __all__ = [
     "DebtAmortizationEngine",
@@ -25,4 +30,7 @@ __all__ = [
     "ModelAuditEngine",
     "AuditMetric",
     "AuditGuardrailRule",
+    "ExpansionFinancialEngine",
+    "ExpansionCapExBreakdown",
+    "ExpansionOperatingAssumptions",
 ]

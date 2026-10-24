@@ -3,16 +3,16 @@
 
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Tests: Pytest Passed](https://img.shields.io/badge/tests-26%20passed-brightgreen.svg)](https://docs.pytest.org/)
+[![Tests: Pytest Passed](https://img.shields.io/badge/tests-30%20passed-brightgreen.svg)](https://docs.pytest.org/)
 [![Model Audit: Verified](https://img.shields.io/badge/Model%20Audit-7%2F7%20Passed-blue.svg)](data/model_audit_summary.json)
-[![Deliverable: Excel Model](https://img.shields.io/badge/Modelo%20Excel-7%20Pestañas%20.XLSX-success.svg)](data/La_Dehesa_del_Castrillo_Financial_Model.xlsx)
+[![Deliverable: Excel Model](https://img.shields.io/badge/Modelo%20Excel-8%20Pestañas%20.XLSX-success.svg)](data/La_Dehesa_del_Castrillo_Financial_Model.xlsx)
 
 [English](README.md) | [Español](README_ES.md)
 
 **Autor:** Jaime Pérez  
 **Especialidad:** Real Estate Private Equity, Due Diligence Operativa y Análisis de Crédito Bancario  
-**Alcance del Proyecto:** Finca Rural de 25 Hectáreas | Segovia, España | Inversión: 729.000 € | Financiación 70/30 Deuda/Capital  
-**Entregables Principales:** Motor Financiero Modular en Python (`/src`), Motor de Unit Economics y Runway Mensual (`unit_economics.py`, `monthly_cash.py`), Capa de Auditoría Programática e Integridad de Modelo (`model_audit_summary.json`), Motor de Cópulas Multivariables (`copula_engine.py`), Memorando para Comité de Riesgos (`credit_committee.py`), Figuras Institucionales de Alta Resolución (`/assets`), Batería de Tests Unitarios (`/tests`) y Modelo Maestro en Excel de 7 pestañas (`data/La_Dehesa_del_Castrillo_Financial_Model.xlsx`).
+**Alcance del Proyecto:** Finca Rural de 25 Hectáreas | Segovia, España | Inversión: 729k € Fase I + 360k € Fase II | Expansión Autofinanciada con Recursos Propios  
+**Entregables Principales:** Motor Financiero Modular en Python (`/src`), Motor de Expansión Fase II (`expansion.py`), Motor de Unit Economics y Runway Mensual (`unit_economics.py`, `monthly_cash.py`), Capa de Auditoría Programática e Integridad de Modelo (`model_audit_summary.json`), Motor de Cópulas Multivariables (`copula_engine.py`), Memorando para Comité de Riesgos (`credit_committee.py`), Figuras Institucionales de Alta Resolución (`/assets`), Batería de Tests Unitarios (`/tests`) y Modelo Maestro en Excel de 8 pestañas (`data/La_Dehesa_del_Castrillo_Financial_Model.xlsx`).
 
 
 ```
@@ -341,9 +341,162 @@ Para garantizar cero circularidades, cuadre estricto de balance y cumplimiento r
 
 Este dictamen programático proporciona a comités de inversión, financiadores y sistemas de escaneo de due diligence una prueba inequívoca de integridad contable, solvencia en estrés y cumplimiento normativo previo a la aportación de fondos.
 
+## 13. Expansión Fase II: Suites de Paisaje y Balsa Biológica (Estrategia Value-Add)
+
+### Tesis de Inversión Estratégica y Financiación con Recursos Propios
+El desarrollo de la Fase II de **La Dehesa del Castrillo S.L.** constituye una operación de creación de valor inmobiliario y operativo (*value-add hospitality expansion*) sobre una finca rústica de 25 hectáreas (250.000 m²) de encinar y robledal en Segovia (~75 minutos de Madrid). Mientras que la Fase I consolida la infraestructura troncal del activo (hotel boutique de 7 habitaciones, casa rural de 10-12 plazas, restaurante agrigastronómico y biopiscina con 729.000 € de CapEx inicial), la Fase II introduce un producto de ultra-lujo experiencial consistente en **dos suites de paisaje independientes (*Landscape Suites*) de 55 m² construidos cada una (110 m² totales)** orientadas a un **estanque biológico naturalizado de 200 m² de lámina de agua**.
+
+La viabilidad financiera de esta expansión descansa sobre dos catalizadores estructurales:
+1. **Financiación 100% con Recursos Propios Acumulados:** Al cierre del Mes 24 (Año 2), la sociedad acumula 421.784 € de tesorería bruta (193.950 € de caja libre neta tras cancelar la línea puente de IVA, creciendo hasta 225.556 € en el Año 3, más una póliza intacta de 50.000 €). Este punto de inflexión de liquidez proviene del cobro de la subvención a fondo perdido LEADER por **163.000 €** (Mes 14) y la devolución del crédito fiscal por IVA soportado en CapEx por parte de la AEAT de **152.250 €** (Mes 18). Ello permite acometer los **359.970,00 € de inversión total (*All-In CapEx*)** íntegramente con el excedente de caja generado por el propio complejo, sin necesidad de ampliar la hipoteca sénior existente ni diluir al accionariado.
+2. **Apalancamiento Operativo Asimétrico:** La Fase I ya absorbe la totalidad de la masa salarial estructural (60.075 €/año para 3 empleados fijos bajo el Convenio de Hostelería de Segovia) y gastos generales (12.159 €/año). Las 2 suites de paisaje operan con un coste fijo incremental mínimo de apenas 14.400 €/año, logrando convertir el **78,00% de sus ingresos brutos en margen de contribución** y el **68,15% en EBITDA neto (99.620,53 €/año en madurez)**. Una inversión marginal del 49,4% sobre el CapEx de Fase I duplica el flujo de caja operativo de toda la compañía.
+
 ---
 
-## 13. Doble Calibración Operativa: Modelo LEADER vs. Benchmark INE
+### Desglose Real de CapEx de Construcción y Benchmarking Paramétrico
+La determinación rigurosa de costes en España (2024–2026) exige deslindar la edificación prefabricada estándar (1.300–1.500 €/m² desde cota cero) de la arquitectura singular de alta gama (*hospitality luxury grade*) en suelo rústico que integra cimentaciones especiales, madera estructural de pino de Valsaín / madera contralaminada (CLT), mampostería tradicional de piedra segoviana, carpintería minimalista de suelo a techo con control solar, aerotermia por suelo radiante-refrescante, baño-spa con bañera exenta mineral y urbanización completa.
+
+| Capítulo / Partida Presupuestaria | Especificación Técnica y Materialidad | PEM (€) | Margen Contrata (13% GG + 6% BI) | PEC / Llave en Mano (€) | Ratio PEC (€ / m² constr.) | Peso (% s/ CapEx) |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **1. Movimiento Tierras, Cimentación y Estructura** | Micropilotes, cámara ventilada, paneles CLT y vigas laminadas GL28h de pino de Valsaín | 38.500,00 € | 7.315,00 € | 45.815,00 € | 416,50 €/m² | 12,73% |
+| **2. Muros de Piedra y Envolvente Térmica** | Mampostería de caliza/granito segoviano, aislamiento ecológico fibra madera/corcho 160 mm | 31.000,00 € | 5.890,00 € | 36.890,00 € | 335,36 €/m² | 10,25% |
+| **3. Carpintería Minimalista y Vidrios Climalit** | Muros cortina correderos ocultos suelo a techo, triple acristalamiento laminar y control Guardian Sun | 37.500,00 € | 7.125,00 € | 44.625,00 € | 405,68 €/m² | 12,40% |
+| **4. Aerotermia, Suelo Radiante y KNX** | Bomba de calor reversible aire-agua (COP > 4,5), suelo radiante-refrescante, VMC con recuperador y KNX | 28.500,00 € | 5.415,00 € | 33.915,00 € | 308,32 €/m² | 9,42% |
+| **5. Baño-Spa Integrado de Diseño** | Bañera exenta mineral Solid Surface, ducha doble a ras, grifería empotrada y microcemento | 26.000,00 € | 4.940,00 € | 30.940,00 € | 281,27 €/m² | 8,60% |
+| **Subtotal Edificación Pura (Cap. 1 a 5)** | Obra civil e instalaciones interiores de las 2 suites (110 m² totales) | 161.500,00 € | 30.685,00 € | 192.185,00 € | 1.747,14 €/m² | 53,39% |
+| **6. Urbanización, Acometidas 25 ha y Depuración** | Zanjas PEAD soterradas, línea eléctrica BT, fibra óptica y depuradora biológica de oxidación total | 31.500,00 € | 5.985,00 € | 37.485,00 € | 340,77 €/m² | 10,41% |
+| **7. Mobiliario 5*, Porche y Tina Nórdica Exterior** | Cama King-size (200x200), chimenea nórdica, porche madera termotratada y tina nórdica climatizada | 35.000,00 € | 6.650,00 € | 41.650,00 € | 378,64 €/m² | 11,57% |
+| **8. Estanque Biológico Paisajístico (200 m²)** | Vaso excavado escalonado, EPDM 1,2 mm, biofiltro zeolitas/puzolana, bombas Oase y macrófitas | 32.000,00 € | 6.080,00 € | 38.080,00 € | 346,18 €/m² | 10,58% |
+| **TOTAL EJECUCIÓN DE OBRA (PEM / PEC)** | Suma de edificación, FF&E 5*, urbanización y estanque natural | 260.000,00 € | 49.400,00 € | 309.400,00 € | 2.812,73 €/m² | 85,95% |
+| **9. Honorarios Técnicos e Ingeniería (9% PEM)** | Proyecto Básico/Ejecución, Dirección Facultativa, Geotécnico y Proyecto específico de balsa | 23.400,00 € | — | 23.400,00 € | 212,73 €/m² | 6,50% |
+| **10. Tasas y Licencias Municipales (4,5% PEM)** | Impuesto s/ Construcciones (ICIO 3,5%) y tasa por tramitación de Uso Excepcional (1,0%) | 11.700,00 € | — | 11.700,00 € | 106,36 €/m² | 3,25% |
+| **11. Reserva de Contingencia (5,0% PEC)** | Fondo de imprevistos para desviaciones en roca granítica o suministros | 15.470,00 € | — | 15.470,00 € | 140,64 €/m² | 4,30% |
+| **TOTAL INVERSIÓN CAPEX FASE II (ALL-IN)** | Desembolso de capital requerido (neto de 21% IVA deducible) | 310.570,00 € | 49.400,00 € | 359.970,00 € | 3.272,45 €/m² | 100,00% |
+
+---
+
+### Ingeniería Específica del Estanque Biológico Paisajístico (200 m²)
+A diferencia de una piscina ecológica de baño colectivo (>50k € para >80 m² por exigencias sanitarias de playas de hormigón y control), el estanque biológico de 200 m² cumple tres funciones esenciales: espejo de agua panorámico ante las cristaleras, microclima de refrigeración evaporativa estival y reserva permanente de agua contra incendios forestales.
+
+| Sub-partida del Estanque Biológico (200 m²) | Medición y Especificación Constructiva | PEM (€) | PEC Llave en Mano (€) | Ratio PEC (€/m² agua) | % s/ Estanque |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **8.1 Excavación y Perfilado de Terrazas** | Excavación de ~260 m³, taludes 1:3, 3 anillos batimétricos (playa 0,3m, terraza 0,8m, foso central 2,0m) | 5.200,00 € | 6.188,00 € | 30,94 €/m² | 16,25% |
+| **8.2 Geotextil y Membrana EPDM** | Cama arena 5 cm, doble geotextil 400 g/m², lámina EPDM Firestone PondGard 1,2 mm (>40 años vida útil) | 7.800,00 € | 9.282,00 € | 46,41 €/m² | 24,38% |
+| **8.3 Biofiltro Zeolitas y Puzolana** | Lecho regeneración 95 m², gravas silíceas lavadas, puzolana volcánica y zeolitas naturales (clinoptilolita) | 6.200,00 € | 7.378,00 € | 36,89 €/m² | 19,38% |
+| **8.4 Sistema Hidráulico y Cascada** | 2 bombas sumergibles Oase Eco (<180W), 2 skimmers de superficie, PVC PN10 y cascada en piedra natural | 5.400,00 € | 6.426,00 € | 32,13 €/m² | 16,88% |
+| **8.5 Rocalla de Piedra Segoviana** | ~35 toneladas de bolos y lajas de granito y caliza local para ocultación perimetral de EPDM y pasos de fauna | 4.100,00 € | 4.879,00 € | 24,40 €/m² | 12,81% |
+| **8.6 Plantación Macrófita Fitodepuradora** | ~600 plantas acuáticas autóctonas: helófitas (*Iris*, *Typha*), oxigenantes sumergidas y nenúfares (*Nymphaea*) | 3.300,00 € | 3.927,00 € | 19,64 €/m² | 10,31% |
+| **TOTAL ESTANQUE BIOLÓGICO** | Infraestructura paisajística con depuración biológica autónoma | 32.000,00 € | 38.080,00 € | 190,40 €/m² | 100,00% |
+
+---
+
+### Benchmark de Mercado y Tarifas de Referencia en el Entorno de Madrid
+
+| Operador Comparable | Ubicación y Distancia | Tipología Arquitectónica y Posicionamiento | ADR Entre Semana | ADR Fin de Semana | Estrategia Comercial |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Vivood Landscape Hotel & 5E Spa** | Benimantell, Alicante | Suites modulares sobre pilotes, ventanal panorámico, jacuzzi | 227,00 € | 505,00 € | Pricing dinámico (-40% enero, +198% mayo), spa 5 elementos |
+| **Miluna Open Nature Rooms** | Hormigos, Toledo (~60 min Madrid) | Burbujas astronómicas y habitaciones panorámicas, flotarium | 310,00 € | 412,00 € – 480,00 € | 100% parejas Madrid, alta tracción gastronómica y telescopio |
+| **Hotel Aire de Bardenas** | Tudela, Navarra | Cubos de diseño frente a Bardenas, bañera exterior privada | 280,00 € | 450,00 € | Posicionamiento internacional, huerto ecológico propio |
+| **Basoa Suites** | Valle de Ultzama, Navarra | Suites elevadas en robledal centenario para adultos | 195,00 € | 260,00 € – 320,00 € | Inmersión total en dosel arbóreo, cesta desayuno con polea |
+| **Cabañitas del Bosque** | Outes, A Coruña | Cabañas en árboles con jacuzzi y chimenea | 150,00 € – 170,00 € | 170,00 € – 190,00 € | Mínimo 2 noches en fin de semana, alta venta de extras |
+| **La Dehesa del Castrillo (Target Fase II)** | **Segovia (~75 min Madrid, 25 ha)** | **2 Suites 55 m², piedra local, CLT/Valsaín, tina nórdica, estanque 200 m²** | **240,00 € (Neto)** | **360,00 € (Neto)** | **ADR medio neto 290,00 € (319 € PVP inc. IVA), 85% captura gastro** |
+
+Parámetros Operativos Clave:
+- **Capacidad Anual:** 730 noches disponibles (2 suites x 365 días).
+- **Tarifas Netas:** Fin de semana: 360,00 € (frente a 505 € Vivood, 412 € Miluna). Entre semana: 240,00 €. ADR medio ponderado neto: **290,00 €** (3,4x el ADR de 85 € de Fase I).
+- **Ocupación:** Fin de semana: 88,5% (104 días). Entre semana: 34,7% (261 días). Ocupación media ponderada: **50,00% (365 noches vendidas)**.
+- **Captura Gastronómica:** 85,0% a 130,00 € de ticket medio por pareja (65 €/pax menú degustación agrigastro y maridaje).
+- **Mix de Distribución:** 70,0% Directo (web/redes/bonos al 1,5% pasarela) / 30,0% OTAs (Booking al 16,0% comisión). Coste de canal ponderado: **5,85%**.
+- **Rendimiento Unitario:** RevPAR: **145,00 €** (vs 40,13 € Fase I). TRevPAR: **200,25 €** (vs 61,75 € Fase I).
+
+---
+
+### Cuenta de Resultados Incremental (P&L USALI Anual)
+
+| Partida de la Cuenta de Resultados (Sin IVA) | Escenario Conservador (40% Occ / 250 € ADR) | Caso Base Año 3 (50% Occ / 290 € ADR) | Escenario Optimista (58% Occ / 330 € ADR) | % s/ Ventas (Base) | Comportamiento del Coste |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Noches Vendidas (s/ 730 disponibles)** | 292,0 noches | **365,0 noches** | 423,4 noches | — | 182,5 noches ocupadas por suite/año |
+| **Ingresos Brutos Alojamiento** | 73.000,00 € | **105.850,00 €** | 139.722,00 € | 72,41% | 365 noches x 290,00 € ADR neto (10% IVA) |
+| **Ingresos Inducidos Restauración** | 27.302,00 € | **40.332,50 €** | 53.983,50 € | 27,59% | 365 noches x 85% captura x 130 € ticket |
+| **FACTURACIÓN BRUTA TOTAL** | **100.302,00 €** | **146.182,50 €** | **193.705,50 €** | **100,00%** | **73.091,25 € facturación por suite/año** |
+| (-) Comisiones OTAs y Pasarela de Pago | -5.307,10 € | **-6.192,23 €** | -6.811,45 € | -4,24% | 30% OTAs al 16% + 70% Directo al 1,5% |
+| (-) Materia Prima Alimentos (COGS 30%) | -8.190,60 € | **-12.099,75 €** | -16.195,05 € | -8,28% | 30,0% sobre facturación gastronómica |
+| (-) Lavandería, Amenities 5* y Leña | -7.008,00 € | **-8.760,00 €** | -10.161,60 € | -5,99% | 24,00 € por noche ocupada |
+| (-) Energía Variable (Aerotermia y Tina) | -4.401,90 € | **-5.110,00 €** | -5.927,60 € | -3,50% | 14,00 € por noche ocupada |
+| **TOTAL COSTES VARIABLES** | **-24.907,60 €** | **-32.161,97 €** | **-39.095,70 €** | **-22,00%** | **88,11 € coste variable por noche ocupada** |
+| **MARGEN DE CONTRIBUCIÓN** | **75.394,40 €** | **114.020,53 €** | **154.609,80 €** | **78,00%** | **312,39 € margen limpio por noche ocupada** |
+| (-) Refuerzo Estacional Limpieza | -4.800,00 € | **-4.800,00 €** | -4.800,00 € | -3,28% | Apoyo en fines de semana; plantilla base en Fase I |
+| (-) Gastos Fijos OPEX Incrementales | -9.600,00 € | **-9.600,00 €** | -9.600,00 € | -6,57% | Mantenimiento (4.500 €), seguro (1.200 €), mkt (2.400 €) |
+| **EBITDA INCREMENTAL REALIZADO** | **60.994,40 €** | **99.620,53 €** | **140.209,80 €** | **68,15%** | **49.810,26 € EBITDA por suite/año** |
+| (-) Amortización Lineal (4,5% medio) | -16.198,65 € | **-16.198,65 €** | -16.198,65 € | -11,08% | Amortización fiscal PGC (Ley 27/2014) |
+| **EBIT (Resultado Operativo)** | **44.795,75 €** | **83.421,88 €** | **124.011,15 €** | **57,07%** | **Cero gasto financiero (100% fondos propios)** |
+| (-) Impuesto sobre Sociedades (25%) | -11.198,94 € | **-20.855,47 €** | -31.002,79 € | -14,27% | Tipo general del 25% |
+| **BENEFICIO NETO (BDI)** | **33.596,81 €** | **62.566,41 €** | **93.008,36 €** | **42,80%** | **42,8% margen neto sobre ventas** |
+| (+) Amortización (-) Reserva FF&E (2%) | +14.192,61 € | **+13.275,00 €** | +12.324,54 € | +9,08% | 2.923,65 € anuales de reserva de reposición |
+| **FLUJO DE CAJA LIBRE (FCF)** | **47.789,42 €** | **75.841,41 €** | **105.332,90 €** | **51,88%** | **Caja limpia disponible para el inversor** |
+
+---
+
+### Serie Quinquenal, Retornos y Arbitraje de Múltiplos en Salida
+Modelizado con una curva de rampa comercial prudente: **Año 1 al 75%** (37,5% ocupación), **Año 2 al 90%** (45,0% ocupación), **Año 3 al 100% de estabilización** (50,0% ocupación) e **indexación por IPC del +2,0% en los Años 4 y 5**.
+
+| Métrica / Magnitud Financiera | Año 1 (Rampa 75%) | Año 2 (Rampa 90%) | Año 3 (Base 100%) | Año 4 (+2% IPC) | Año 5 (+2% IPC) | Acumulado 5 Años |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **Facturación Bruta** | 109.636,88 € | 131.564,25 € | **146.182,50 €** | 149.106,15 € | 152.088,27 € | **688.578,05 €** |
+| **EBITDA** | 68.474,39 € | 87.162,07 € | **99.620,53 €** | 101.612,94 € | 103.645,20 € | **460.515,13 €** |
+| **Margen EBITDA** | 62,46% | 66,25% | **68,15%** | 68,15% | 68,15% | **66,88% (Media)** |
+| **Beneficio Neto (BDI)** | 39.206,81 € | 53.222,57 € | **62.566,41 €** | 64.060,72 € | 65.584,91 € | **284.641,42 €** |
+| **Flujo de Caja Libre (FCF)** | **53.212,72 €** | **66.789,93 €** | **75.841,41 €** | **77.277,24 €** | **78.741,80 €** | **351.863,10 €** |
+| **FCF Descontado (WACC 8,0%)** | 49.271,03 € | 57.261,60 € | **60.205,36 €** | 56.801,08 € | 53.590,34 € | **277.129,41 €** |
+
+Indicadores de Rentabilidad y Eficiencia de Capital:
+- **Payback EBITDA Simple:** **3,97 años (47,6 meses)** (356.870 € acumulados entre A1 y A4).
+- **Payback FCF Post-Impuestos:** **5,10 años (61,2 meses)** (351.863 € acumulados en A5, liquidado en M61).
+- **Payback Descontado (WACC 8,0%):** **6,67 años (80,1 meses)**.
+- **Rendimiento Bruto de Desarrollo (Yield on Cost):** **27,67%** (EBITDA 99.620 € / CapEx 359.970 €).
+- **ROIC Estabilizado (Año 3):** **17,38%** (NOPAT / CapEx = 62.566 € / 359.970 €), con un **spread EVA de +938 pb** sobre el coste de capital del 8,0%.
+- **TIR Operativa Pura a 10 Años:** **15,57%** (asumiendo valor terminal nulo).
+
+Arbitraje de Múltiplos en Salida:
+El proyecto se construye a un múltiplo implícito de **3,61x EBITDA** (359.970 € / 99.620 €). En el mercado institucional español, los hoteles singulares transaccionan a tasas de capitalización (*Exit Cap Rates*) de entre el **8,0% y el 9,0%** (11,11x a 12,50x EBITDA):
+
+| Exit Cap Rate | Múltiplo Implícito | Valoración Año 3 | Plusvalía Neta A3 | Valoración Año 5 | Plusvalía Neta A5 | TIR 5 Años con Salida | MOIC 5 Años |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **8,0% (Prime Comp.)** | 12,50x | **1.245.256,62 €** | +885.286,62 € | **1.295.565,00 €** | +935.595,00 € | **41,43%** | **4,58x** |
+| **8,5% (Caso Base)** | 11,76x | **1.172.006,24 €** | +812.036,24 € | **1.219.355,29 €** | +859.385,29 € | **40,12%** | **4,37x** |
+| **9,0% (Conservador)** | 11,11x | **1.106.894,78 €** | +746.924,78 € | **1.151.613,33 €** | +791.643,33 € | **38,90%** | **4,18x** |
+
+---
+
+### Impacto en el Balance Consolidado del Grupo y Cobertura de Deuda
+La consolidación de Fase I y Fase II bajo la matriz **La Dehesa del Castrillo S.L.** transforma radicalmente el perfil de solvencia de la compañía:
+
+| Magnitud Financiera | Fase I Standalone (A3) | Fase II Incremental (A3) | Grupo Consolidado (A3) | % Expansión |
+| :--- | :--- | :--- | :--- | :--- |
+| **Ventas Operativas Totales** | 180.306,00 € | 146.182,50 € | **326.488,50 €** | **+81,08%** |
+| **EBITDA Realizado** | 89.139,87 € (49,4%) | 99.620,53 € (68,1%) | **188.760,40 € (57,8%)** | **+111,76%** |
+| **Servicio Anual Deuda Bancaria** | 43.536,36 € | 0,00 € | **43.536,36 €** | **0,00% (Sin deuda adicional)** |
+| **Saldo Hipoteca Sénior Viva** | 426.098,24 € | 0,00 € | **426.098,24 €** | **0,00%** |
+| **Cobertura Servicio Deuda (DSCR)** | **1,73x / 2,05x** | — | **3,56x / 4,34x** | **+105,8% seguridad bancaria** |
+| **Flujo de Caja Libre Neto** | 41.993,00 € | 75.841,41 € | **117.834,41 €** | **+180,6%** |
+| **Valor de Empresa (Cap Rate 8,5%)** | 1.048.704,35 € | 1.172.006,24 € | **2.220.710,59 €** | **2,04x CapEx Histórico Total** |
+
+---
+
+### Tramitación Urbanística (LOUCYL) y Secuenciación Modular Off-Site
+- **Marco Regulador Autonómico:** Regulado por la *Ley 5/1999 de Urbanismo de Castilla y León* (LOUCYL, Art. 23.2 y 25) y el *Decreto 22/2004* (RUCYL, Art. 306-308). Requiere procedimiento de **Autorización de Uso Excepcional en Suelo Rústico** resuelto por la *Comisión Territorial de Medio Ambiente y Urbanismo* (CTMAU) de Segovia.
+- **Holgura en Parámetros Urbanísticos (Finca de 25 Hectáreas):**
+  - Parcela mínima: 250.000 m² (frente a 10.000–30.000 m² exigidos).
+  - Ocupación de parcela: 860 m² totales (Fase I 550 m² + Fase II 310 m²) = **0,344% de ocupación** (frente al 2,0%–5,0% máximo legal).
+  - Retranqueos: **>120 m a linderos** (frente a 5–10 m reglamentarios) y >80 m al hotel de Fase I.
+  - Altura: 1 sola planta (3,40 m alero / 4,10 m cumbrera, oculta bajo el dosel de las encinas vs 7,00 m / 9,00 m autorizables).
+- **Construcción Industrializada Modular (85% off-site / 15% in situ):**
+  - **Semanas 1 a 10:** Fabricación industrial en taller de módulos de madera CLT/Valsaín (*Arquima*, *Room2030*, *Egoin*) con aislamiento, cristaleras y baños premontados.
+  - **Semanas 8 a 11:** Ventana quirúrgica de obra civil en finca durante los meses de menor ocupación histórica de Fase I (noviembre o febrero) para zanjas a 90 cm bajo cota de helada, micropilotes y vaso del estanque biológico de 200 m².
+  - **Semanas 12 a 14:** Izado e implantación con grúa en **24 a 72 horas entre martes y jueves** (cero interferencia con huéspedes de fin de semana de Fase I), seguido de 2 semanas de mampostería tradicional de piedra segoviana por canteros locales.
+
+---
+
+## 14. Doble Calibración Operativa: Modelo LEADER vs. Benchmark INE
 
 Para garantizar máxima trazabilidad entre los documentos preliminares y el motor de mercado, el repositorio soporta dos modos conmutables:
 1. **Modo LEADER Consolidado (`calibration_mode='leader_excel'`):** Replica las cifras de la presentación original `Presentacion_La_Dehesa.xlsx` (Año 1: 96.628 € ventas, Año 2: 126.855 €, Año 3: 159.863 €, caja acumulada: 60.750 €).
@@ -351,7 +504,7 @@ Para garantizar máxima trazabilidad entre los documentos preliminares y el moto
 
 ---
 
-## 14. Estructura del Repositorio
+## 15. Estructura del Repositorio
 
 ```
 proyecto-dehesa-del-castrillo/
@@ -363,7 +516,7 @@ proyecto-dehesa-del-castrillo/
 │   ├── figure_5_copula_tail_risk.png     # Dependencia de colas con cópulas y CVaR
 │   └── figure_6_monthly_cash_runway.png  # Runway de tesorería mensual a 24 meses y trough
 ├── data/                                 # Entregables cuantitativos
-│   ├── La_Dehesa_del_Castrillo_Financial_Model.xlsx # Modelo maestro estructurado en 7 pestañas
+│   ├── La_Dehesa_del_Castrillo_Financial_Model.xlsx # Modelo maestro estructurado en 8 pestañas
 │   └── model_audit_summary.json          # Resumen de Auditoría Programática e Integridad
 ├── raw_data/                             # Archivos Excel originales de origen
 │   ├── La_Dehesa_de_Castrillo_Proyecto.xlsx
@@ -375,6 +528,7 @@ proyecto-dehesa-del-castrillo/
 │   ├── core/                             # Deuda, Fiscalidad, Estados, Unit Economics y Auditoría
 │   │   ├── credit_committee.py           # Memorando automatizado de comité de crédito
 │   │   ├── debt.py                       # Cuadro de amortización francés
+│   │   ├── expansion.py                  # Motor de Expansión Fase II: Suites de Paisaje y Estanque
 │   │   ├── metrics.py                    # Covenants, puntos muertos y TIR/VAN
 │   │   ├── model_audit.py                # Verificación de integridad y auditoría de modelo
 │   │   ├── monthly_cash.py               # Simulación mensual de tesorería y trough
@@ -390,11 +544,12 @@ proyecto-dehesa-del-castrillo/
 ├── tests/                                # Suite de tests automatizados (pytest)
 │   ├── test_assumptions.py
 │   ├── test_copula.py                    # Tests de marginales, orden y DSRA
+│   ├── test_expansion.py                 # Tests de CapEx, P&L, retornos y consolidación Fase II
 │   ├── test_financial_engine.py
 │   ├── test_model_audit.py               # Tests de auditoría y guardrails del modelo
 │   ├── test_simulation.py
 │   └── test_unit_economics_monthly.py    # Tests de unit economics y runway mensual
-├── main.py                               # Pipeline integral de ejecución
+├── main.py                               # Pipeline integral de ejecución (10 pasos automatizados)
 ├── README.md                             # Memorando de inversión en inglés
 ├── README_ES.md                          # Memorando de inversión en español
 └── .gitignore                            # Reglas de exclusión de Git
@@ -402,7 +557,7 @@ proyecto-dehesa-del-castrillo/
 
 ---
 
-## 15. Instalación y Ejecución
+## 16. Instalación y Ejecución
 
 ```bash
 # Clonar el repositorio
@@ -412,20 +567,22 @@ cd la-dehesa-financial-due-diligence
 # Instalar dependencias requeridas
 pip install pandas numpy scipy openpyxl matplotlib seaborn pytest
 
-# Ejecutar el pipeline financiero completo
+# Ejecutar el pipeline financiero completo (análisis institucional de 10 pasos)
 python main.py
 
-# Ejecutar la batería de tests automatizados (26 tests de cuadre financiero, cópulas y guardrails de IA)
+# Ejecutar la batería de tests automatizados (30 tests de cuadre financiero, cópulas y métricas de expansión)
 python -m pytest tests/
 ```
 
 ---
 
-## 16. Referencias Regulatorias y Metodológicas
+## 17. Referencias Regulatorias y Metodológicas
 - **IVA:** *Ley 37/1992, de 28 de diciembre, del Impuesto sobre el Valor Añadido* (Art. 90, Art. 91.Uno.2.2º).
 - **Impuesto sobre Sociedades:** *Ley 27/2014, de 27 de noviembre, del Impuesto sobre Sociedades* (Art. 12, Art. 26 - BINs).
 - **Convenio Colectivo:** *Convenio Colectivo Provincial de Hostelería de Segovia* (BOP Segovia).
-- **Official Tourism Statistics:** *Instituto Nacional de Estadística* (INE) - *Encuesta de Ocupación en Alojamientos de Turismo Rural* (EOTR), Serie Provincial Segovia.
+- **Estadísticas Oficiales de Turismo:** *Instituto Nacional de Estadística* (INE) - *Encuesta de Ocupación en Alojamientos de Turismo Rural* (EOTR), Serie Provincial Segovia.
+- **Urbanismo Autonómico:** *Ley 5/1999, de 8 de abril, de Urbanismo de Castilla y León* (LOUCYL, Art. 23.2 y 25) y *Decreto 22/2004, de 29 de enero, por el que se aprueba el Reglamento de Urbanismo de Castilla y León* (RUCYL, Art. 306 a 308).
+- **Normativa de Turismo Rural:** *Ley 14/2010, de 9 de diciembre, de Turismo de Castilla y León* y *Decreto 75/2013, de 28 de noviembre, regulador de los establecimientos de alojamiento de turismo rural*.
 
 
 

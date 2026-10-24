@@ -11,6 +11,7 @@ Containing:
 5. Monte Carlo Stochastic Simulation (N=1,000)
 6. Credit Risk & Copula Tail Underwriting
 7. Unit Economics & Monthly Runway (RevPAR, TRevPAR, 24M Trough)
+8. Phase II Expansion & Value-Add (Landscape Suites & Biological Pond)
 """
 
 from pathlib import Path
@@ -34,6 +35,7 @@ from src.simulation.copula_engine import CopulaSimulationEngine
 from src.core.credit_committee import CreditCommitteeMemo
 from src.core.unit_economics import UnitEconomicsEngine
 from src.core.monthly_cash import MonthlyCashEngine
+from src.core.expansion import ExpansionFinancialEngine
 
 
 def get_data_dir() -> Path:
@@ -370,6 +372,128 @@ def export_institutional_excel(filename: str = "La_Dehesa_del_Castrillo_Financia
                 cell.font = bold_font
             else:
                 cell.font = regular_font
+            cell.border = thin_border
+
+    # Tab 8: Phase II Expansion - Landscape Suites & Biological Pond
+    ws8 = wb.create_sheet(title="Phase II Expansion")
+    ws8.views.sheetView[0].showGridLines = True
+    ws8["A1"] = "PHASE II EXPANSION: LANDSCAPE HOTEL SUITES & BIOLOGICAL RESERVOIR (VALUE-ADD)"
+    ws8["A1"].font = title_font
+
+    exp_engine = ExpansionFinancialEngine()
+    exp_capex = exp_engine.capex
+    exp_pnl = exp_engine.compute_stabilized_pnl(scenario="base")
+    df_exp_5y = exp_engine.compute_5year_schedule()
+    exp_metrics = exp_engine.compute_investment_metrics()
+    exp_cons = exp_engine.compute_consolidated_underwriting()
+
+    # Section 1: All-In CapEx Schedule
+    ws8["A3"] = "1. PHASE II ALL-IN CAPEX & EXECUTION BUDGET (110 M² SUITES + 200 M² POND)"
+    ws8["A3"].font = bold_font
+
+    capex_rows = [
+        ("Pure Building PEM (Foundations, Stone, Timber, Glazing, HVAC, Bath)", f"{exp_capex.pure_building_pem:,.2f} EUR", "1,468.18 EUR/m² built (110 m²)"),
+        ("Contractor PEC - Pure Building (13% GG + 6% BI)", f"{exp_capex.pure_building_pem * 1.19:,.2f} EUR", "1,747.14 EUR/m² built"),
+        ("Estate Utilities & Trenching Across 25 Ha (Water, Power, Bio-Sewage)", f"{exp_capex.utilities_trenching_25ha_pem * 1.19:,.2f} EUR", "37,485.00 EUR PEC"),
+        ("5-Star FF&E, High-End Textiles, Porch & Exterior Hot Tub", f"{exp_capex.ffe_textiles_hot_tub_pem * 1.19:,.2f} EUR", "41,650.00 EUR PEC (2 suites)"),
+        ("Biological Pond (200 m² EPDM, Biofilter, Zeolites, Cascade, Flora)", f"{exp_capex.biological_pond_200m2_pem * 1.19:,.2f} EUR", "38,080.00 EUR PEC (190.40 EUR/m² water)"),
+        ("TOTAL CONTRACTOR WORKS PEC (Capítulo 1 al 8)", f"{exp_capex.total_execution_pec:,.2f} EUR", "2,812.73 EUR/m² repercutido"),
+        ("Architecture, Engineering & Project Management Fees (9.0% PEM)", f"{exp_capex.engineering_architecture_fees:,.2f} EUR", "Complete technical project & permits"),
+        ("Municipal Taxes, Urban Fees & ICIO (4.5% PEM)", f"{exp_capex.municipal_taxes_icio:,.2f} EUR", "Segovia rural municipality rate"),
+        ("Contingency Reserve (5.0% PEC)", f"{exp_capex.contingency_reserve:,.2f} EUR", "Granite rock & unforeseen works"),
+        ("TOTAL ALL-IN EXPANSION CAPEX (Net of Deductible VAT)", f"{exp_capex.total_all_in_capex:,.2f} EUR", "179,985.00 EUR all-in per suite"),
+        ("Financing Structure (Zero New Senior Debt)", "100% Retained Cash", "Year 2 LEADER (163k) + VAT Refund (152.2k)"),
+    ]
+
+    ws8.cell(row=4, column=1, value="CapEx Investment Chapter").fill = navy_fill
+    ws8.cell(row=4, column=1).font = header_font
+    ws8.cell(row=4, column=2, value="Budget (EUR)").fill = navy_fill
+    ws8.cell(row=4, column=2).font = header_font
+    ws8.cell(row=4, column=3, value="Technical Benchmark / Repercussion").fill = navy_fill
+    ws8.cell(row=4, column=3).font = header_font
+
+    for r_idx, (ch, val, note) in enumerate(capex_rows, start=5):
+        c1 = ws8.cell(row=r_idx, column=1, value=ch)
+        c2 = ws8.cell(row=r_idx, column=2, value=val)
+        c3 = ws8.cell(row=r_idx, column=3, value=note)
+        c1.font = regular_font
+        c2.font = bold_font
+        c3.font = regular_font
+        c1.border = thin_border
+        c2.border = thin_border
+        c3.border = thin_border
+
+    # Section 2: Financial Metrics & Exit Arbitrage
+    ws8["E3"] = "2. INVESTMENT RETURNS & CAPITAL ALLOCATION METRICS"
+    ws8["E3"].font = bold_font
+
+    returns_rows = [
+        ("Stabilized Year 3 Gross Revenue", f"{exp_pnl['gross_revenue']:,.2f} EUR", "ADR 290 EUR net | 50% Occ (365 nights)"),
+        ("Stabilized Year 3 Contribution Margin", f"{exp_pnl['contribution_margin']:,.2f} EUR", f"{exp_pnl['contribution_margin_ratio']*100:.2f}% contribution margin"),
+        ("Stabilized Year 3 Incremental EBITDA", f"{exp_pnl['ebitda']:,.2f} EUR", f"{exp_pnl['ebitda_margin']*100:.2f}% EBITDA margin"),
+        ("Stabilized Year 3 Free Cash Flow (Post-Tax)", f"{exp_pnl['free_cash_flow']:,.2f} EUR", "Clean cash flow net of 2% FF&E reserve"),
+        ("Development Yield on Cost (EBITDA / CapEx)", f"{exp_metrics['yield_on_cost']*100:.2f}%", "Unlevered gross development yield"),
+        ("Return on Invested Capital (ROIC Y3)", f"{exp_metrics['roic_y3']*100:.2f}%", "+938 bps spread over 8.0% WACC"),
+        ("Simple EBITDA Payback Period", f"{exp_metrics['simple_ebitda_payback_years']:.2f} Years", "47.6 months recovery"),
+        ("Simple Post-Tax FCF Payback Period", f"{exp_metrics['simple_fcf_payback_years']:.2f} Years", "61.2 months recovery"),
+        ("Year 5 Exit Valuation @ 8.5% Cap Rate", f"{exp_metrics['exit_val_85bps']:,.2f} EUR", f"Net gain: +{exp_metrics['net_gain_85bps']:,.2f} EUR"),
+        ("5-Year Post-Tax IRR with Exit (8.5% Cap Rate)", f"{exp_metrics['irr_85bps']*100:.2f}%", f"MOIC: {exp_metrics['moic_85bps']:.2f}x"),
+        ("Consolidated Group EBITDA (Phase 1 + 2)", f"{exp_cons['consolidated_ebitda_y3']:,.2f} EUR", "+111.76% surge vs Phase 1 baseline"),
+        ("Consolidated Debt Service Coverage (DSCR)", f"{exp_cons['consolidated_dscr_y3']:.2f}x", "Expands from 2.05x to 4.34x (Zero debt add)"),
+    ]
+
+    ws8.cell(row=4, column=5, value="Return / Underwriting Parameter").fill = navy_fill
+    ws8.cell(row=4, column=5).font = header_font
+    ws8.cell(row=4, column=6, value="Metric Value").fill = navy_fill
+    ws8.cell(row=4, column=6).font = header_font
+    ws8.cell(row=4, column=7, value="Strategic Interpretation").fill = navy_fill
+    ws8.cell(row=4, column=7).font = header_font
+
+    for r_idx, (p, val, note) in enumerate(returns_rows, start=5):
+        c1 = ws8.cell(row=r_idx, column=5, value=p)
+        c2 = ws8.cell(row=r_idx, column=6, value=val)
+        c3 = ws8.cell(row=r_idx, column=7, value=note)
+        c1.font = regular_font
+        c2.font = bold_font
+        c3.font = regular_font
+        c1.border = thin_border
+        c2.border = thin_border
+        c3.border = thin_border
+
+    # Section 3: 5-Year Trajectory Schedule
+    start_row_traj = 18
+    ws8.cell(row=start_row_traj, column=1, value="3. 5-YEAR COMMERCIAL RAMP-UP & CASH FLOW TRAJECTORY SCHEDULE").font = bold_font
+
+    traj_display_cols = [
+        ("year", "Year"),
+        ("occupancy_rate", "Occupancy (%)"),
+        ("occupied_nights", "Nights Sold"),
+        ("adr_net", "ADR Net (EUR)"),
+        ("gross_revenue", "Revenue (EUR)"),
+        ("contribution_margin", "Contr Margin (EUR)"),
+        ("ebitda", "EBITDA (EUR)"),
+        ("ebit", "EBIT (EUR)"),
+        ("tax", "Tax 25% (EUR)"),
+        ("net_income", "Net Income (EUR)"),
+        ("free_cash_flow", "Free Cash Flow (EUR)"),
+        ("discounted_fcf", "Discounted FCF (EUR)"),
+    ]
+
+    header_row_traj = start_row_traj + 1
+    for col_idx, (_, col_title) in enumerate(traj_display_cols, start=1):
+        cell = ws8.cell(row=header_row_traj, column=col_idx, value=col_title)
+        cell.fill = navy_fill
+        cell.font = header_font
+
+    for r_idx, (_, r) in enumerate(df_exp_5y.iterrows(), start=header_row_traj + 1):
+        for c_idx, (col_key, _) in enumerate(traj_display_cols, start=1):
+            val = r[col_key]
+            if col_key == "occupancy_rate":
+                val = f"{val*100:.1f}%"
+            elif isinstance(val, float):
+                val = round(val, 2)
+            cell = ws8.cell(row=r_idx, column=c_idx, value=val)
+            cell.font = regular_font
             cell.border = thin_border
 
     # Auto-adjust column widths across all sheets

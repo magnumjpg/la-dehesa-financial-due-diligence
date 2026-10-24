@@ -150,13 +150,21 @@ def run_executive_pipeline(generate_charts: bool = True):
     print()
 
     # Step 9: Programmatic Model Audit & Data Room Integrity Verification
-    print("[9/9] PROGRAMMATIC MODEL AUDIT & DATA ROOM INTEGRITY VERIFICATION")
+    print("[9/10] PROGRAMMATIC MODEL AUDIT & DATA ROOM INTEGRITY VERIFICATION")
     print("-" * 88)
     from src.core.model_audit import ModelAuditEngine
     audit_engine = ModelAuditEngine()
     audit_json_path = audit_engine.export_json()
     audit_engine.print_terminal_summary()
     print(f"-> Exported Model Audit Summary JSON: {audit_json_path.name} ({audit_json_path.stat().st_size / 1024:.1f} KB)")
+    print()
+
+    # Step 10: Phase II Expansion & Value-Add Underwriting
+    print("[10/10] PHASE II EXPANSION & VALUE-ADD UNDERWRITING (LANDSCAPE SUITES & BIOLOGICAL POND)")
+    print("-" * 88)
+    from src.core.expansion import ExpansionFinancialEngine
+    exp_engine = ExpansionFinancialEngine()
+    exp_engine.print_terminal_summary()
     print()
 
     # Visual Assets & Deliverables
@@ -167,7 +175,7 @@ def run_executive_pipeline(generate_charts: bool = True):
             print(f"   [OK] {f.name} ({f.stat().st_size / 1024:.1f} KB)")
         print()
 
-    print("-> Exporting Institutional 7-Tab Excel Model in /data...")
+    print("-> Exporting Master 8-Tab Excel Model in /data...")
     excel_path = export_institutional_excel()
     print(f"   [OK] {excel_path.name} ({excel_path.stat().st_size / 1024:.1f} KB)")
     print()
