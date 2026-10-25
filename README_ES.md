@@ -437,6 +437,8 @@ La reforma es un conjunto de supuestos, no una previsión. El [red team](#14-red
 
 La continuación honesta es un **test de demanda de Fase 0** de bajo coste: probar la demanda de F&B externo y experiencias con un pop-up o un restaurante arrendado antes de comprometer capital de construcción. Si la familia quiere avanzar, la primera fase debería limitarse al alcance lean y la segunda debería quedar detrás de un gate de demanda. El terreno debe cargarse a su valor de oportunidad en todo momento; el proyecto no se vuelve viable porque la finca ya sea propiedad de la familia.
 
+**Siguiente capa, aún no implementada: R7 (cabañas y agroturismo).** La reforma R2-R6 arregla el crédito, no el valor. La pregunta que queda es si un producto distinto —cinco o seis cabañas de dos dormitorios más la casa principal— podría hacerlo. [BENCHMARKS_R7_ES.md](BENCHMARKS_R7_ES.md) fija la banda antes de escribir código: ADR de 180-210 €, ocupación estabilizada del 45-55%, 110-150 k€ por cabaña all-in y un cap rate de salida del 9,5%. La comprobación aritmética solo pasa en el borde bueno del corredor: seis cabañas a 110 k€, 200 € y 50% dejan +62 k€ sobre 1,53 M€ de inversión total, un 4% de margen; a 120 k€ el mismo caso falla. R7 será un preset separado detrás del mismo gate de Fase 0, no un cuarto caso as-is.
+
 ---
 
 ## 14. Red team: diez ataques a mi propio modelo
@@ -541,6 +543,7 @@ proyecto-dehesa-del-castrillo/
 ├── main.py                       # pipeline de 15 pasos
 ├── README.md / README_ES.md
 ├── RED_TEAM.md / RED_TEAM_ES.md # diez ataques al modelo y sus respuestas
+├── BENCHMARKS_R7_ES.md          # nota de evidencia para el caso R7 (cabañas + agroturismo)
 ├── requirements.txt
 ├── .github/workflows/tests.yml   # CI: tests + pipeline
 ├── src/

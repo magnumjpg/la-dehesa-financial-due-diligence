@@ -437,6 +437,8 @@ The reform is a set of assumptions, not a forecast. The [red team](#14-red-team-
 
 The honest continuation is a low-cost **Phase 0 demand test**: prove the external F&B and experience demand with a pop-up or a leased restaurant before committing construction capital. If the family wants to proceed, the first phase should be capped at the lean scope and the second phase should sit behind a demand gate. The land must be charged at its opportunity value throughout; the project does not become viable because the site is already owned.
 
+**Next layer, not yet implemented: R7 (cabins and agritourism).** The R2-R6 reform fixes the credit but not the value. The remaining question is whether a different product — five or six two-bedroom cabins plus the main house — could clear it. [BENCHMARKS_R7_ES.md](BENCHMARKS_R7_ES.md) (in Spanish) fixes the band before any code is written: €180-210 ADR, 45-55% stabilised occupancy, €110-150k per cabin all-in and a 9.5% exit cap. The arithmetic check only clears at the good edge of that corridor: six cabins at €110k, €200 ADR and 50% occupancy leave +€62k on €1.53M of total investment, a 4% margin; at €120k the same case fails. R7 will be a separate preset behind the same Phase 0 gate, not a fourth as-is case.
+
 ---
 
 ## 14. Red team: ten attacks on my own model
@@ -541,6 +543,7 @@ proyecto-dehesa-del-castrillo/
 ├── main.py                       # 15-step pipeline
 ├── README.md / README_ES.md
 ├── RED_TEAM.md / RED_TEAM_ES.md # ten attacks on the model and the responses
+├── BENCHMARKS_R7_ES.md          # evidence note for the R7 cabin / agritourism case (Spanish)
 ├── requirements.txt
 ├── .github/workflows/tests.yml   # CI: test suite + pipeline
 ├── src/
