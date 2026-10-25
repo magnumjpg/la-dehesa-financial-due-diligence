@@ -115,6 +115,29 @@ def run_executive_pipeline(generate_charts: bool = True):
     print("-> The INE market case (21.24%) is the independent benchmark; the promoter case replicates the original Excel.")
     print()
 
+    # Demand reconciliation: the management case is weekend-weighted, not a
+    # flat uplift on every night.
+    from src.core.demand_bridge import INE_MIX, MANAGEMENT_MIX, build_bridge
+
+    occ_bridge = build_bridge()
+    print("OCCUPANCY BRIDGE: 31.36% IS NOT A FLAT 48% UPLIFT")
+    print(f"{'Segment':<22}{'Nights':>8}{'Management':>14}{'INE':>10}{'Gap (pp)':>12}")
+    for mgmt_segment, mkt_segment in zip(MANAGEMENT_MIX.segments, INE_MIX.segments):
+        print(
+            f"{mgmt_segment.label:<22}{mgmt_segment.nights:>8}"
+            f"{mgmt_segment.occupancy*100:>13.1f}%"
+            f"{mkt_segment.occupancy*100:>9.1f}%"
+            f"{occ_bridge['gap_contributions_pp'][mgmt_segment.key]:>12.2f}"
+        )
+    print(
+        f"{'Annual':<22}{365:>8}"
+        f"{MANAGEMENT_MIX.occupancy*100:>13.2f}%"
+        f"{INE_MIX.occupancy*100:>9.2f}%"
+        f"{occ_bridge['gap_pp']:>12.2f}"
+    )
+    print(f"-> {occ_bridge['headline']}")
+    print()
+
     # Step 4: Unit Economics & Contribution Margin Audit
     print("[4/15] UNIT ECONOMICS & CONTRIBUTION MARGIN AUDIT (USALI & MARGINAL COSTING)")
     print("-" * 88)
@@ -280,7 +303,7 @@ def run_executive_pipeline(generate_charts: bool = True):
     print("[15/15] DELIVERABLES: CHARTS & EXCEL MODEL")
     print("-" * 88)
     if generate_charts:
-        print("-> Generating Institutional Charts in /assets (Figures 1 to 7)...")
+        print("-> Generating Institutional Charts in /assets (Figures 1 to 8)...")
         figs = generate_all_figures()
         for f in figs:
             print(f"   [OK] {f.name} ({f.stat().st_size / 1024:.1f} KB)")

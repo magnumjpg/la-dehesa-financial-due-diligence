@@ -14,6 +14,7 @@ guard four things:
 import pytest
 
 from src.config.assumptions import SCENARIOS
+from src.config.ine_weights import MARKET_OCCUPANCY
 from src.config.reform import CAPEX_ONLY, DOWNSIDE, REVENUE_REFORM
 from src.core.metrics import CreditMetricsEngine
 from src.core.reform import ReformAnalysisEngine
@@ -116,9 +117,52 @@ def test_recommendation_keeps_the_decline_and_flags_the_boundary_case():
     results = rec["results"]
     assert results["aggressive"].project_npv > 0
     assert results["aggressive"].value_gap_total_investment < 0
+    assert results["aggressive"].net_value_gap_capex > 0
+    assert results["aggressive"].net_value_gap_total_investment < 0
     assert results["revenue_reform"].project_npv < 0
     assert results["value_engineered"].project_npv < 0
     assert results["resize_850"].project_npv < 0
+
+
+def test_exit_costs_make_the_value_gap_more_conservative():
+    assert R2.exit_cost_rate == pytest.approx(0.03, abs=1e-9)
+    assert R2.exit_costs == pytest.approx(
+        R2.ev_cap_rate * R2.exit_cost_rate, abs=0.01
+    )
+    assert R2.net_exit_value == pytest.approx(
+        R2.ev_cap_rate - R2.exit_costs, abs=0.01
+    )
+    assert R2.net_value_gap_capex < R2.value_gap_capex
+    assert R2.net_value_gap_total_investment < R2.value_gap_total_investment
+
+
+def test_rate_sensitivity_moves_dscr_and_npv_in_the_expected_direction():
+    sensitivity = ENGINE.rate_sensitivity()
+
+    assert list(sensitivity["rate_delta_bp"]) == [0, 100, 200, 300]
+    assert sensitivity.iloc[0]["interest_rate"] == pytest.approx(0.04, abs=1e-9)
+    assert sensitivity.iloc[-1]["interest_rate"] == pytest.approx(0.07, abs=1e-9)
+    assert sensitivity.iloc[0]["dscr_min"] > sensitivity.iloc[-1]["dscr_min"]
+    assert sensitivity.iloc[0]["project_npv"] > sensitivity.iloc[-1]["project_npv"]
+
+
+def test_downside_is_pinned_to_ine_and_its_value_is_floored_at_zero():
+    r6 = ENGINE.run_config(DOWNSIDE, key="downside")
+
+    # R6 must genuinely run at the INE anchor, not merely be labelled INE.
+    assert DOWNSIDE.demand_anchor == pytest.approx(MARKET_OCCUPANCY, abs=1e-9)
+    assert r6.ebitda_y5 < 0
+    assert r6.dscr_min < 0
+
+    # A loss-making asset does not have a negative enterprise value.
+    assert r6.ev_cap_rate == 0.0
+    assert r6.net_exit_value == 0.0
+    assert r6.net_value_gap_total_investment == pytest.approx(
+        -r6.total_project_investment, abs=0.01
+    )
+    assert r6.project_npv < ENGINE.run_config(
+        REVENUE_REFORM, key="revenue_reform"
+    ).project_npv
 
 
 def test_leader_delay_shifts_the_grant_to_year_three():

@@ -443,7 +443,7 @@ def build_readme(wb, st: Dict[str, Any], case_facts: Dict[str, Dict[str, Any]], 
         ws.cell(row=r, column=3).alignment = Alignment(horizontal="center")
 
     ws["A41"] = "4. HEADLINE FINDINGS"
-    ws["A40"].font = st["bold"]
+    ws["A41"].font = st["bold"]
     mgmt = case_facts["management"]["result"]
     findings = [
         (
@@ -484,6 +484,16 @@ def build_readme(wb, st: Dict[str, Any], case_facts: Dict[str, Dict[str, Any]], 
             "aggressive eight-cover / +10% ADR corner clears 8%, and it still fails the bank test."
         ),
         (
+            "The management case is 31.36% occupancy, 1.48x the INE 21.24%. It is a weekend-weighted "
+            "mix, not a flat uplift: 72% weekends, 65% holiday bridges and 10% midweek reconstruct "
+            "the annual target. 68% of the gap is weekend capture; the thin midweek is what the "
+            "reform's external F&B covers are trying to fill."
+        ),
+        (
+            "The exit is shown gross and net of 3% selling costs. R2's net value gap is EUR 324,723 "
+            "against total investment; even the aggressive R4 corner fails the net test at EUR 84,147."
+        ),
+        (
             "The model is deliberately honest: the business does not earn its 8.5% cost of capital "
             "at the planned occupancy and ADR, and the workbook says so rather than hiding it."
         ),
@@ -495,17 +505,17 @@ def build_readme(wb, st: Dict[str, Any], case_facts: Dict[str, Dict[str, Any]], 
         ws.merge_cells(start_row=r, start_column=1, end_row=r, end_column=6)
         ws.row_dimensions[r].height = 30
 
-    ws["A51"] = "5. DISCLAIMER"
-    ws["A51"].font = st["bold"]
-    ws["A52"] = (
+    ws["A53"] = "5. DISCLAIMER"
+    ws["A53"].font = st["bold"]
+    ws["A54"] = (
         "This is a portfolio model built from the author's own university work, public INE data and "
         "public convenio tables. It is not investment advice. The management case is an upside case; "
         "the market and promoter cases are the honest downside anchors."
     )
-    ws["A52"].font = st["note"]
-    ws["A52"].alignment = Alignment(wrap_text=True, vertical="top")
-    ws.merge_cells("A52:F52")
-    ws.row_dimensions[52].height = 44
+    ws["A54"].font = st["note"]
+    ws["A54"].alignment = Alignment(wrap_text=True, vertical="top")
+    ws.merge_cells("A54:F54")
+    ws.row_dimensions[54].height = 44
 
     ws.column_dimensions["A"].width = 58
     ws.column_dimensions["B"].width = 34

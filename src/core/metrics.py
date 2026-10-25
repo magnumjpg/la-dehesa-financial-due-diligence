@@ -165,7 +165,11 @@ class CreditMetricsEngine:
         equity_cfs = [-initial_equity] + fcfe_ops
 
         terminal_ebitda = float(df_projection.iloc[-1]["ebitda"])
-        terminal_value = terminal_ebitda / exit_cap_rate if exit_cap_rate > 0 else 0.0
+        # Floor the terminal value at zero: a loss-making asset does not have a
+        # negative resale value. The operating losses still flow through.
+        terminal_value = (
+            max(0.0, terminal_ebitda / exit_cap_rate) if exit_cap_rate > 0 else 0.0
+        )
         ending_debt = float(df_projection.iloc[-1]["total_debt"])
 
         project_cfs_exit = list(project_cfs)

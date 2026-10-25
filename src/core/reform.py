@@ -34,6 +34,7 @@ from typing import Any, Dict, Iterable, List, Optional, Tuple
 import pandas as pd
 
 from src.config.assumptions import SCENARIOS, ScenarioDrivers
+from src.config.ine_weights import MANAGEMENT_OCCUPANCY
 from src.config.reform import (
     REFORM_PRESETS,
     ReformConfig,
@@ -88,6 +89,11 @@ class ReformCaseResult:
     ev_cap_rate: float
     value_gap_capex: float
     value_gap_total_investment: float
+    exit_cost_rate: float
+    exit_costs: float
+    net_exit_value: float
+    net_value_gap_capex: float
+    net_value_gap_total_investment: float
     required_ebitda_capex: float
     required_ebitda_total_investment: float
 
@@ -133,6 +139,14 @@ class ReformAnalysisEngine:
         key: Optional[str] = None,
     ) -> ReformCaseResult:
         scenario = scenario or SCENARIOS["base"]
+        if config.demand_anchor is not None:
+            # Pin the reform to its own demand anchor instead of the inherited
+            # management occupancy. R6 uses this to be a genuine INE-demand
+            # downside; every other preset leaves it as None.
+            scenario = replace(
+                scenario,
+                occupancy_multiplier=config.demand_anchor / MANAGEMENT_OCCUPANCY,
+            )
         cache_key = (config, scenario)
         if cache_key in self._cache:
             return self._cache[cache_key]
@@ -159,7 +173,12 @@ class ReformAnalysisEngine:
         y1 = kpi.iloc[0]
         y5 = kpi.iloc[-1]
         terminal_ebitda = float(y5["ebitda"])
-        ev = terminal_ebitda / config.exit_cap_rate
+        # A negative-EBITDA asset is not worth a negative amount: the cap-rate
+        # value is floored at zero and the downside is carried in the cash
+        # flows, not in a fictional negative enterprise value.
+        ev = max(terminal_ebitda, 0.0) / config.exit_cap_rate
+        exit_costs = round(ev * config.exit_cost_rate, 2)
+        net_ev = round(ev - exit_costs, 2)
         total_investment = float(engine.total_project_investment)
 
         result = ReformCaseResult(
@@ -199,6 +218,11 @@ class ReformAnalysisEngine:
             ev_cap_rate=round(ev, 2),
             value_gap_capex=round(ev - config.total_capex, 2),
             value_gap_total_investment=round(ev - total_investment, 2),
+            exit_cost_rate=float(config.exit_cost_rate),
+            exit_costs=exit_costs,
+            net_exit_value=net_ev,
+            net_value_gap_capex=round(net_ev - config.total_capex, 2),
+            net_value_gap_total_investment=round(net_ev - total_investment, 2),
             required_ebitda_capex=round(config.total_capex * config.exit_cap_rate, 2),
             required_ebitda_total_investment=round(
                 total_investment * config.exit_cap_rate, 2
@@ -306,6 +330,11 @@ class ReformAnalysisEngine:
             "value_gap_total_investment": round(
                 full.ev_cap_rate - full.total_project_investment, 2
             ),
+            "exit_cost_rate": config.exit_cost_rate,
+            "exit_costs": full.exit_costs,
+            "net_exit_value": full.net_exit_value,
+            "net_value_gap_capex": full.net_value_gap_capex,
+            "net_value_gap_total_investment": full.net_value_gap_total_investment,
             "cap_rate": cap,
             "full": full,
         }
@@ -376,9 +405,10 @@ class ReformAnalysisEngine:
             ("R2 + covers -50%", replace(base, external_covers_per_day=3.0, incremental_fte=1.0), SCENARIOS["base"]),
             ("R3 + CapEx +20%", ve.scale_non_land_capex(1.20), SCENARIOS["base"]),
             ("R3 + LEADER delayed to Y3", replace(ve, leader_disbursement_year=3), SCENARIOS["base"]),
+            ("R3 + no LEADER grant", replace(ve, leader_subsidy_rate=0.0), SCENARIOS["base"]),
             ("R3 + rate +200 bp", ve, rate_scenario),
             ("R3 + conservative demand", ve, conservative),
-            ("R6 combined downside", downside, ine_scenario),
+            ("R6 combined downside", downside, SCENARIOS["base"]),
         ]
 
         rows = []
@@ -394,9 +424,46 @@ class ReformAnalysisEngine:
                     "ev_cap_rate": result.ev_cap_rate,
                     "value_gap_capex": result.value_gap_capex,
                     "value_gap_total_investment": result.value_gap_total_investment,
+                    "net_value_gap_total_investment": result.net_value_gap_total_investment,
                     "project_npv": result.project_npv,
                     "project_irr_exit": result.project_irr_exit,
                     "equity_irr_exit": result.equity_irr_exit,
+                }
+            )
+        return pd.DataFrame(rows)
+
+    # ------------------------------------------------------------------
+    # Rate sensitivity
+    # ------------------------------------------------------------------
+    def rate_sensitivity(
+        self,
+        base_config: Optional[ReformConfig] = None,
+        deltas: Iterable[float] = (0.0, 0.01, 0.02, 0.03),
+    ) -> pd.DataFrame:
+        """
+        Re-runs the chosen reform at a range of rate shocks. The reform uses a
+        4.0% fixed rate in the base case; this table shows what a floating or
+        re-priced facility would do to the DSCR and the value gap.
+        """
+        base_config = base_config or get_reform_preset("revenue_reform")
+        rows = []
+        for delta in deltas:
+            scenario = replace(
+                SCENARIOS["base"], interest_rate_delta=float(delta)
+            )
+            result = self.run_config(
+                base_config, scenario=scenario, key=f"rate_{delta}"
+            )
+            rows.append(
+                {
+                    "rate_delta_bp": int(round(float(delta) * 10_000)),
+                    "interest_rate": round(
+                        base_config.loan_interest_rate + float(delta), 4
+                    ),
+                    "dscr_min": result.dscr_min,
+                    "project_npv": result.project_npv,
+                    "value_gap_total_investment": result.value_gap_total_investment,
+                    "net_value_gap_total_investment": result.net_value_gap_total_investment,
                 }
             )
         return pd.DataFrame(rows)
@@ -438,7 +505,9 @@ class ReformAnalysisEngine:
             f"and EUR {r2.ev_cap_rate:,.0f} of asset value. Against the "
             f"EUR {r2.capex:,.0f} CapEx that is a gap of EUR {r2.value_gap_capex:,.0f}; "
             f"against total project investment of EUR {r2.total_project_investment:,.0f} "
-            f"the gap is EUR {r2.value_gap_total_investment:,.0f}. "
+            f"the gap is EUR {r2.value_gap_total_investment:,.0f}. After "
+            f"{r2.exit_cost_rate*100:.1f}% exit costs the net gap is "
+            f"EUR {r2.net_value_gap_total_investment:,.0f}. "
             f"R2 still has a project NPV of EUR {r2.project_npv:,.0f} and a "
             f"project IRR of {(r2.project_irr_exit or 0)*100:.2f}%."
         )
@@ -452,6 +521,9 @@ class ReformAnalysisEngine:
             f"one FTE) at EUR {r4.project_npv:,.0f} of NPV and "
             f"{(r4.project_irr_exit or 0)*100:.2f}% IRR - a negligible margin "
             f"and a total-investment value gap of EUR {r4.value_gap_total_investment:,.0f}. "
+            f"After {r4.exit_cost_rate*100:.1f}% exit costs the net gap is "
+            f"EUR {r4.net_value_gap_total_investment:,.0f}, so even the boundary "
+            f"case fails the net test. "
             f"The combined downside (R6) is deeply negative: EBITDA "
             f"EUR {r6.ebitda_y5:,.0f}, NPV EUR {r6.project_npv:,.0f}. "
             "The value frontier does show a positive corner at roughly EUR 700k of CapEx "
@@ -465,6 +537,7 @@ class ReformAnalysisEngine:
             "If the family wants to proceed, cap the initial capital at the lean scope and keep the second phase behind a demand gate.",
             "Treat the ~700k frontier corner as a different, smaller project: it only works by cutting the non-land budget to about 450k, which is not the eight-room refurbishment currently specified.",
             "Charge the land at its opportunity value; do not describe the project as viable only because the site is already owned.",
+            "Price the exit net of selling costs. The gross cap-rate value flatters every case; the boundary case fails once 3% exit costs are deducted.",
             "Re-run the model with 1.25-1.5 FTE for the external covers, not one FTE, and with INE 21.24% occupancy in the downside.",
         ]
         return {
@@ -493,6 +566,8 @@ class ReformAnalysisEngine:
             "ev_cap_rate",
             "value_gap_capex",
             "value_gap_total_investment",
+            "net_value_gap_capex",
+            "net_value_gap_total_investment",
             "project_npv",
             "project_irr_exit",
             "equity_irr_exit",
@@ -503,19 +578,31 @@ class ReformAnalysisEngine:
         print("REFORM / RESIZE CASE - WHAT WOULD HAVE TO BE TRUE?")
         print("-" * 88)
         summary = self.summary_table()
-        display = summary.copy()
-        for col in ("project_irr_exit", "equity_irr_exit"):
+        terminal_cols = [
+            "key",
+            "name",
+            "capex",
+            "total_project_investment",
+            "ebitda_y5",
+            "dscr_min",
+            "ev_cap_rate",
+            "value_gap_total_investment",
+            "net_value_gap_total_investment",
+            "project_npv",
+            "project_irr_exit",
+        ]
+        display = summary[terminal_cols].copy()
+        for col in ("project_irr_exit",):
             display[col] = display[col].apply(
                 lambda x: f"{x*100:.2f}%" if x is not None and pd.notna(x) else "n/a"
             )
         for col in (
             "capex",
             "total_project_investment",
-            "revenue_y5",
             "ebitda_y5",
             "ev_cap_rate",
-            "value_gap_capex",
             "value_gap_total_investment",
+            "net_value_gap_total_investment",
             "project_npv",
         ):
             display[col] = display[col].apply(lambda x: f"{x:,.0f}")
@@ -527,11 +614,13 @@ class ReformAnalysisEngine:
         for label, value in bridge["components_ebitda"].items():
             print(f"  + {label:<36} EUR {value:>12,.2f}")
         print(f"  = Reform EBITDA:                        EUR {bridge['reform_ebitda']:>12,.2f}")
-        print(f"  Reform enterprise value:                EUR {bridge['reform_ev']:>12,.2f}")
+        print(f"  Reform enterprise value (gross):        EUR {bridge['reform_ev']:>12,.2f}")
+        print(f"  Exit costs ({bridge['exit_cost_rate']*100:.1f}%):                    EUR {-bridge['exit_costs']:>12,.2f}")
+        print(f"  Net exit value:                         EUR {bridge['net_exit_value']:>12,.2f}")
         print(f"  CapEx:                                  EUR {bridge['capex']:>12,.2f}")
-        print(f"  Value gap vs CapEx:                     EUR {bridge['value_gap_capex']:>12,.2f}")
+        print(f"  Net value gap vs CapEx:                 EUR {bridge['net_value_gap_capex']:>12,.2f}")
         print(f"  Total project investment:               EUR {bridge['total_project_investment']:>12,.2f}")
-        print(f"  Value gap vs total investment:          EUR {bridge['value_gap_total_investment']:>12,.2f}")
+        print(f"  Net value gap vs total investment:      EUR {bridge['net_value_gap_total_investment']:>12,.2f}")
         print(f"  Bridge tie (should be zero):            EUR {bridge['bridge_tie']:>12,.2f}")
         print()
         rec = self.recommendation()
@@ -554,6 +643,7 @@ class ReformAnalysisEngine:
         rec = self.recommendation()
         frontier = self.frontier()
         stress = self.stress_cases()
+        rate_sensitivity = self.rate_sensitivity()
 
         payload = {
             "generated_by": "src.core.reform.ReformAnalysisEngine",
@@ -577,6 +667,7 @@ class ReformAnalysisEngine:
                 for idx in frontier.index
             },
             "stress_cases": stress.to_dict(orient="records"),
+            "rate_sensitivity": rate_sensitivity.to_dict(orient="records"),
             "recommendation": {
                 "verdict": rec["verdict"],
                 "stance": rec["stance"],

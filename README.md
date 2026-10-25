@@ -3,13 +3,40 @@
 ### Hospitality Feasibility, Senior Debt Underwriting & Computed Due Diligence
 
 **A portfolio-grade financial model built from my own university feasibility study.**
-Python 3.11 · 50 automated tests · 16-rule computed audit · 13-tab Excel model · 15-step pipeline
+Python 3.11 · 59 automated tests · 16-rule computed audit · 13-tab Excel model · 8 figures · 15-step pipeline
 
 [![tests](https://github.com/magnumjpg/la-dehesa-financial-due-diligence/actions/workflows/tests.yml/badge.svg)](https://github.com/magnumjpg/la-dehesa-financial-due-diligence/actions/workflows/tests.yml)
 ![Python 3.11](https://img.shields.io/badge/python-3.11-blue)
 ![License: MIT](https://img.shields.io/badge/license-MIT-green)
 
-> **Read this first.** The realistic model reaches a harsher conclusion than the original university work. Once the full cost stack, construction interest, debt amortisation, OPEX, FF&E reserve and the equity plug are modelled, the management case fails the 1.25x DSCR covenant in Year 2 at **1.15x**, requires **49.6% cash equity** instead of the 30% assumed, and produces a project IRR of **-9.49%** even with an 8.5% exit. The audit is deliberately allowed to fail: **10 of 16 rules pass, 5 material exceptions and 1 warning remain open**, and the verdict is `CONDITIONAL - 5 MATERIAL EXCEPTION(S)`. The credit committee recommendation is **DECLINE AS STRUCTURED (RESIZE REQUIRED)**. A separate reform / resize layer then asks whether the project can be made viable: six external F&B covers per day, a 5% ADR uplift and one extra FTE fix the covenant (minimum DSCR 2.13x) but still leave a **€299,550 value gap versus total investment**; only an aggressive, unproven demand corner clears 8%, and it still fails the bank test.
+---
+
+## The 60-second version
+
+**The asset.** A 25-hectare rural estate in Segovia: 7 double rooms, one full country house, a 21-cover restaurant and a natural swimming biopool. It started as my university feasibility study.
+
+**What I built.** Three as-is cases (promoter, INE market, management), a full cost stack, sources and uses, a 20-year amortising facility, a computed 16-rule audit, a live-formula Excel workbook, 59 tests and eight figures.
+
+**The answer is no.** The management case fails the 1.25x DSCR covenant in Year 2 at **1.15x**, needs **49.6% cash equity** instead of the planned 30%, and returns a project IRR of **-9.49%** even with an 8.5% exit. The credit recommendation is **DECLINE AS STRUCTURED (RESIZE REQUIRED)**.
+
+**The occupancy question is fair, and the model answers it.** 31.36% is not a flat 48% uplift on the INE's 21.24%. It is a weekend-weighted mix: **72% weekends, 65% holiday bridges and 10.1% midweek**. 68% of the 10.1 pp gap is weekend capture; the midweek is thin in both the plan and the market. That makes the case defensible for a boutique with a restaurant, not certain.
+
+**The reform fixes the credit, not the value.** Six external F&B covers/day, +5% ADR and one extra FTE lift the minimum DSCR to **2.13x**, but the asset is worth €839,075 gross and **€813,903 net of 3% exit costs**, against €1,138,625 of total investment: a **-€324,723 net value gap**. Only the aggressive, unproven R4 corner clears the 8% WACC, and even it fails the net bank test.
+
+**What would change my mind.** A Phase 0 demand test (pop-up or leased restaurant), a lean scope at or below €846k, and debt sized to the DSCR cap rather than to 35% LTV.
+
+---
+
+## How to read this
+
+| Time | Read | What you get |
+|---|---|---|
+| **5 min** | [The 60-second version](#the-60-second-version) + [Section 3](#3-the-findings-that-matter) | The verdict and the eleven findings that drive it |
+| **15 min** | Add [Section 6](#6-demand-calibration-ine-promoter-and-management) and [Section 13](#13-reform--resize-what-would-have-to-be-true) | Why 31.36% occupancy is defensible, and why the reform still fails |
+| **30 min** | Add [Section 9](#9-returns-the-exit-does-not-rescue-the-realistic-cases) and [Section 14](#14-red-team-ten-attacks-on-my-own-model) | The returns, the net exit test and my own ten attacks on the model |
+| **Full** | All 20 sections + the Excel workbook | The complete audit trail, formulas and limitations |
+
+> **The one-paragraph version.** The realistic model reaches a harsher conclusion than the original university work. Once the full cost stack, construction interest, debt amortisation, OPEX, FF&E reserve and the equity plug are modelled, the management case fails the covenant, the market case never covers its debt service, and neither earns its cost of capital. The audit is deliberately allowed to fail: **10 of 16 rules pass, 5 material exceptions and 1 warning remain open**, verdict `CONDITIONAL - 5 MATERIAL EXCEPTION(S)`. A separate reform layer is allowed to say no as well, and it does: it fixes the covenant but not the value gap.
 
 ---
 
@@ -62,7 +89,7 @@ The three cases share the same CapEx (except the promoter's original €725k bas
 8. **The VAT bridge is a financing source, not value creation.** Input VAT on CapEx is €168,021 (21% on the €800,100 non-land base). It is drawn under a separate €175,000 bridge, repaid with the AEAT refund in Month 18, and it carries interest. Operational VAT is a pass-through.
 9. **Phase II is not self-funded.** Phase II needs €435,564 (€359,970 net CapEx + €75,593.70 VAT). Phase I cash at the end of Year 2 is €183,322.64, so the phase-gate gap is **-€252,241.06** and the gate returns `DO NOT PROCEED`. It also fails the DSCR condition (1.15x < 1.25x).
 10. **The audit is computed and it fails.** 10 of 16 rules pass. The five material exceptions are management DSCR, Phase II self-funding, returns versus WACC, market DSCR and the equity requirement. The warning is management occupancy versus INE. This is the point of the audit layer: it reports what the model actually does, not what the narrative wants.
-11. **The reform fixes the covenant, not the value gap.** A realistic revenue reform (R2: six external covers/day, +5% ADR, experiences and €5k of savings, one extra FTE) lifts mature EBITDA from €37,042 to €71,321 and the minimum DSCR from 1.15x to 2.13x. The asset is then worth €839,075 at an 8.5% cap rate, still **€211,025 below CapEx** and **€299,550 below total project investment**. Value engineering to €900k (R3) and a lean €846k scope (R5) soften the gap but remain below an 8% WACC. Only the aggressive eight-cover / +10% ADR case (R4) produces a positive NPV (+€3,722) and it still has a negative total-investment value gap. The reform conclusion is therefore also a decline, with a conditional Phase 0 demand test.
+11. **The reform fixes the covenant, not the value gap.** A realistic revenue reform (R2: six external covers/day, +5% ADR, experiences and €5k of savings, one extra FTE) lifts mature EBITDA from €37,042 to €71,321 and the minimum DSCR from 1.15x to 2.13x. The asset is then worth €839,075 gross, **€813,903 after 3% exit costs**, still **€236,197 below CapEx** and **€324,723 below total project investment** on a net basis. Value engineering to €900k (R3) and a lean €846k scope (R5) soften the gap but remain below an 8% WACC. Only the aggressive eight-cover / +10% ADR case (R4) produces a positive NPV (+€3,722), and even it fails the net total-investment test at **-€84,147**. The reform conclusion is therefore also a decline, with a conditional Phase 0 demand test.
 
 ---
 
@@ -153,6 +180,30 @@ The monthly series is calibrated to the 2025 annual average of 21.24%, preservin
 
 The gap between 19.2%, 21.24% and 31.36% is the commercial risk the model is underwriting. The management case is 1.48x the provincial average, and the audit flags it as a warning.
 
+### 6.1 The occupancy bridge: 31.36% is not a flat 48% uplift
+
+The fair challenge is this: if the INE average is 21.24%, how can the management case assume 31.36% without assuming that every single night sells 48% better? It does not. The annual average is the sum of three very different segments, and the management case is a weekend-capture story, not a seven-day-demand story.
+
+| Segment | Nights/year | Management | INE Segovia | Gap (pp) | Share of gap |
+|---|---:|---:|---:|---:|---:|
+| Friday-Saturday weekends | 104 | 72.0% | 48.0% | +6.84 | 68% |
+| Holiday bridges | 24 | 65.0% | 45.0% | +1.32 | 13% |
+| Midweek | 237 | 10.1% | 7.1% | +1.97 | 19% |
+| **Annual average** | **365** | **31.36%** | **21.24%** | **+10.12** | **100%** |
+
+The weekend and holiday occupancies are judgement anchors. The midweek is the residual that makes the three segments reconcile to the 31.36% the model already uses, so the bridge cannot quietly change the P&L. The same arithmetic is applied to the INE average, which is itself weekend-weighted: the official 21.24% is roughly 48% weekends, 45% bridges and 7.1% midweek, not a flat 21% every night.
+
+![Figure 8: occupancy bridge](assets/figure_8_occupancy_bridge.png)
+
+**What this does and does not prove:**
+
+- **It proves the shape is plausible.** A destination boutique with a restaurant can sell most weekends and still be empty on a Tuesday. That is exactly what the local market does, only with weaker weekend capture.
+- **It isolates the risk.** 68% of the gap is weekend demand. The plan is not betting on a seven-day market; it is betting on premium weekend pricing and a small midweek base.
+- **It exposes the hole.** Midweek is only 3.0 pp above the INE. The reform's external F&B covers are an attempt to fill precisely that hole, which is why the Phase 0 demand test is the gating item.
+- **It does not make the case certain.** 72% weekend occupancy is still 1.5x the market's 48%. The anchors are judgement, not a booking curve, and the first year is deliberately weaker: at 0.90x the mature curve the mix is 64.8% / 58.5% / 9.1%, which is 28.23%. That is the "the first years are hard" ramp, and it is already in the model.
+
+The bridge is computed in `src/core/demand_bridge.py` and locked by `tests/test_demand_bridge.py`. It is an annual reconciliation, not a monthly model; monthly seasonality lives in `src/config/ine_weights.py` and Figure 1.
+
 ---
 
 ## 7. Unit economics and break-evens
@@ -215,6 +266,8 @@ The original Excel's €58,740 is gross payroll (€35,640 cooks + €23,100 cle
 The terminal value is Year 5 EBITDA capitalised at an 8.5% cap rate. Without an exit, the five-year operating cash flow does not recover the CapEx in any case. The management project NPV at an 8% WACC is **-€574,465** and the equity NPV is **-€541,676**. The promoter case is the only one with a positive exit return, and even it produces a 6.84% project IRR, below the 8% cost of capital.
 
 The reason is structural: at €85 ADR and 31.36% occupancy the asset generates €37,042 of mature EBITDA against €45,943 of D&A and €27,648 of debt service. The business is close to cash break-even but not to an adequate return on €1.05m of CapEx.
+
+**One caveat on this table:** these IRRs are gross of selling costs. A cap-rate exit assumes the asset changes hands for free, which flatters every case. The reform layer below carries the explicit net-of-cost test (3% of value, 4% in the combined downside) and the same logic is the honest way to read the as-is numbers: they are an upper bound, not a net proceeds figure.
 
 ---
 
@@ -304,23 +357,23 @@ This is a separate layer, not a fourth as-is case. The three original projection
 
 The question is deliberately answerable with "no": a reform that fixes the covenant but not the value gap is still a decline.
 
-| Ref | Reform case | CapEx | Total investment | EBITDA Y5 | Min DSCR | EV @ 8.5% | Gap vs CapEx | Gap vs total inv. | Project NPV | Project IRR |
-|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| R1 | Capital-only (€900k) | €901,800 | €986,297 | €37,042 | 1.34x | €435,783 | -€466,017 | -€550,514 | -€450,359 | -7.18% |
-| R2 | Revenue reform (€1.05M) | €1,050,100 | €1,138,625 | €71,321 | 2.13x | €839,075 | -€211,025 | -€299,550 | -€220,685 | 2.53% |
-| R3 | Revenue + value engineering (€900k) | €901,800 | €986,297 | €71,321 | 2.44x | €839,075 | -€62,725 | -€147,222 | -€96,378 | 5.37% |
-| R4 | Aggressive demand (€1.05M) | €1,050,100 | €1,138,625 | €92,403 | 2.72x | €1,087,091 | +€36,991 | -€51,534 | +€3,722 | 8.08% |
-| R5 | Lean scope (€846k) | €846,300 | €929,289 | €71,321 | 2.57x | €839,075 | -€7,225 | -€90,214 | -€49,106 | 6.61% |
-| R6 | Combined downside | €965,560 | €1,051,789 | €2,671 | -1.49x | €26,710 | -€938,850 | -€1,025,080 | -€906,166 | -37.76% |
+| Ref | Reform case | CapEx | Total investment | EBITDA Y5 | Min DSCR | EV net of exit | Net gap vs total inv. | Project NPV | Project IRR |
+|---|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| R1 | Capital-only (€900k) | €901,800 | €986,297 | €37,042 | 1.34x | €422,710 | -€563,587 | -€450,359 | -7.18% |
+| R2 | Revenue reform (€1.05M) | €1,050,100 | €1,138,625 | €71,321 | 2.13x | €813,903 | -€324,723 | -€220,685 | 2.53% |
+| R3 | Revenue + value engineering (€900k) | €901,800 | €986,297 | €71,321 | 2.44x | €813,903 | -€172,394 | -€96,378 | 5.37% |
+| R4 | Aggressive demand (€1.05M) | €1,050,100 | €1,138,625 | €92,403 | 2.72x | €1,054,479 | -€84,147 | +€3,722 | 8.08% |
+| R5 | Lean scope (€846k) | €846,300 | €929,289 | €71,321 | 2.57x | €813,903 | -€115,387 | -€49,106 | 6.61% |
+| R6 | Combined downside | €965,560 | €1,051,789 | -€33,887 | -3.82x | €0 | -€1,051,789 | -€1,021,973 | n/a |
 
 **What the table says:**
 
-- **R1 proves that capital alone does not work.** Cutting the budget to €900k with no demand lever leaves EBITDA at the as-is €37,042 and destroys €550,514 of value versus total investment.
+- **R1 proves that capital alone does not work.** Cutting the budget to €900k with no demand lever leaves EBITDA at the as-is €37,042 and destroys €563,587 of value versus total investment, net of exit costs.
 - **R2 fixes the credit problem.** Six external covers per day at a €28 ticket (€61,320 of mature external F&B revenue), €12,000 of experiences, a 5% ADR uplift and €5,000 of savings lift EBITDA to €71,321. The minimum DSCR rises from 1.15x to 2.13x, so the covenant is no longer the binding constraint.
-- **But R2 does not fix the value problem.** At an 8.5% cap rate the asset is worth €839,075. That is €211,025 below the €1,050,100 CapEx and €299,550 below the €1,138,625 total project investment (CapEx + IDC + pre-opening + working capital + DSRA). The reform moves the project from a covenant breach to a negative-NPV asset.
-- **Value engineering helps but does not close the gap.** R3 (€900k) and R5 (€846k) reduce the total-investment gap to -€147,222 and -€90,214, with project IRRs of 5.37% and 6.61%: still below the 8% WACC.
-- **Only the aggressive demand corner clears 8%, and it is not bankable.** R4 needs eight external covers per day and a 10% ADR uplift. It produces €3,722 of NPV and a 36,991 positive gap versus CapEx, but the total-investment gap is still -€51,534 and the demand assumption is well above a defensible base case.
-- **R6 shows how quickly the reform breaks.** INE occupancy, half the external covers, a 10% price cut, 1.5 FTE, a 20% CapEx overrun, a 10% exit cap, +200 bp rates and a one-year grant delay produce €2,671 of EBITDA and a -€906,166 NPV.
+- **But R2 does not fix the value problem.** At an 8.5% cap rate the asset is worth €839,075 gross and €813,903 net of 3% exit costs. That is €236,197 below the €1,050,100 CapEx and €324,723 below the €1,138,625 total project investment (CapEx + IDC + pre-opening + working capital + DSRA). The reform moves the project from a covenant breach to a negative-NPV asset.
+- **Value engineering helps but does not close the gap.** R3 (€900k) and R5 (€846k) reduce the net total-investment gap to -€172,394 and -€115,387, with project IRRs of 5.37% and 6.61%: still below the 8% WACC.
+- **Only the aggressive demand corner clears 8%, and it is not bankable.** R4 needs eight external covers per day and a 10% ADR uplift. It produces €3,722 of NPV and a positive gross gap versus CapEx, but the net total-investment gap is still -€84,147 and the demand assumption is well above a defensible base case.
+- **R6 confirms how quickly the reform breaks.** It is now genuinely pinned to INE 21.24% occupancy (not the management anchor) and combines half the external covers, a 10% price cut, 1.5 FTE, a 20% CapEx overrun, a 10% exit cap, +200 bp rates and a one-year grant delay. EBITDA turns negative (-€33,887), the DSCR is -3.82x and the asset is worth zero on a cap-rate basis. The downside is carried in the cash flows: a **-€1,021,973 NPV**.
 
 **R2 value bridge (mature year, 8.5% cap rate):**
 
@@ -337,13 +390,94 @@ The bridge is computed with the engine itself, lever by lever, so it ties to the
 
 Figure 7 plots the bridge and the value frontier: the heat map shows EV minus total investment across CapEx and external covers. Almost the entire current budget is value-destroying. The only positive corner is around €700k of CapEx (€450k of non-land spend) with six or more covers. That is not the eight-room refurbishment currently specified; it is a smaller project with a different scope.
 
+### 13.1 Exit costs: the gross cap rate flatters every case
+
+A cap-rate exit assumes the asset changes hands for free. It does not: selling costs, transfer taxes and legal fees are real. The reform charges **3% of value** (4% in R6) and reports the net proceeds next to the gross value.
+
+| Case | EV gross | Exit costs | EV net | Net gap vs CapEx | Net gap vs total inv. |
+|---|---:|---:|---:|---:|---:|
+| R2 Revenue reform | €839,075 | -€25,172 | €813,903 | -€236,197 | **-€324,723** |
+| R3 Value engineering | €839,075 | -€25,172 | €813,903 | -€62,725 | -€172,394 |
+| R5 Lean scope | €839,075 | -€25,172 | €813,903 | -€7,225 | -€115,387 |
+| R4 Aggressive demand | €1,087,091 | -€32,613 | €1,054,479 | +€4,379 | **-€84,147** |
+| R6 Combined downside | €0 | €0 | €0 | -€965,560 | -€1,051,789 |
+
+The important line is R4: it is the only case with a positive gross gap versus CapEx, and it still fails the bank test by €84,147 once total investment and exit costs are included. The net test is the one a lender would apply; the gross test is the one that makes a bad project look marginal.
+
+### 13.2 Rate sensitivity: the covenant survives +300 bp, the value does not
+
+The base reform is priced at a 4.0% fixed rate. The table re-runs R2 at +0 / +100 / +200 / +300 bp.
+
+| Shock | Interest rate | Min DSCR | Project NPV | Net gap vs total inv. |
+|---|---:|---:|---:|---:|
+| +0 bp | 4.00% | 2.13x | -€220,685 | -€324,723 |
+| +100 bp | 5.00% | 1.96x | -€221,863 | -€325,900 |
+| +200 bp | 6.00% | 1.65x | -€223,094 | -€327,131 |
+| +300 bp | 7.00% | 1.41x | -€224,376 | -€328,413 |
+
+The covenant still passes at +300 bp (1.41x versus 1.25x), so rate risk is not what kills R2. The interesting result is that the **unlevered NPV barely moves**: the project is weak because it does not earn its cost of capital at the operating level, not because the debt is expensive. A floating-rate facility with a shorter tenor would hurt the equity IRR and the cash sweep more than this table shows.
+
+### 13.3 Grant risk: the LEADER grant is load-bearing
+
+The reform assumes a €162,766 LEADER grant disbursed in Year 2. There is no award letter in the repository, so the model tests the downside explicitly.
+
+| R3 scenario | Project NPV | Difference |
+|---|---:|---:|
+| Grant in Year 2 (base) | -€96,378 | - |
+| Grant delayed to Year 3 | -€105,254 | -€8,876 |
+| **No grant at all** | **-€216,215** | **-€119,838** |
+
+Without the grant the project loses a further €119,838 of value and needs more equity at close. The grant is not a rounding item; it is part of the funding stack, and it should be treated as conditional until the award letter exists.
+
+### 13.4 What would falsify the reform
+
+The reform is a set of assumptions, not a forecast. The [red team](#14-red-team-ten-attacks-on-my-own-model) lists the ten attacks I would expect from a credit committee and how each one is answered. The three that would change the conclusion fastest are: external covers below four per day, weekend occupancy materially below 72%, and a construction quote above €1.05M. Any one of them moves R2 from "negative but close" to "clearly unviable".
+
 **Reform recommendation:** `DECLINE AS STRUCTURED - ONLY THE AGGRESSIVE, UNPROVEN DEMAND CASE CLEARS THE WACC`.
 
 The honest continuation is a low-cost **Phase 0 demand test**: prove the external F&B and experience demand with a pop-up or a leased restaurant before committing construction capital. If the family wants to proceed, the first phase should be capped at the lean scope and the second phase should sit behind a demand gate. The land must be charged at its opportunity value throughout; the project does not become viable because the site is already owned.
 
 ---
 
-## 14. Computed audit: 16 rules, 10 pass, 5 material, 1 warning
+## 14. Red team: ten attacks on my own model
+
+A model that only survives friendly questions is not a model. These are the ten attacks I would make if I were paid to break this one, and what the workbook actually says. The long-form memo is in [RED_TEAM.md](RED_TEAM.md).
+
+**1. "31.36% is 48% above the INE average. You invented the demand."**
+Fair, and the audit says the same (Rule 10 fails at 1.48x). The bridge is the answer: 72% weekends, 65% bridges and 10.1% midweek, with 68% of the 10.1 pp gap coming from weekend capture. It is a premium weekend story, not a seven-day market, and it remains an upside case. **Verdict: weakens the base case, but it is disclosed and tested; the market case is the downside anchor.**
+
+**2. "Your market case reaches 32% anyway, so the downside is not a downside."**
+It reaches 32% only by keeping the promoter's 25%/20% volume ramp and 5% growth after Year 3. That ramp is an assumption, not evidence. At the official 21.24% in Year 1 the case has negative EBITDA (-€18,566) and a -1.46x DSCR; it never clears 1.0x within five years. **Verdict: the ramp is the weak point, and it is labelled as such.**
+
+**3. "You charge €250k for land the family already owns."**
+That is the opportunity value of the site, and it is the correct charge. Treating the land as free would turn a family subsidy into a project return and flatter every metric. The model also shows the land separately so the reader can strip it out. **Verdict: strengthens the decline; no change.**
+
+**4. "An 8.5% cap rate is too low for rural Segovia."**
+Agreed as a risk. The model uses 8.5% for the base exit and 10% in R6. Each +100 bp removes about €76k of gross value: at a 10% cap, R2 is worth €713k and the net gap versus total investment widens to -€447k. **Verdict: strengthens the decline.**
+
+**5. "Six external F&B covers per day is made up."**
+Yes. It is the single most important unproven assumption in the reform, and there is no competitive set, menu engineering or covers-by-daypart build-up in the repository. R6 cuts it to three, and the case collapses to negative EBITDA. **Verdict: genuine weakness; it is exactly why the recommendation is a Phase 0 demand test, not a construction budget.**
+
+**6. "One extra FTE cannot serve six covers and breakfast."**
+Plausible. The base uses one FTE at €28k loaded; R6 uses 1.5. The honest base should probably be 1.25-1.5 FTE, which would reduce R2 EBITDA by €7k-€14k and widen the gap. **Verdict: genuine weakness, already flagged as a condition for further work.**
+
+**7. "Your Monte Carlo is a naive Gaussian."**
+Correct. It is kept as a benchmark; the copula engine is the real tail tool. The Clayton 99% CVaR implies a €62,786 DSRA against the €13,824 contractual reserve, so the funding stack is under-reserved in the tail. **Verdict: strengthens the decline.**
+
+**8. "Unlevered NPV understates the equity case; leverage can rescue it."**
+Leverage does not create value when the asset yield is below the cost of debt, and the DSCR covenant caps the facility at €339k against the €367k requested. R2's equity IRR is 1.96%; R4's is 10.16% but only on the unproven demand corner. **Verdict: no rescue.**
+
+**9. "You double-count the grant and ignore VAT timing."**
+The grant is a capital source, not revenue, and the VAT bridge is a separate €175k facility repaid with the AEAT refund in Month 18, with interest. The Phase II gate exists precisely to test whether the grant and the VAT refund are being spent twice; it returns `DO NOT PROCEED`. **Verdict: no double count; the gate is the control.**
+
+**10. "A Year-5 exit at 11.8x EBITDA dominates the result."**
+It is a test, not a rescue: without an exit the management project IRR is -35.43%, and the table shows both. The exit multiple is high for a rural asset, which is why the cap rate is stressed to 10% in R6 and why the net-of-cost test is shown separately. **Verdict: the exit does not rescue the case; it makes the failure smaller.**
+
+**Scorecard:** six attacks strengthen the decline, three expose genuine weaknesses (covers, FTE, exit cap) that are all gated by the Phase 0 test, and one is a presentation issue. None of them turns the project into a viable investment.
+
+---
+
+## 15. Computed audit: 16 rules, 10 pass, 5 material, 1 warning
 
 The audit is computed from the model, not hand-written. It is allowed to fail.
 
@@ -372,7 +506,7 @@ The five material exceptions are management DSCR, Phase II self-funding, returns
 
 ---
 
-## 15. The Excel model
+## 16. The Excel model
 
 The workbook has **13 tabs** and **2,060 live formulas**:
 
@@ -390,7 +524,7 @@ The workbook has **13 tabs** and **2,060 live formulas**:
 | `Credit Risk & Copula` | Gaussian / Student-t / Clayton tail-risk comparison and DSRA sizing. | 0 |
 | `Unit Economics & Runway` | RevPAR, TRevPAR, contribution margin and the monthly liquidity stress. | 0 |
 | `Phase II Expansion` | Landscape suites and biological pond: CapEx, P&L, scenarios, phase gate and consolidated impact. | 0 |
-| `Reform Case` | R1-R6 presets, R2 value bridge, CapEx/cover frontier, stress tests and the reform recommendation. | 0 |
+| `Reform Case` | R1-R6 presets, R2 value bridge, gross/net exit, CapEx/cover frontier, stress tests, rate sensitivity and the reform recommendation. | 0 |
 
 The `Live Model` is intentionally simple and transparent: revenue is a formula linked to `Inputs`, debt comes from `Debt Schedule`, and the checks compare the live output with Python. The debt tab reproduces the monthly `ROUND` of the Python engine, so the Year-2 service is €27,647.64 and the loan closes at zero in Month 240.
 
@@ -400,18 +534,19 @@ The report tabs are Python snapshots and do not recalculate. Open the workbook i
 
 ---
 
-## 16. Repository architecture
+## 17. Repository architecture
 
 ```
 proyecto-dehesa-del-castrillo/
 ├── main.py                       # 15-step pipeline
 ├── README.md / README_ES.md
+├── RED_TEAM.md / RED_TEAM_ES.md # ten attacks on the model and the responses
 ├── requirements.txt
 ├── .github/workflows/tests.yml   # CI: test suite + pipeline
 ├── src/
 │   ├── config/
 │   │   ├── assumptions.py        # CapEx, payroll, debt, opex, cases, funding fields
-│   │   ├── reform.py             # ReformConfig and the R1-R6 presets
+│   │   ├── reform.py             # ReformConfig, demand anchor and the R1-R6 presets
 │   │   └── ine_weights.py        # INE Segovia monthly series (21.24% calibrated)
 │   ├── core/
 │   │   ├── statements.py         # 3-statement engine, three cases, equity plug
@@ -423,6 +558,7 @@ proyecto-dehesa-del-castrillo/
 │   │   ├── monthly_cash.py       # Monthly liquidity stress and revolver
 │   │   ├── expansion.py          # Phase II CapEx, scenarios, phase gate
 │   │   ├── credit_committee.py   # DSRA and underwriting memo
+│   │   ├── demand_bridge.py      # Management vs INE occupancy bridge and gap split
 │   │   ├── reform.py             # Reform engine, value bridge, frontier, stress, JSON
 │   │   └── model_audit.py        # Computed audit, 16 rules, JSON export
 │   ├── data/
@@ -435,8 +571,8 @@ proyecto-dehesa-del-castrillo/
 │   │   ├── monte_carlo.py        # Naive Gaussian Monte Carlo
 │   │   └── copula_engine.py      # Gaussian / Student-t / Clayton
 │   └── visualization/
-│       └── charts.py             # Seven institutional figures
-├── tests/                        # 10 files, 50 tests
+│       └── charts.py             # Eight institutional figures
+├── tests/                        # 12 files, 59 tests
 ├── raw_data/                     # Source workbooks for the reconciliation
 ├── data/                         # Excel model, audit JSON and reform JSON
 └── assets/                       # figure_*.png
@@ -444,7 +580,7 @@ proyecto-dehesa-del-castrillo/
 
 ---
 
-## 17. Installation and execution
+## 18. Installation and execution
 
 ```bash
 git clone https://github.com/magnumjpg/la-dehesa-financial-due-diligence.git
@@ -457,7 +593,7 @@ python main.py
 # Skip chart generation
 python main.py --no-charts
 
-# Test suite (50 tests)
+# Test suite (59 tests)
 python -m pytest tests/ -q
 ```
 
@@ -466,13 +602,13 @@ python -m pytest tests/ -q
 - `data/La_Dehesa_del_Castrillo_Financial_Model.xlsx`: 13 tabs, 2,060 formulas.
 - `data/model_audit_summary.json`: computed audit, schema 4.0.0.
 - `data/reform_analysis.json`: R1-R6 presets, value bridge, frontier, stress cases and recommendation.
-- `assets/figure_*.png`: seven institutional charts.
+- `assets/figure_*.png`: eight institutional charts.
 
 The pipeline is deterministic by default; the Monte Carlo and copula simulations use a fixed seed (42).
 
 ---
 
-## 18. Limitations and next steps
+## 19. Limitations and next steps
 
 This is a portfolio model, not an investment memorandum. The main limitations are explicit:
 
@@ -491,6 +627,10 @@ This is a portfolio model, not an investment memorandum. The main limitations ar
 13. **The reform demand is not independently proven.** Six external F&B covers per day is a destination-restaurant assumption; there is no local competitive set, no menu engineering, no covers-by-daypart build-up and no evidence that the 25-hectare estate can attract that traffic outside weekends.
 14. **The reform frontier is a sensitivity device, not a budget.** It scales the non-land budget uniformly. The ~€700k positive corner implies €450k of non-land spend for an eight-room refurbishment, which would require a materially smaller scope and a contractor's cost plan.
 15. **The incremental FTE is a judgement.** One FTE for six external covers per day is the minimum labour step-up; R6 tests 1.5 FTE and still shows how quickly the reform breaks.
+16. **The occupancy bridge anchors are judgement, not a booking curve.** 72% weekend and 65% holiday occupancy are plausible for a destination boutique, but they are not measured. The INE segment split (48% / 45%) is inferred from the official annual average, not published by INE.
+17. **Exit costs are a planning assumption.** 3% of value (4% in R6) covers selling costs, transfer taxes and legal fees; the actual Castilla y León bill could be higher. The net test is directionally right, not a quote.
+18. **R6 is a genuine INE-demand downside, and its EV is floored at zero.** A loss-making asset is not worth a negative amount, but a real liquidation could still require remediation cash. The NPV carries the operating losses; the value line does not pretend to be a liquidation analysis.
+19. **The rate sensitivity is a re-run, not a refinancing model.** It shocks a fixed-rate facility and shows the DSCR and unlevered NPV; it does not model a floating coupon path, break costs or a changed tenor.
 
 **Next steps I would take in a real mandate:**
 
@@ -505,7 +645,7 @@ This is a portfolio model, not an investment memorandum. The main limitations ar
 
 ---
 
-## 19. References
+## 20. References
 
 - **INE**, *Encuesta de Ocupación en Alojamientos de Turismo Rural* (EOTR), table 2070, Segovia, 2023-2025.
 - **Ley 37/1992**, *Impuesto sobre el Valor Añadido*, Art. 91.Uno.2.2ª (10% hospitality rate) and Art. 92-114 (deductible input VAT).

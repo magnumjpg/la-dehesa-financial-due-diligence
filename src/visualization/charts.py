@@ -20,6 +20,8 @@ Generates:
 6. figure_6_monthly_cash_runway.png: 24-month cash runway, revolver draw and solvency bridge.
 7. figure_7_reform_value_bridge.png: R2 mature-EBITDA value bridge and the CapEx x
    external-cover value frontier for the separate reform / resize case.
+8. figure_8_occupancy_bridge.png: management vs INE occupancy by segment and the
+   decomposition of the 10.1 pp gap.
 """
 
 from pathlib import Path
@@ -729,8 +731,160 @@ def generate_reform_value_bridge(save_path: Optional[Path] = None) -> Path:
     return save_path
 
 
+def generate_occupancy_bridge_chart(save_path: Optional[Path] = None) -> Path:
+    """Figure 8: management vs INE occupancy by segment and the gap waterfall."""
+    from src.core.demand_bridge import INE_MIX, MANAGEMENT_MIX, build_bridge
+
+    set_institutional_style()
+    save_path = save_path or (get_assets_dir() / "figure_8_occupancy_bridge.png")
+    bridge = build_bridge()
+
+    fig, (ax1, ax2) = plt.subplots(
+        1, 2, figsize=(15.2, 6.2), gridspec_kw={"width_ratios": [1.0, 1.0]}
+    )
+
+    # --- (A) Segment occupancy ------------------------------------------
+    labels = [segment.label for segment in MANAGEMENT_MIX.segments]
+    management = [segment.occupancy * 100 for segment in MANAGEMENT_MIX.segments]
+    market = [segment.occupancy * 100 for segment in INE_MIX.segments]
+    x = np.arange(len(labels))
+    width = 0.34
+
+    bars_mgmt = ax1.bar(
+        x - width / 2,
+        management,
+        width,
+        label="Management case",
+        color=PALETTE["navy_primary"],
+        edgecolor="white",
+        linewidth=0.8,
+    )
+    bars_market = ax1.bar(
+        x + width / 2,
+        market,
+        width,
+        label="INE Segovia",
+        color=PALETTE["slate_benchmark"],
+        edgecolor="white",
+        linewidth=0.8,
+    )
+
+    for bars in (bars_mgmt, bars_market):
+        for bar in bars:
+            height = bar.get_height()
+            ax1.annotate(
+                f"{height:.1f}%",
+                xy=(bar.get_x() + bar.get_width() / 2, height),
+                xytext=(0, 4),
+                textcoords="offset points",
+                ha="center",
+                fontsize=8.5,
+                fontweight="bold",
+                color=PALETTE["slate_dark"],
+            )
+
+    ax1.set_xticks(x)
+    ax1.set_xticklabels(labels, fontsize=9)
+    ax1.set_ylabel("Occupancy (%)", color=PALETTE["slate_dark"])
+    ax1.set_ylim(0, 85)
+    ax1.legend(frameon=False, loc="upper right", fontsize=9)
+    ax1.set_title(
+        "(A) The gap is weekend capture, not seven-day demand",
+        pad=10,
+        fontweight="bold",
+        color=PALETTE["slate_dark"],
+    )
+
+    # --- (B) Gap waterfall ----------------------------------------------
+    contributions = bridge["gap_contributions_pp"]
+    steps = [
+        ("Weekend", contributions["weekend"]),
+        ("Holiday", contributions["peak"]),
+        ("Midweek", contributions["midweek"]),
+        ("Total gap", bridge["gap_pp"]),
+    ]
+    bottoms = [0.0, 0.0, 0.0, 0.0]
+    cumulative = 0.0
+    for i, (_, value) in enumerate(steps[:-1]):
+        bottoms[i] = cumulative
+        cumulative += value
+    bottoms[-1] = 0.0
+    heights = [value for _, value in steps]
+    colors = [
+        PALETTE["teal_positive"],
+        PALETTE["teal_positive"],
+        PALETTE["teal_positive"],
+        PALETTE["navy_primary"],
+    ]
+    bars = ax2.bar(
+        np.arange(len(steps)),
+        heights,
+        bottom=bottoms,
+        color=colors,
+        width=0.62,
+        edgecolor="white",
+        linewidth=0.8,
+    )
+    for i, bar in enumerate(bars):
+        value = steps[i][1]
+        y = bottoms[i] + heights[i]
+        ax2.annotate(
+            f"+{value:.2f} pp" if i < len(steps) - 1 else f"{value:.2f} pp",
+            xy=(bar.get_x() + bar.get_width() / 2, y),
+            xytext=(0, 5),
+            textcoords="offset points",
+            ha="center",
+            fontsize=9,
+            fontweight="bold",
+            color=PALETTE["slate_dark"],
+        )
+
+    for i in range(len(steps) - 1):
+        ax2.plot(
+            [i + 0.31, i + 1 - 0.31],
+            [bottoms[i] + heights[i], bottoms[i] + heights[i]],
+            color=PALETTE["slate_benchmark"],
+            linewidth=0.8,
+            linestyle=":",
+        )
+
+    ax2.set_xticks(np.arange(len(steps)))
+    ax2.set_xticklabels([label for label, _ in steps], fontsize=9)
+    ax2.set_ylabel("Percentage points of occupancy", color=PALETTE["slate_dark"])
+    ax2.set_ylim(0, bridge["gap_pp"] * 1.25)
+    ax2.set_title(
+        f"(B) {bridge['gap_shares']['weekend']*100:.0f}% of the gap is weekend capture",
+        pad=10,
+        fontweight="bold",
+        color=PALETTE["slate_dark"],
+    )
+
+    fig.text(
+        0.5,
+        -0.02,
+        (
+            "Management 31.36% vs INE 21.24%. Calendar: 104 weekend, 24 holiday-bridge and "
+            "237 midweek nights. The mix is an annual average; the monthly seasonality lives in Figure 1."
+        ),
+        ha="center",
+        fontsize=8.5,
+        color=PALETTE["slate_dark"],
+    )
+    fig.suptitle(
+        "Figure 8: Occupancy Bridge - Management Case vs INE Segovia",
+        fontsize=13,
+        fontweight="bold",
+        color=PALETTE["slate_dark"],
+        y=1.01,
+    )
+    plt.tight_layout()
+    fig.savefig(save_path, bbox_inches="tight")
+    plt.close(fig)
+    return save_path
+
+
 def generate_all_figures():
-    """Generates all 7 institutional figures using the unified palette."""
+    """Generates all 8 institutional figures using the unified palette."""
     p1 = generate_seasonality_chart()
     p2 = generate_dscr_sensitivity_heatmap()
     p3 = generate_monte_carlo_distribution()
@@ -738,7 +892,8 @@ def generate_all_figures():
     p5 = generate_copula_tail_risk_chart()
     p6 = generate_monthly_cash_runway_chart()
     p7 = generate_reform_value_bridge()
-    return [p1, p2, p3, p4, p5, p6, p7]
+    p8 = generate_occupancy_bridge_chart()
+    return [p1, p2, p3, p4, p5, p6, p7, p8]
 
 
 if __name__ == "__main__":

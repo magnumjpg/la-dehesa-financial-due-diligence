@@ -25,9 +25,10 @@ to report a negative result where the economics do not close.
 """
 
 from dataclasses import dataclass, replace
-from typing import Dict, Tuple
+from typing import Dict, Optional, Tuple
 
 from src.config.assumptions import CapExAsset, CapExStructure
+from src.config.ine_weights import MARKET_OCCUPANCY
 
 
 @dataclass(frozen=True)
@@ -64,6 +65,12 @@ class ReformConfig:
     incremental_fte: float = 1.0
     loaded_cost_per_fte: float = 28_000.0
 
+    # Optional demand anchor. When set, the reform is run at this annual
+    # occupancy rather than at the management case's 31.36%. It exists so R6
+    # can genuinely be an INE-demand downside instead of merely being labelled
+    # one. None means "use the inherited scenario".
+    demand_anchor: Optional[float] = None
+
     # --- Financing / close-day costs ----------------------------------
     leader_subsidy_rate: float = 0.155
     leader_subsidy_cap: float = 163_000.0
@@ -80,6 +87,9 @@ class ReformConfig:
     # --- Valuation -----------------------------------------------------
     exit_cap_rate: float = 0.085
     discount_rate: float = 0.08
+    # Selling costs, transfer taxes and legal fees at exit. The gross cap-rate
+    # value flatters every case; the net proceeds are the honest comparison.
+    exit_cost_rate: float = 0.03
 
     # ------------------------------------------------------------------
     # Capital-stack helpers
@@ -365,9 +375,11 @@ DOWNSIDE = replace(
     adr_uplift=-0.10,
     cost_savings=0.0,
     incremental_fte=1.5,
+    demand_anchor=MARKET_OCCUPANCY,
     leader_disbursement_year=3,
     exit_cap_rate=0.10,
     discount_rate=0.09,
+    exit_cost_rate=0.04,
 ).scale_non_land_capex(1.20)
 
 

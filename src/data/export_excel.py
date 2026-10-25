@@ -615,6 +615,7 @@ def export_institutional_excel(filename: str = "La_Dehesa_del_Castrillo_Financia
         base_config=get_reform_preset("revenue_reform"),
     )
     reform_stress = reform_engine.stress_cases()
+    reform_rate = reform_engine.rate_sensitivity()
     reform_rec = reform_engine.recommendation()
 
     ws9 = wb.create_sheet(title="Reform Case")
@@ -629,7 +630,7 @@ def export_institutional_excel(filename: str = "La_Dehesa_del_Castrillo_Financia
     )
     ws9["A2"].font = Font(name="Calibri", size=10, italic=True, color="64748B")
     ws9["A2"].alignment = Alignment(wrap_text=True, vertical="top")
-    ws9.merge_cells("A2:L2")
+    ws9.merge_cells("A2:N2")
     ws9.row_dimensions[2].height = 42
 
     ws9["A4"] = "1. R1-R6 REFORM PRESETS (ALL SIX ARE SHOWN; NEGATIVE RESULTS ARE NOT HIDDEN)"
@@ -646,6 +647,7 @@ def export_institutional_excel(filename: str = "La_Dehesa_del_Castrillo_Financia
         ("ev_cap_rate", "EV @ exit cap (EUR)"),
         ("value_gap_capex", "Gap vs CapEx (EUR)"),
         ("value_gap_total_investment", "Gap vs total inv. (EUR)"),
+        ("net_value_gap_total_investment", "Net gap vs total inv. (EUR)"),
         ("project_npv", "Project NPV (EUR)"),
         ("project_irr_exit", "Project IRR"),
         ("equity_irr_exit", "Equity IRR"),
@@ -668,7 +670,7 @@ def export_institutional_excel(filename: str = "La_Dehesa_del_Castrillo_Financia
             cell = ws9.cell(row=r_idx, column=c_idx, value=val)
             cell.font = regular_font
             cell.border = thin_border
-            if key in ("capex", "total_project_investment", "revenue_y5", "ebitda_y5", "ev_cap_rate", "value_gap_capex", "value_gap_total_investment", "project_npv"):
+            if key in ("capex", "total_project_investment", "revenue_y5", "ebitda_y5", "ev_cap_rate", "value_gap_capex", "value_gap_total_investment", "net_value_gap_total_investment", "project_npv"):
                 cell.number_format = "#,##0"
             elif key == "dscr_min":
                 cell.number_format = "0.00x"
@@ -702,24 +704,37 @@ def export_institutional_excel(filename: str = "La_Dehesa_del_Castrillo_Financia
                 cell.number_format = "#,##0"
 
     value_rows = [
-        ("Reform enterprise value @ 8.5%", reform_bridge["reform_ev"]),
-        ("Reform CapEx", reform_bridge["capex"]),
-        ("Value gap vs CapEx", reform_bridge["value_gap_capex"]),
-        ("Total project investment", reform_bridge["total_project_investment"]),
-        ("Value gap vs total investment (bank test)", reform_bridge["value_gap_total_investment"]),
-        ("Bridge tie (must be zero)", reform_bridge["bridge_tie"]),
+        ("Enterprise value", reform_bridge["reform_ev"], reform_bridge["net_exit_value"]),
+        ("Exit costs", 0.0, -reform_bridge["exit_costs"]),
+        ("Reform CapEx", reform_bridge["capex"], reform_bridge["capex"]),
+        ("Value gap vs CapEx", reform_bridge["value_gap_capex"], reform_bridge["net_value_gap_capex"]),
+        ("Total project investment", reform_bridge["total_project_investment"], reform_bridge["total_project_investment"]),
+        ("Value gap vs total investment", reform_bridge["value_gap_total_investment"], reform_bridge["net_value_gap_total_investment"]),
+        ("Bridge tie (must be zero)", reform_bridge["bridge_tie"], reform_bridge["bridge_tie"]),
     ]
-    for r_idx, (label, val) in enumerate(value_rows, start=r + 9):
+    for col_idx, label in enumerate(
+        ["Value test", "Gross (EUR)", "Net of exit costs (EUR)"], start=1
+    ):
+        cell = ws9.cell(row=r + 9, column=col_idx, value=label)
+        cell.fill = navy_fill
+        cell.font = header_font
+        cell.alignment = Alignment(horizontal="center", wrap_text=True)
+
+    for r_idx, (label, gross, net) in enumerate(value_rows, start=r + 10):
         c1 = ws9.cell(row=r_idx, column=1, value=label)
-        c2 = ws9.cell(row=r_idx, column=2, value=round(float(val), 2))
-        c1.font = bold_font if "gap" in label.lower() or "tie" in label.lower() else regular_font
+        c2 = ws9.cell(row=r_idx, column=2, value=round(float(gross), 2))
+        c3 = ws9.cell(row=r_idx, column=3, value=round(float(net), 2))
+        bold = "gap" in label.lower() or "tie" in label.lower()
+        c1.font = bold_font if bold else regular_font
         c2.font = bold_font
-        c1.border = thin_border
-        c2.border = thin_border
+        c3.font = bold_font
+        for cell in (c1, c2, c3):
+            cell.border = thin_border
         c2.number_format = "#,##0"
+        c3.number_format = "#,##0"
 
     # Section 3: value frontier
-    r = 27
+    r = 33
     ws9.cell(row=r, column=1, value="3. VALUE FRONTIER - EV MINUS TOTAL INVESTMENT (EUR), BY CAPEX AND EXTERNAL COVERS").font = bold_font
     r += 1
     ws9.cell(row=r, column=1, value="CapEx (EUR) \\ Covers/day").fill = navy_fill
@@ -749,7 +764,7 @@ def export_institutional_excel(filename: str = "La_Dehesa_del_Castrillo_Financia
             )
 
     # Section 4: stress cases
-    r = 36
+    r = 42
     ws9.cell(row=r, column=1, value="4. STRESS TESTS - THE REFORM UNDER DEMAND, COST, RATE AND GRANT DELAYS").font = bold_font
     stress_cols = [
         ("case", "Stress case"),
@@ -759,6 +774,7 @@ def export_institutional_excel(filename: str = "La_Dehesa_del_Castrillo_Financia
         ("dscr_min", "Min DSCR"),
         ("ev_cap_rate", "EV (EUR)"),
         ("value_gap_total_investment", "Gap vs total inv. (EUR)"),
+        ("net_value_gap_total_investment", "Net gap vs total inv. (EUR)"),
         ("project_npv", "Project NPV (EUR)"),
         ("project_irr_exit", "Project IRR"),
         ("equity_irr_exit", "Equity IRR"),
@@ -779,33 +795,67 @@ def export_institutional_excel(filename: str = "La_Dehesa_del_Castrillo_Financia
             cell = ws9.cell(row=r_idx, column=c_idx, value=val)
             cell.font = regular_font
             cell.border = thin_border
-            if key in ("capex", "total_investment", "ebitda_y5", "ev_cap_rate", "value_gap_total_investment", "project_npv"):
+            if key in ("capex", "total_investment", "ebitda_y5", "ev_cap_rate", "value_gap_total_investment", "net_value_gap_total_investment", "project_npv"):
                 cell.number_format = "#,##0"
             elif key == "dscr_min":
                 cell.number_format = "0.00x"
             elif key in ("project_irr_exit", "equity_irr_exit") and isinstance(val, float):
                 cell.number_format = "0.00%"
 
-    # Section 5: recommendation
-    r = 48
-    ws9.cell(row=r, column=1, value="5. REFORM RECOMMENDATION").font = bold_font
+    # Section 5: rate sensitivity
+    r = 55
+    ws9.cell(row=r, column=1, value="5. RATE SENSITIVITY - R2 REFORM AT +0 / +100 / +200 / +300 BP").font = bold_font
+    rate_cols = [
+        ("rate_delta_bp", "Rate shock (bp)"),
+        ("interest_rate", "Interest rate"),
+        ("dscr_min", "Min DSCR"),
+        ("project_npv", "Project NPV (EUR)"),
+        ("value_gap_total_investment", "Gap vs total inv. (EUR)"),
+        ("net_value_gap_total_investment", "Net gap vs total inv. (EUR)"),
+    ]
+    for col_idx, (_, label) in enumerate(rate_cols, start=1):
+        cell = ws9.cell(row=r + 1, column=col_idx, value=label)
+        cell.fill = navy_fill
+        cell.font = header_font
+        cell.alignment = Alignment(horizontal="center", wrap_text=True)
+
+    for r_idx, (_, row) in enumerate(reform_rate.iterrows(), start=r + 2):
+        for c_idx, (key, _) in enumerate(rate_cols, start=1):
+            val = row[key]
+            if isinstance(val, (int, float)):
+                val = round(float(val), 4)
+            cell = ws9.cell(row=r_idx, column=c_idx, value=val)
+            cell.font = regular_font
+            cell.border = thin_border
+            if key == "rate_delta_bp":
+                cell.number_format = "0"
+            elif key == "interest_rate":
+                cell.number_format = "0.00%"
+            elif key == "dscr_min":
+                cell.number_format = "0.00x"
+            else:
+                cell.number_format = "#,##0"
+
+    # Section 6: recommendation
+    r = 63
+    ws9.cell(row=r, column=1, value="6. REFORM RECOMMENDATION").font = bold_font
     ws9.cell(row=r + 1, column=1, value=reform_rec["verdict"]).font = Font(name="Calibri", size=12, bold=True, color="BE123C")
-    ws9.merge_cells(start_row=r + 1, start_column=1, end_row=r + 1, end_column=12)
+    ws9.merge_cells(start_row=r + 1, start_column=1, end_row=r + 1, end_column=14)
     ws9.cell(row=r + 2, column=1, value=reform_rec["detail"]).font = regular_font
     ws9.cell(row=r + 2, column=1).alignment = Alignment(wrap_text=True, vertical="top")
-    ws9.merge_cells(start_row=r + 2, start_column=1, end_row=r + 2, end_column=12)
-    ws9.row_dimensions[r + 2].height = 42
+    ws9.merge_cells(start_row=r + 2, start_column=1, end_row=r + 2, end_column=14)
+    ws9.row_dimensions[r + 2].height = 46
     ws9.cell(row=r + 3, column=1, value=reform_rec["detail_2"]).font = regular_font
     ws9.cell(row=r + 3, column=1).alignment = Alignment(wrap_text=True, vertical="top")
-    ws9.merge_cells(start_row=r + 3, start_column=1, end_row=r + 3, end_column=12)
-    ws9.row_dimensions[r + 3].height = 42
+    ws9.merge_cells(start_row=r + 3, start_column=1, end_row=r + 3, end_column=14)
+    ws9.row_dimensions[r + 3].height = 56
 
     ws9.cell(row=r + 5, column=1, value="Conditions attached to any further work").font = bold_font
     for offset, condition in enumerate(reform_rec["conditions"], start=1):
         cell = ws9.cell(row=r + 5 + offset, column=1, value=f"- {condition}")
         cell.font = regular_font
         cell.alignment = Alignment(wrap_text=True, vertical="top")
-        ws9.merge_cells(start_row=r + 5 + offset, start_column=1, end_row=r + 5 + offset, end_column=12)
+        ws9.merge_cells(start_row=r + 5 + offset, start_column=1, end_row=r + 5 + offset, end_column=14)
         ws9.row_dimensions[r + 5 + offset].height = 28
 
     # Add the live, formula-driven tabs (Inputs, Live Model, Funding & Audit, Read Me)
