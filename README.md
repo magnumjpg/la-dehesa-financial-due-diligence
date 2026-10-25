@@ -9,7 +9,7 @@ Python 3.11 · 74 automated tests · 16-rule computed audit · 13-tab Excel mode
 ![Python 3.11](https://img.shields.io/badge/python-3.11-blue)
 ![License: MIT](https://img.shields.io/badge/license-MIT-green)
 
-**Language:** [Español](README_ES.md) · [Method](METHOD.md) · [Governance](MODEL_GOVERNANCE.md) · [Red team](RED_TEAM.md)
+**Language:** [Español](README_ES.md) · [Governance](MODEL_GOVERNANCE.md) · [Red team](RED_TEAM.md)
 
 ---
 

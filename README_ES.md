@@ -9,7 +9,7 @@ Python 3.11 · 74 tests automáticos · auditoría calculada de 16 reglas · mod
 ![Python 3.11](https://img.shields.io/badge/python-3.11-blue)
 ![License: MIT](https://img.shields.io/badge/license-MIT-green)
 
-**Idioma:** [English](README.md) · [Gobierno del modelo](MODEL_GOVERNANCE_ES.md) · [Red team](RED_TEAM.md)
+**Idioma:** [English](README.md) · [Gobierno del modelo](MODEL_GOVERNANCE_ES.md) · [Red team](RED_TEAM_ES.md)
 
 ---
 
