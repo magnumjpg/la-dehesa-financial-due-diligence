@@ -297,6 +297,8 @@ Esta tabla es una **comprobación de orden de magnitud**, no el modelo R7. Usa u
 
 **La frontera, en una frase.** R7 pasa el test de inversión total si se cumplen a la vez: 6 cabañas, coste all-in ≤110 k€, ADR ≥200 €, ocupación ≥50% y experiencias ≥45 k€. A 120 k€ el mismo caso falla por 9 k€; a 130 k€, por 79 k€. El corredor es de 10 k€ por cabaña, no de 40.
 
+**Qué dijo el primer pase por el motor completo.** La comprobación de esta sección es una P&L simplificada con un recargo fijo del 6% sobre el CapEx. El motor de tres estados, con el calendario de obra, el drawdown de deuda y la rampa de ocupación, produce un caso base algo más caro y algo más justo: CapEx de 1.441.600 € (idéntico), inversión total de 1.540.760 € (12.664 € más que la comprobación, porque el IDC y la DSRA se calculan en vez de estimarse), EBITDA estabilizado de 155.713 € (prácticamente idéntico) y **gap neto de +49.147 €** frente a los +61.811 € de la tabla. La diferencia no cambia la conclusión —el caso sigue pasando— pero reduce el colchón del 4,0% al 3,2% de la inversión total. A 120 k€ por cabaña el motor también falla el test neto: -19.263 €. El resto de la banda se mueve en la misma dirección y por la misma magnitud.
+
 ---
 
 ## 9. Banda recomendada para R7
@@ -323,17 +325,17 @@ Esta tabla es una **comprobación de orden de magnitud**, no el modelo R7. Usa u
 | EBITDA estabilizado | ~155.700 € |
 | EBITDA necesario | ~149.700 € |
 | Gap vs CapEx | ~+148.300 € |
-| Gap vs inversión total | **~+61.800 €** |
+| Gap vs inversión total | **~+61.800 € (motor completo: +49.147 €)** |
 
-**Cuánto margen hay realmente.** El EBITDA estabilizado supera el listón en unos 6 k€, un 4%. Traducido a valor, son 62 k€ sobre una inversión de 1,53 M€: un 4%. No es un caso que aguante un error de ejecución; es un caso que pasa si el coste se queda en 110 k€ y la demanda llega a 200 € y 50%. Por eso el caso base usa 110 k€ y no 120-150 k€, y por eso el test de Fase 0 no es un trámite.
+**Cuánto margen hay realmente.** El EBITDA estabilizado supera el listón en unos 6 k€, un 4%. Traducido a valor, son 62 k€ sobre una inversión de 1,53 M€ en la comprobación, o 49 k€ y un 3,2% en el motor completo. No es un caso que aguante un error de ejecución; es un caso que pasa si el coste se queda en 110 k€ y la demanda llega a 200 € y 50%. Por eso el caso base usa 110 k€ y no 120-150 k€, y por eso el test de Fase 0 no es un trámite.
 
 **R7 stretch (el caso "VIP", solo si la demanda se prueba).**
 
-6 cabañas a 150 k€, ADR 230 €, ocupación 55%, 12 cubiertos, 60 k€ de experiencias. EBITDA ~227 k€, CapEx ~1,71 M€, inversión total ~1,81 M€, gap ~+613 k€ contra CapEx y ~+511 k€ contra inversión total. Es un caso de upside, no la base. El ADR de 230 € está en el top de la muestra local; el de 250 €+ no.
+6 cabañas a 150 k€, ADR 230 €, ocupación 55%, 12 cubiertos, 60 k€ de experiencias. EBITDA ~227 k€, CapEx ~1,71 M€, inversión total ~1,81 M€, gap ~+613 k€ contra CapEx y ~+507 k€ contra inversión total en el motor. Es un caso de upside, no la base. El ADR de 230 € está en el top de la muestra local; el de 250 €+ no.
 
 **R7 downside (el caso que hay que enseñar).**
 
-5 cabañas a 150 k€, ADR 190 €, ocupación 45%, 8 cubiertos, 25 k€ de experiencias, cap rate 10,5%, 4% de costes de salida. EBITDA ~72 k€, gap ~-887 k€ contra CapEx y ~-979 k€ contra inversión total. Es el escenario que justifica el test de Fase 0.
+5 cabañas a 150 k€, ADR 190 €, ocupación 45%, 8 cubiertos, 25 k€ de experiencias, cap rate 10,5%, 4% de costes de salida. EBITDA ~72 k€, gap ~-887 k€ contra CapEx y **-988.767 €** contra inversión total en el motor. Es el escenario que justifica el test de Fase 0.
 
 **Lo que no se debe hacer.**
 
@@ -403,10 +405,11 @@ Antes de comprometer 1,5 M€, R7 propone una prueba de una temporada con la cas
 **Interno**
 
 - `docs/memory.md`, lección de CapEx de Fase II: 3.272 €/m² all-in para suites de 55 m², 359.970 € por 110 m².
-- `src/config/reform.py`, presets R1-R6 y supuestos de reforma.
-- `src/core/reform.py`, motor de reforma, value bridge, frontera y stress.
+- `src/config/reform.py`, presets R1-R6, `CABIN_PRESETS` (R7 base, stretch y downside) y supuestos de reforma.
+- `src/core/reform.py`, motor de reforma, value bridge, frontera, stress y corredor de coste R7.
+- `src/core/statements.py`, modo de calibración `cabins` (mezcla cabaña + casa, rampa de ocupación y F&B).
 - `src/core/demand_bridge.py`, puente de ocupación gestión vs INE.
 
 ---
 
-**Nota final.** Esta nota no implementa R7. Fija la banda y la frontera. La implementación tiene que reproducir estas cifras con el motor completo, añadir deuda, impuestos, IDC, preapertura, capital circulante y DSRA, y exportar el preset al Excel y al JSON. El margen del caso base es de solo un 4%, así que no hace falta una desviación del 10% para cambiar la conclusión: un 5% más de CapEx o dos puntos menos de ocupación la invierten. Si el motor completo no pasa, la conclusión correcta es que R7 no pasa con esos inputs, no que haya que subir el ADR hasta que pase.
+**Nota final.** Esta nota fija la banda y la frontera; el preset R7 ya está implementado en el motor de tres estados y exportado al Excel y al JSON. El motor reproduce el caso base con CapEx de 1.441.600 €, EBITDA de 155.713 € y un gap neto de +49.147 € sobre 1.540.760 € de inversión total: pasa, pero por un 3,2%, no por el 4,0% de la comprobación. A 120 k€ por cabaña el motor falla por -19.263 €. El margen es tan fino que no hace falta una desviación del 10% para cambiar la conclusión: un 5% más de CapEx o dos puntos menos de ocupación la invierten. Si el test de Fase 0 no llega a los umbrales, la conclusión correcta es que R7 no pasa con esos inputs, no que haya que subir el ADR hasta que pase.

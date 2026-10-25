@@ -1,4 +1,4 @@
-# Red team: ten attacks on the Dehesa del Castrillo model
+# Red team: fifteen attacks on the Dehesa del Castrillo model
 
 **Purpose.** This memo is the adversarial counterpart to the investment case. It assumes the reader is paid to find the weakest point in the model, not to approve it. Each attack is followed by what the workbook actually says, what I would concede, and what is still unresolved.
 
@@ -137,6 +137,62 @@
 
 ---
 
+## R7: five more attacks, because the cabin case actually passes
+
+R7 is the only configuration in the workbook that clears both the WACC and the net total-investment test. That makes it the case a credit committee would attack hardest, not the one it would wave through.
+
+## Attack 11: "€110k all-in per cabin is a catalogue price, not a hospitality unit."
+
+**Why it bites.** If the real all-in cost is €130k, the net gap turns to -€87,672 and the case fails. The base is only 3.2% above water.
+
+**What the model says.** The cost ladder is explicit: €110k passes (+€49,147), €120k fails (-€19,263), €130k fails (-€87,672), €150k fails (-€224,490) and €180k fails (-€429,718). The €110k is not a shell price; it includes the fitted unit, the deck, services and the share of common infrastructure. The benchmark note separates the €17-37k shell from the €85-110k installed standard package and the €130-150k premium one.
+
+**Response.** The base is deliberately set at the top of the standard corridor, not the middle of the premium one. The recommendation does not say "build at €110k"; it says "run the Phase 0 test, then get a binding quote at or below €110k".
+
+**Residual risk.** A QS quote at €125-135k is entirely plausible in 2026. If it arrives, the correct move is to cut a cabin or the restaurant scope, not to raise the ADR.
+
+## Attack 12: "€200 ADR for a cabin in Segovia is optimistic."
+
+**Why it bites.** The local OTA sample averages €236/night but spans €85-520; the median is far below the mean, and the €200 figure is an annual realised rate, not a peak weekend rate.
+
+**What the model says.** At €190 ADR with 50% occupancy the net gap is -€39,932. At €200 it is +€49,147. The case lives inside a €10-20 band around the realised rate. The stretch case needs €230 and 55% occupancy, and the note explicitly says €250+ is not supported.
+
+**Response.** The €200 is triangulated from three sources (OTA sample, rural house rates per person, glamping operator bands), not from a single listing. The downside runs €190.
+
+**Residual risk.** If the realised rate settles at €185-190, R7 fails even at €110k. That is exactly what the Phase 0 test is for.
+
+## Attack 13: "€45k of agronomic experiences is a story, not a revenue line."
+
+**Why it bites.** €45k is 7.9% of total revenue and carries a 70% margin, so it contributes disproportionately to EBITDA. If it is really €25k, the net gap falls by roughly €14k and the base stops passing.
+
+**What the model says.** The note builds the €45k two ways: 30 retreats × 12 people × €125, or 300 experiences × €150, which is a 27% attach on 1,095 cabin nights. The downside uses €25k.
+
+**Response.** Experiences are modelled with an explicit host, calendar and marketing cost inside the 4.5 FTE and the fixed OPEX, not as passive income. The Phase 0 gate includes the realised attach rate.
+
+**Residual risk.** A 27% attach is demanding for a first season. The case should be re-run at 15-20% attach before any construction commitment.
+
+## Attack 14: "Six cabins is four too many for a first phase."
+
+**Why it bites.** Building all six before proving demand turns a €50k option into a €1.54M commitment. The downside case (five cabins) still loses €989k.
+
+**What the model says.** Five cabins at €110k with €45k of experiences clears the asset test (+€49,987) but fails total investment (-€29,183). The sixth cabin is what makes the case pass, because it adds ~€21k of EBITDA for €110k of CapEx, a 19% yield on cost.
+
+**Response.** The recommendation is explicitly two-stage: Phase 0 proves demand with two cabins plus the house, and only then does the sixth cabin get built. The model prices the full configuration; the recommendation does not authorise it in one go.
+
+**Residual risk.** A staged build carries its own cost premium and loses the scale economies assumed in the common infrastructure.
+
+## Attack 15: "You charge €250k for land the family already owns, so the result is not the family's return."
+
+**Why it bites.** The return that matters to the family is the cash it actually puts in. If the land is contributed in kind and never paid for, the equity cheque is smaller and the family IRR is higher than the project IRR.
+
+**What the model says.** The €250k is in every R7 metric, including the €110k base. Removing it would add roughly €250k to the value gap and make the case look better, not worse: R7 passes *with* the land charged. The project test is deliberately the whole-asset test, because a bank lends against the whole asset and the land has an opportunity value (it could be sold or leased).
+
+**Response.** The land stays in, and the equity cash-flow view is reported separately. The case does not pass by pretending the site is free; the family can still see a better family-only return if it wants to, but that is not the same decision.
+
+**Residual risk.** The €250k is an internal opportunity value, not an appraisal. A formal valuation could move it in either direction, and with it the size of the gap.
+
+---
+
 ## What would change the verdict
 
 The decline is robust to the attacks above, but it is not unfalsifiable. Three pieces of evidence would force a re-run:
@@ -146,6 +202,8 @@ The decline is robust to the attacks above, but it is not unfalsifiable. Three p
 3. **A LEADER award letter** with a disbursement date, plus a debt term sheet sized to the DSCR cap rather than 35% LTV.
 
 Even with all three, R2 would still need a cap rate below roughly 7.2% to clear the total-investment test at €71,321 of EBITDA. That is not a rural Segovia cap rate. The honest conclusion is that the project is a **Phase 0 option**, not a construction project.
+
+For R7 the list is different and narrower: a signed Phase 0 season at 45% occupancy, €190 realised ADR, eight external covers a day and €25k of experiences, plus a binding all-in cabin quote at or below €110k. If the occupancy gate fails, the case is dead regardless of the ADR; if the cost gate fails, the answer is fewer cabins or a smaller restaurant, not a higher price.
 
 ---
 
@@ -158,5 +216,7 @@ Even with all three, R2 would still need a cap rate below roughly 7.2% to clear 
 - The exit cap rate is not supported by comparable transactions.
 - R6's zero enterprise value is an accounting floor, not a liquidation analysis.
 - The rate sensitivity is a fixed-rate re-run, not a refinancing model.
+- R7's €45k experience revenue has no signed programme, only a build-up.
+- R7's €110k all-in cabin cost is a benchmark, not a contractor quote.
 
 These are listed in the README's limitations section. They are not hidden in an appendix.

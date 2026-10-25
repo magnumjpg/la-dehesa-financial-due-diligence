@@ -3,7 +3,7 @@
 ### Viabilidad hotelera, underwriting de deuda senior y due diligence calculada
 
 **Un modelo financiero de nivel portfolio construido a partir de mi propio trabajo de viabilidad universitario.**
-Python 3.11 · 59 tests automáticos · auditoría calculada de 16 reglas · modelo Excel de 13 pestañas · 8 figuras · pipeline de 15 pasos
+Python 3.11 · 65 tests automáticos · auditoría calculada de 16 reglas · modelo Excel de 13 pestañas · 8 figuras · pipeline de 15 pasos
 
 [![tests](https://github.com/magnumjpg/la-dehesa-financial-due-diligence/actions/workflows/tests.yml/badge.svg)](https://github.com/magnumjpg/la-dehesa-financial-due-diligence/actions/workflows/tests.yml)
 ![Python 3.11](https://img.shields.io/badge/python-3.11-blue)
@@ -15,7 +15,7 @@ Python 3.11 · 59 tests automáticos · auditoría calculada de 16 reglas · mod
 
 **El activo.** Una finca rural de 25 hectáreas en Segovia: 7 habitaciones dobles, una casa rural completa, un restaurante de 21 cubiertos y una biopiscina natural. Empezó como mi trabajo de viabilidad universitario.
 
-**Qué construí.** Tres casos as-is (promotor, mercado INE, gestión), el stack completo de costes, fuentes y usos, una facilidad amortizable a 20 años, una auditoría calculada de 16 reglas, un Excel con fórmulas vivas, 59 tests y ocho figuras.
+**Qué construí.** Tres casos as-is (promotor, mercado INE, gestión), el stack completo de costes, fuentes y usos, una facilidad amortizable a 20 años, una auditoría calculada de 16 reglas, un Excel con fórmulas vivas, 65 tests y ocho figuras.
 
 **La respuesta es no.** El caso de gestión incumple el covenant de 1,25x en el Año 2 con **1,15x**, necesita un **49,6% de equity en caja** en lugar del 30% previsto y devuelve una TIR de proyecto de **-9,49%** incluso con una salida al 8,5%. La recomendación de crédito es **DECLINE AS STRUCTURED (RESIZE REQUIRED)**.
 
@@ -33,10 +33,10 @@ Python 3.11 · 59 tests automáticos · auditoría calculada de 16 reglas · mod
 |---|---|---|
 | **5 min** | [La versión de 60 segundos](#la-versión-de-60-segundos) + [Sección 3](#3-los-hallazgos-que-importan) | El veredicto y los once hallazgos que lo sostienen |
 | **15 min** | Añade [Sección 6](#6-calibración-de-la-demanda-ine-promotor-y-gestión) y [Sección 13](#13-reforma--resize-qué-tendría-que-ser-cierto) | Por qué el 31,36% es defendible y por qué la reforma falla igualmente |
-| **30 min** | Añade [Sección 9](#9-retornos-la-salida-no-rescata-los-casos-realistas) y [Sección 14](#14-red-team-diez-ataques-a-mi-propio-modelo) | Los retornos, el test neto de salida y mis propios diez ataques al modelo |
+| **30 min** | Añade [Sección 9](#9-retornos-la-salida-no-rescata-los-casos-realistas) y [Sección 14](#14-red-team-quince-ataques-a-mi-propio-modelo) | Los retornos, el test neto de salida y mis propios quince ataques al modelo |
 | **Completo** | Las 20 secciones + el Excel | El rastro de auditoría completo, fórmulas y limitaciones |
 
-> **La versión de un párrafo.** El modelo realista llega a una conclusión más dura que el trabajo universitario original. Una vez modelados el coste completo, los intereses de construcción, la amortización de la deuda, el OPEX, la reserva de FF&E y el equity plug, el caso de gestión incumple el covenant, el caso de mercado nunca cubre su servicio de deuda y ninguno gana su coste de capital. La auditoría se deja fallar a propósito: **pasan 10 de 16 reglas, quedan 5 excepciones materiales y 1 warning**, veredicto `CONDITIONAL - 5 MATERIAL EXCEPTION(S)`. Una capa separada de reforma también puede decir que no, y lo dice: arregla el covenant pero no el gap de valor.
+> **La versión de un párrafo.** El modelo realista llega a una conclusión más dura que el trabajo universitario original. Una vez modelados el coste completo, los intereses de construcción, la amortización de la deuda, el OPEX, la reserva de FF&E y el equity plug, el caso de gestión incumple el covenant, el caso de mercado nunca cubre su servicio de deuda y ninguno gana su coste de capital. La auditoría se deja fallar a propósito: **pasan 10 de 16 reglas, quedan 5 excepciones materiales y 1 warning**, veredicto `CONDITIONAL - 5 MATERIAL EXCEPTION(S)`. Una capa separada de reforma también puede decir que no, y lo dice: arregla el covenant pero no el gap de valor. La última capa (R7) cambia el producto a seis cabañas premium y es la única configuración que supera el WACC y el test neto de inversión total —por un 3,2%, y solo a 110 k€ por cabaña.
 
 ---
 
@@ -431,19 +431,19 @@ Sin la subvención el proyecto pierde otros 119.838 € de valor y necesita más
 
 ### 13.4 Qué falsificaría la reforma
 
-La reforma es un conjunto de supuestos, no una previsión. El [red team](#14-red-team-diez-ataques-a-mi-propio-modelo) lista los diez ataques que esperaría de un comité de crédito y cómo se responde a cada uno. Los tres que cambiarían la conclusión más rápido son: menos de cuatro cubiertos externos al día, una ocupación de fin de semana materialmente inferior al 72% y un presupuesto de obra por encima de 1,05 M€. Cualquiera de los tres mueve R2 de "negativo pero cerca" a "claramente inviable".
+La reforma es un conjunto de supuestos, no una previsión. El [red team](#14-red-team-quince-ataques-a-mi-propio-modelo) lista los quince ataques que esperaría de un comité de crédito y cómo se responde a cada uno. Los tres que cambiarían la conclusión más rápido son: menos de cuatro cubiertos externos al día, una ocupación de fin de semana materialmente inferior al 72% y un presupuesto de obra por encima de 1,05 M€. Cualquiera de los tres mueve R2 de "negativo pero cerca" a "claramente inviable".
 
 **Recomendación de la reforma:** `DECLINE AS STRUCTURED - ONLY THE AGGRESSIVE, UNPROVEN DEMAND CASE CLEARS THE WACC`.
 
 La continuación honesta es un **test de demanda de Fase 0** de bajo coste: probar la demanda de F&B externo y experiencias con un pop-up o un restaurante arrendado antes de comprometer capital de construcción. Si la familia quiere avanzar, la primera fase debería limitarse al alcance lean y la segunda debería quedar detrás de un gate de demanda. El terreno debe cargarse a su valor de oportunidad en todo momento; el proyecto no se vuelve viable porque la finca ya sea propiedad de la familia.
 
-**Siguiente capa, aún no implementada: R7 (cabañas y agroturismo).** La reforma R2-R6 arregla el crédito, no el valor. La pregunta que queda es si un producto distinto —cinco o seis cabañas de dos dormitorios más la casa principal— podría hacerlo. [BENCHMARKS_R7_ES.md](BENCHMARKS_R7_ES.md) fija la banda antes de escribir código: ADR de 180-210 €, ocupación estabilizada del 45-55%, 110-150 k€ por cabaña all-in y un cap rate de salida del 9,5%. La comprobación aritmética solo pasa en el borde bueno del corredor: seis cabañas a 110 k€, 200 € y 50% dejan +62 k€ sobre 1,53 M€ de inversión total, un 4% de margen; a 120 k€ el mismo caso falla. R7 será un preset separado detrás del mismo gate de Fase 0, no un cuarto caso as-is.
+**Siguiente capa: R7 (cabañas y agroturismo).** La reforma R2-R6 arregla el crédito, no el valor. La pregunta que queda es si un producto distinto —cinco o seis cabañas de dos dormitorios más la casa principal— podría hacerlo. [BENCHMARKS_R7_ES.md](BENCHMARKS_R7_ES.md) fija la banda: ADR de 180-210 €, ocupación estabilizada del 45-55%, 110-150 k€ por cabaña all-in y un cap rate de salida del 9,5%. R7 está implementado como preset separado (`CABIN_PRESETS`), no como cuarto caso as-is. El caso base —seis cabañas a 110 k€, 200 € de ADR, 50% de ocupación, diez cubiertos externos y 45 k€ de experiencias— produce 155.713 € de EBITDA estabilizado, **+49.147 € de gap neto sobre 1.540.760 € de inversión total (3,2%)**, DSCR mínimo de 1,41x, NPV de +76.416 € e IRR de 9,21%. Pasa, pero solo en el borde bueno del corredor: a 120 k€ por cabaña el mismo caso falla por -19.263 €, y el downside (cinco cabañas, 190 €, 45%) se hunde a un DSCR de 0,79x y -988.767 €. Por eso la recomendación es **proceder solo a un test de demanda de Fase 0**, no a construir.
 
 ---
 
-## 14. Red team: diez ataques a mi propio modelo
+## 14. Red team: quince ataques a mi propio modelo
 
-Un modelo que solo sobrevive a preguntas amables no es un modelo. Estos son los diez ataques que haría si me pagaran por romper este, y lo que el libro dice realmente. El memo largo está en [RED_TEAM_ES.md](RED_TEAM_ES.md).
+Un modelo que solo sobrevive a preguntas amables no es un modelo. Estos son los quince ataques que haría si me pagaran por romper este, y lo que el libro dice realmente. El memo largo está en [RED_TEAM_ES.md](RED_TEAM_ES.md).
 
 **1. "El 31,36% está un 48% por encima de la media del INE. Te has inventado la demanda."**
 Justo, y la auditoría dice lo mismo (la Regla 10 falla a 1,48x). El puente es la respuesta: 72% fines de semana, 65% puentes y 10,1% entre semana, con el 68% de los 10,1 pp de gap viniendo de la captura de fin de semana. Es una historia premium de fin de semana, no un mercado de siete días, y sigue siendo un caso upside. **Veredicto: debilita el caso base, pero está declarado y testado; el caso de mercado es el ancla downside.**
@@ -526,7 +526,7 @@ El libro tiene **13 pestañas** y **2.060 fórmulas vivas**:
 | `Credit Risk & Copula` | Comparativa de cola Gaussian / Student-t / Clayton y dimensionamiento de la DSRA. | 0 |
 | `Unit Economics & Runway` | RevPAR, TRevPAR, margen de contribución y stress de liquidez mensual. | 0 |
 | `Phase II Expansion` | Suites y estanque: CapEx, P&L, escenarios, phase gate e impacto consolidado. | 0 |
-| `Reform Case` | Presets R1-R6, value bridge de R2, salida bruta/neta, frontera CapEx/cubiertos, stress tests, sensibilidad de tipos y recomendación de reforma. | 0 |
+| `Reform Case` | Presets R1-R6, value bridge de R2, salida bruta/neta, frontera CapEx/cubiertos, stress tests, sensibilidad de tipos, cabañas premium R7 y recomendación de reforma. | 0 |
 
 El `Live Model` es intencionadamente simple y transparente: los ingresos son una fórmula enlazada a `Inputs`, la deuda viene de `Debt Schedule` y los checks comparan la salida viva con Python. La pestaña de deuda reproduce el `ROUND` mensual del motor Python, de modo que el servicio del Año 2 es 27.647,64 € y el préstamo cierra a cero en el Mes 240.
 
@@ -542,7 +542,7 @@ Las pestañas de informe son snapshots de Python y no recalculan. Abre el libro 
 proyecto-dehesa-del-castrillo/
 ├── main.py                       # pipeline de 15 pasos
 ├── README.md / README_ES.md
-├── RED_TEAM.md / RED_TEAM_ES.md # diez ataques al modelo y sus respuestas
+├── RED_TEAM.md / RED_TEAM_ES.md # quince ataques al modelo y sus respuestas
 ├── BENCHMARKS_R7_ES.md          # nota de evidencia para el caso R7 (cabañas + agroturismo)
 ├── requirements.txt
 ├── .github/workflows/tests.yml   # CI: tests + pipeline
@@ -575,7 +575,7 @@ proyecto-dehesa-del-castrillo/
 │   │   └── copula_engine.py      # Gaussian / Student-t / Clayton
 │   └── visualization/
 │       └── charts.py             # ocho figuras institucionales
-├── tests/                        # 12 ficheros, 59 tests
+├── tests/                        # 12 ficheros, 65 tests
 ├── raw_data/                     # libros fuente para la reconciliación
 ├── data/                         # modelo Excel, JSON de auditoría y JSON de reforma
 └── assets/                       # figure_*.png
@@ -596,7 +596,7 @@ python main.py
 # Sin generación de gráficos
 python main.py --no-charts
 
-# Batería de tests (59 tests)
+# Batería de tests (65 tests)
 python -m pytest tests/ -q
 ```
 
@@ -604,7 +604,7 @@ python -m pytest tests/ -q
 
 - `data/La_Dehesa_del_Castrillo_Financial_Model.xlsx`: 13 pestañas, 2.060 fórmulas.
 - `data/model_audit_summary.json`: auditoría calculada, schema 4.0.0.
-- `data/reform_analysis.json`: presets R1-R6, value bridge, frontera, stress tests y recomendación.
+- `data/reform_analysis.json`: presets R1-R6, value bridge, frontera, stress tests, presets de cabañas R7 y escalera de coste, y las dos recomendaciones.
 - `assets/figure_*.png`: ocho figuras institucionales.
 
 El pipeline es determinista por defecto; las simulaciones de Monte Carlo y cópulas usan semilla fija (42).
@@ -634,6 +634,7 @@ Esto es un modelo de portfolio, no un memorando de inversión. Las limitaciones 
 17. **Los costes de salida son un supuesto de planificación.** El 3% del valor (4% en R6) cubre costes de venta, impuestos de transmisión y honorarios; la factura real de Castilla y León podría ser mayor. El test neto es correcto en dirección, no una cotización.
 18. **R6 es un downside de demanda INE real, y su EV está limitado a cero.** Un activo con pérdidas no vale una cantidad negativa, pero una liquidación real podría exigir caja de remediación. El VAN lleva las pérdidas operativas; la línea de valor no pretende ser un análisis de liquidación.
 19. **La sensibilidad de tipos es una re-ejecución, no un modelo de refinanciación.** Estresa una facilidad a tipo fijo y muestra el DSCR y el VAN unlevered; no modela una senda de cupón variable, costes de ruptura ni un plazo distinto.
+20. **R7 es el caso más frágil del libro precisamente porque pasa.** Su margen es del 3,2% de la inversión total, el coste all-in de 110 k€ por cabaña es un benchmark y no una oferta vinculante (a 120 k€ el caso falla), y los 45 k€ de experiencias no tienen programa firmado. La lectura correcta no es "construir cabañas", sino "pagar un test de Fase 0 de 50-80 k€ antes de comprometer 1,54 M€".
 
 **Próximos pasos que daría en un mandato real:**
 

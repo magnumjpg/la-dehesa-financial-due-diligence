@@ -226,7 +226,26 @@ class FinancialModelEngine:
                 calibration_mode="ine_market",
                 apply_full_cost_stack=True,
             )
+            if self.reform.is_cabin_product:
+                # The cabin product replaces the hotel room inventory. The
+                # unit mix lives in the reform config so the as-is cases and
+                # the R1-R6 hotel presets are untouched.
+                self.rev_cfg = replace(
+                    self.rev_cfg,
+                    calibration_mode="cabins",
+                    double_rooms_count=self.reform.cabin_count,
+                    double_room_adr=self.reform.cabin_adr,
+                    full_house_count=1,
+                    full_house_adr=self.reform.house_adr,
+                    guests_per_double_room=self.reform.cabin_guests,
+                    guests_per_full_house=self.reform.house_guests,
+                    restaurant_cogs_ratio=0.32,
+                )
             self.capex = self.reform.build_capex()
+            self.opex = replace(
+                self.opex,
+                other=self.opex.other + self.reform.fixed_opex_extra,
+            )
             self.financing = replace(
                 self.financing,
                 base_capex=self.capex.total_capex,
@@ -477,7 +496,9 @@ class FinancialModelEngine:
             else 1.0
         )
 
-        external_covers = r.external_covers_per_day * 365.0 * external_ramp
+        external_covers = (
+            r.external_covers_per_day * float(r.external_service_days) * external_ramp
+        )
         external_revenue = round(external_covers * r.external_ticket, 2)
         experience_revenue = round(r.experiences_revenue * experience_ramp, 2)
 
@@ -583,6 +604,42 @@ class FinancialModelEngine:
                     "occupied_days": occupied_days,
                     "room_nights": occupied_days * 7,
                     "house_nights": occupied_days,
+                    "guests": guests,
+                },
+                year,
+            )
+
+        if self.rev_cfg.calibration_mode == "cabins":
+            r = self.reform
+            if r is None:
+                raise ValueError("The cabins calibration requires a ReformConfig")
+            occ = r.cabin_occupancy_for_year(year) * occ_mult
+            cabin_nights = occ * 365.0 * r.cabin_count
+            house_nights = occ * 365.0
+            guests = (
+                cabin_nights * r.cabin_guests
+                + house_nights * r.house_guests
+            )
+            rev_cabins = cabin_nights * r.cabin_adr * adr_mult
+            rev_house = house_nights * r.house_adr * adr_mult
+            rev_restaurant = (
+                guests * self.rev_cfg.restaurant_average_ticket * adr_mult
+            )
+            cogs_restaurant = rev_restaurant * self.rev_cfg.restaurant_cogs_ratio
+            return self._apply_reform_overlay(
+                {
+                    "rev_rooms": round(rev_cabins, 2),
+                    "rev_house": round(rev_house, 2),
+                    "rev_restaurant": round(rev_restaurant, 2),
+                    "total_revenue": round(
+                        rev_cabins + rev_house + rev_restaurant, 2
+                    ),
+                    "cogs_restaurant": round(cogs_restaurant, 2),
+                    # Total occupied unit-days, so the property-level
+                    # amenities cost scales with the number of cabins.
+                    "occupied_days": cabin_nights + house_nights,
+                    "room_nights": cabin_nights,
+                    "house_nights": house_nights,
                     "guests": guests,
                 },
                 year,

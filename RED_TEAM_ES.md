@@ -1,4 +1,4 @@
-# Red team: diez ataques al modelo de la Dehesa del Castrillo
+# Red team: quince ataques al modelo de la Dehesa del Castrillo
 
 **Propósito.** Este memo es la contraparte adversarial del caso de inversión. Asume que el lector cobra por encontrar el punto más débil del modelo, no por aprobarlo. Cada ataque va seguido de lo que el libro dice realmente, lo que concedo y lo que sigue sin resolverse.
 
@@ -137,6 +137,62 @@ El 68% del gap es captura de fin de semana. El supuesto entre semana está solo 
 
 ---
 
+## R7: cinco ataques más, porque el caso de cabañas sí pasa
+
+R7 es la única configuración del libro que supera a la vez el WACC y el test neto de inversión total. Eso lo convierte en el caso que un comité de crédito atacaría con más dureza, no en el que dejaría pasar sin preguntas.
+
+## Ataque 11: "110 k€ all-in por cabaña es precio de catálogo, no de una unidad de hospitalidad."
+
+**Por qué duele.** Si el coste real es 130 k€, el gap neto se vuelve -87.672 € y el caso falla. La base solo está un 3,2% por encima del agua.
+
+**Qué dice el modelo.** La escalera de coste es explícita: 110 k€ pasa (+49.147 €), 120 k€ falla (-19.263 €), 130 k€ falla (-87.672 €), 150 k€ falla (-224.490 €) y 180 k€ falla (-429.718 €). Los 110 k€ no son precio de cáscara: incluyen la unidad equipada, la terraza, servicios y la parte proporcional de infraestructura común. La nota separa la cáscara de 17-37 k€ del paquete instalado estándar de 85-110 k€ y del premium de 130-150 k€.
+
+**Respuesta.** La base está deliberadamente en el techo del corredor estándar, no en el centro del premium. La recomendación no dice "construir a 110 k€"; dice "hacer el test de Fase 0 y luego conseguir una oferta vinculante a 110 k€ o menos".
+
+**Riesgo residual.** Una oferta de QS a 125-135 k€ es perfectamente plausible en 2026. Si llega, lo correcto es recortar una cabaña o el alcance del restaurante, no subir el ADR.
+
+## Ataque 12: "200 € de ADR para una cabaña en Segovia es optimista."
+
+**Por qué duele.** La muestra local de OTAs promedia 236 €/noche pero va de 85 a 520 €; la mediana está muy por debajo de la media, y los 200 € son una tarifa realizada anual, no un precio de fin de semana punta.
+
+**Qué dice el modelo.** Con 190 € de ADR y 50% de ocupación el gap neto es -39.932 €. Con 200 € es +49.147 €. El caso vive en una banda de 10-20 € alrededor de la tarifa realizada. El stretch necesita 230 € y 55%, y la nota dice explícitamente que 250 €+ no está soportado.
+
+**Respuesta.** Los 200 € están triangulados con tres fuentes (muestra OTA, tarifas de casas rurales por persona, bandas de operadores de glamping), no con un anuncio suelto. El downside corre a 190 €.
+
+**Riesgo residual.** Si la tarifa realizada se queda en 185-190 €, R7 falla incluso a 110 k€. Para eso está el test de Fase 0.
+
+## Ataque 13: "45 k€ de experiencias agronómicas es un relato, no una línea de ingreso."
+
+**Por qué duele.** Los 45 k€ son el 7,9% del ingreso total y llevan un margen del 70%, así que contribuyen de forma desproporcionada al EBITDA. Si en realidad son 25 k€, el gap neto cae unos 14 k€ y la base deja de pasar.
+
+**Qué dice el modelo.** La nota construye los 45 k€ de dos formas: 30 retiros × 12 personas × 125 €, o 300 experiencias × 150 €, que es un attach del 27% sobre 1.095 noches de cabaña. El downside usa 25 k€.
+
+**Respuesta.** Las experiencias se modelan con anfitrión, calendario y marketing explícitos dentro de los 4,5 FTE y del OPEX fijo, no como ingreso pasivo. El gate de Fase 0 incluye el attach realizado.
+
+**Riesgo residual.** Un attach del 27% es exigente para una primera temporada. El caso debería re-ejecutarse con un attach del 15-20% antes de comprometer construcción.
+
+## Ataque 14: "Seis cabañas son cuatro demasiadas para una primera fase."
+
+**Por qué duele.** Construir las seis antes de probar la demanda convierte una opción de 50 k€ en un compromiso de 1,54 M€. El downside (cinco cabañas) sigue perdiendo 989 k€.
+
+**Qué dice el modelo.** Cinco cabañas a 110 k€ con 45 k€ de experiencias pasan el test de activo (+49.987 €) pero fallan el de inversión total (-29.183 €). La sexta cabaña es lo que hace pasar el caso, porque añade unos 21 k€ de EBITDA por 110 k€ de CapEx, un yield on cost del 19%.
+
+**Respuesta.** La recomendación es explícitamente en dos fases: la Fase 0 prueba la demanda con dos cabañas más la casa, y solo después se construye la sexta. El modelo pone precio a la configuración completa; la recomendación no la autoriza de golpe.
+
+**Riesgo residual.** Una construcción por fases tiene su propio sobrecoste y pierde las economías de escala de la infraestructura común.
+
+## Ataque 15: "Cobras 250 k€ por un terreno que la familia ya tiene, así que el resultado no es el retorno de la familia."
+
+**Por qué duele.** El retorno que le importa a la familia es la caja que realmente pone. Si el terreno se aporta en especie y nunca se paga, el cheque de equity es menor y la TIR de la familia es mayor que la TIR de proyecto.
+
+**Qué dice el modelo.** Los 250 k€ están en todas las métricas de R7, incluida la base de 110 k€. Quitarlos añadiría unos 250 k€ al gap y haría el caso mejor, no peor: R7 pasa *con* el terreno cargado. El test de proyecto es deliberadamente el del activo completo, porque el banco presta contra el activo completo y el terreno tiene valor de oportunidad (se podría vender o arrendar).
+
+**Respuesta.** El terreno se queda dentro, y la vista de caja de equity se muestra por separado. El caso no pasa por fingir que la finca es gratis; la familia puede ver un retorno mejor solo-para-ella si quiere, pero esa no es la misma decisión.
+
+**Riesgo residual.** Los 250 k€ son un valor de oportunidad interno, no una tasación. Una valoración formal podría moverlo en cualquier dirección, y con ella el tamaño del gap.
+
+---
+
 ## Qué cambiaría el veredicto
 
 El decline es robusto a los ataques anteriores, pero no es infalsificable. Tres piezas de evidencia obligarían a re-ejecutar:
@@ -146,6 +202,8 @@ El decline es robusto a los ataques anteriores, pero no es infalsificable. Tres 
 3. **Una carta de concesión LEADER** con fecha de desembolso, más un term sheet de deuda dimensionado al tope DSCR en lugar del 35% LTV.
 
 Aun con las tres, R2 necesitaría un cap rate por debajo de aproximadamente 7,2% para superar el test de inversión total con 71.321 € de EBITDA. Eso no es un cap rate de la Segovia rural. La conclusión honesta es que el proyecto es una **opción de Fase 0**, no un proyecto de construcción.
+
+Para R7 la lista es distinta y más estrecha: una temporada de Fase 0 firmada con 45% de ocupación, 190 € de ADR realizado, ocho cubiertos externos al día y 25 k€ de experiencias, más una oferta vinculante de cabaña all-in a 110 k€ o menos. Si falla el gate de ocupación, el caso muere independientemente del ADR; si falla el de coste, la respuesta es menos cabañas o un restaurante más pequeño, no un precio más alto.
 
 ---
 
@@ -158,5 +216,7 @@ Aun con las tres, R2 necesitaría un cap rate por debajo de aproximadamente 7,2%
 - El cap rate de salida no está soportado por transacciones comparables.
 - El valor de empresa cero de R6 es un suelo contable, no un análisis de liquidación.
 - La sensibilidad de tipos es una re-ejecución a tipo fijo, no un modelo de refinanciación.
+- Los 45 k€ de experiencias de R7 no tienen programa firmado, solo un build-up.
+- El coste all-in de 110 k€ por cabaña de R7 es un benchmark, no una oferta de contratista.
 
 Estas cuestiones aparecen en la sección de limitaciones del README. No están escondidas en un apéndice.

@@ -36,8 +36,10 @@ import pandas as pd
 from src.config.assumptions import SCENARIOS, ScenarioDrivers
 from src.config.ine_weights import MANAGEMENT_OCCUPANCY
 from src.config.reform import (
+    CABIN_PRESETS,
     REFORM_PRESETS,
     ReformConfig,
+    get_cabin_preset,
     get_reform_preset,
 )
 from src.core.metrics import CreditMetricsEngine
@@ -249,6 +251,136 @@ class ReformAnalysisEngine:
             row["clears_total_investment"] = result.clears_total_investment
             rows.append(row)
         return pd.DataFrame(rows)
+
+    # ------------------------------------------------------------------
+    # R7: premium cabins, a different product
+    # ------------------------------------------------------------------
+    def run_cabin_presets(self) -> pd.DataFrame:
+        rows = []
+        for key, config in CABIN_PRESETS.items():
+            result = self.run_config(config, key=key)
+            row = result.as_dict()
+            row["clears_wacc"] = result.clears_wacc
+            row["clears_total_investment"] = result.clears_total_investment
+            row["cabin_count"] = config.cabin_count
+            row["cabin_adr"] = config.cabin_adr
+            row["cabin_capex_per_unit"] = config.cabin_capex_per_unit
+            row["cabin_occupancy_mature"] = config.cabin_occupancy_mature
+            rows.append(row)
+        return pd.DataFrame(rows)
+
+    def cabin_cost_ladder(
+        self,
+        costs: Iterable[float] = (110_000, 120_000, 130_000, 150_000, 180_000),
+        base_config: Optional[ReformConfig] = None,
+    ) -> pd.DataFrame:
+        """
+        Value gap by all-in cost per cabin, holding demand constant.
+
+        This is the R7 equivalent of the hotel frontier: it isolates the one
+        variable that separates a pass from a fail when the demand band is
+        already at the top of what Segovia supports.
+        """
+        base_config = base_config or get_cabin_preset("cabins_base")
+        rows = []
+        for cost in costs:
+            result = self.run_config(
+                base_config.with_cabin_cost(float(cost)), key=f"cabin_cost_{cost}"
+            )
+            rows.append(
+                {
+                    "cost_per_cabin": float(cost),
+                    "capex": result.capex,
+                    "total_investment": result.total_project_investment,
+                    "ebitda_y5": result.ebitda_y5,
+                    "ev_cap_rate": result.ev_cap_rate,
+                    "gap_capex": result.value_gap_capex,
+                    "gap_total_investment": result.value_gap_total_investment,
+                    "net_gap_total_investment": result.net_value_gap_total_investment,
+                    "dscr_min": result.dscr_min,
+                    "project_npv": result.project_npv,
+                    "clears_wacc": result.clears_wacc,
+                    "clears_total_investment": result.clears_total_investment,
+                    # The bank-facing test is the *net* gap versus total
+                    # investment. The gross property above is kept for the
+                    # asset-value test, but the ladder verdict uses this one.
+                    "passes_net_test": result.net_value_gap_total_investment > 0.0,
+                }
+            )
+        return pd.DataFrame(rows)
+
+    def cabin_recommendation(self) -> Dict[str, Any]:
+        results = {
+            key: self.run_config(config, key=key)
+            for key, config in CABIN_PRESETS.items()
+        }
+        base = results["cabins_base"]
+        stretch = results["cabins_stretch"]
+        downside = results["cabins_downside"]
+        ladder = self.cabin_cost_ladder()
+
+        passes_net = base.net_value_gap_total_investment > 0.0
+        passes_wacc = base.clears_wacc
+        if passes_net and passes_wacc:
+            verdict = (
+                "CONDITIONAL PROCEED TO PHASE 0 - PREMIUM CABINS PASS ON PAPER, "
+                "BUT ONLY AT 110K PER CABIN"
+            )
+            stance = "phase_zero"
+        elif passes_net or passes_wacc:
+            verdict = (
+                "CONDITIONAL - THE CABIN CASE CLEARS ONE TEST BUT NOT THE NET "
+                "TOTAL-INVESTMENT TEST"
+            )
+            stance = "boundary"
+        else:
+            verdict = "DECLINE - THE PREMIUM CABIN CASE DOES NOT CLEAR THE HURDLE"
+            stance = "decline"
+
+        detail = (
+            f"The base cabin case (six two-bedroom cabins, 200 EUR ADR, 50% "
+            f"occupancy, ten external covers, 45k of experiences) produces "
+            f"EUR {base.ebitda_y5:,.0f} of mature EBITDA and "
+            f"EUR {base.ev_cap_rate:,.0f} of enterprise value at a "
+            f"{base.exit_cap_rate*100:.1f}% cap rate. Against total investment "
+            f"of EUR {base.total_project_investment:,.0f} that is a net gap of "
+            f"EUR {base.net_value_gap_total_investment:+,.0f} after "
+            f"{base.exit_cost_rate*100:.1f}% selling costs: it passes, but by "
+            f"roughly {base.net_value_gap_total_investment/base.total_project_investment*100:.1f}% "
+            f"of the capital at risk. The project NPV is "
+            f"EUR {base.project_npv:+,.0f}, the project IRR "
+            f"{(base.project_irr_exit or 0)*100:.2f}% and the minimum DSCR "
+            f"{base.dscr_min:.2f}x."
+        )
+        detail_2 = (
+            f"The corridor is narrow. At 120k per cabin the same demand fails "
+            f"the net total-investment test, and at 150k it only works if the ADR "
+            f"moves to 230 EUR and occupancy to 55% (the stretch case: EBITDA "
+            f"EUR {stretch.ebitda_y5:,.0f}, net gap "
+            f"EUR {stretch.net_value_gap_total_investment:+,.0f}). The "
+            f"180k ultra-luxury unit fails with the demand this market pays. "
+            f"The downside (five cabins, 190 EUR, 45% occupancy) produces "
+            f"EBITDA EUR {downside.ebitda_y5:,.0f}, a minimum DSCR of "
+            f"{downside.dscr_min:.2f}x and a net gap of "
+            f"EUR {downside.net_value_gap_total_investment:+,.0f}: it is a "
+            f"demand failure, not a construction-cost problem."
+        )
+        conditions = [
+            "Run the Phase 0 demand test before committing construction capital: two cabins plus the house for one season, or a restaurant/experience pop-up. The gates are 45% occupancy, 190 EUR realised ADR, eight external covers a day and 25k of experiences.",
+            "Keep the all-in cabin cost at or below 110k. At 120k the same demand band fails the net total-investment test; at 130k or more the gap is negative.",
+            "Do not budget the 180k ultra-luxury unit. It only works at 250 EUR ADR or more, which the Segovia comparables do not support.",
+            "Treat the 45k of agronomic experiences as an operating programme with a host, a calendar and marketing, not as passive income.",
+            "Charge the land at its 250k opportunity value; the case does not pass by treating the site as free.",
+        ]
+        return {
+            "verdict": verdict,
+            "stance": stance,
+            "detail": detail,
+            "detail_2": detail_2,
+            "conditions": conditions,
+            "results": results,
+            "cost_ladder": ladder,
+        }
 
     # ------------------------------------------------------------------
     # Value bridge
@@ -632,6 +764,39 @@ class ReformAnalysisEngine:
             print(f"   - {condition}")
         print()
 
+        print("R7 PREMIUM CABINS - A DIFFERENT PRODUCT, SAME HURDLE")
+        print("-" * 88)
+        cabin_rec = self.cabin_recommendation()
+        cabin_summary = self.run_cabin_presets()
+        for _, row in cabin_summary.iterrows():
+            irr = row["project_irr_exit"]
+            irr_text = f"{irr*100:.2f}%" if irr is not None and pd.notna(irr) else "n/a"
+            print(
+                f"  {row['key']:<18} CapEx {row['capex']:>10,.0f}  "
+                f"EBITDA {row['ebitda_y5']:>9,.0f}  DSCR {row['dscr_min']:>4.2f}x  "
+                f"net gap {row['net_value_gap_total_investment']:>+10,.0f}  "
+                f"IRR {irr_text:>7}"
+            )
+        print()
+        ladder = cabin_rec["cost_ladder"]
+        print("  Cost corridor (6 cabins, 200 EUR ADR, 50% occupancy, 45k experiences):")
+        for _, row in ladder.iterrows():
+            print(
+                f"    {row['cost_per_cabin']:>7,.0f} EUR/cabin  "
+                f"CapEx {row['capex']:>10,.0f}  "
+                f"EBITDA {row['ebitda_y5']:>9,.0f}  "
+                f"net gap {row['net_gap_total_investment']:>+10,.0f}  "
+                f"{'PASS' if row['passes_net_test'] else 'FAIL'}"
+            )
+        print()
+        print(f"R7 RECOMMENDATION: {cabin_rec['verdict']}")
+        print(f"  {cabin_rec['detail']}")
+        print(f"  {cabin_rec['detail_2']}")
+        print("  Conditions:")
+        for condition in cabin_rec["conditions"]:
+            print(f"   - {condition}")
+        print()
+
     def export_json(self, path: Optional[Path] = None) -> Path:
         if path is None:
             data_dir = Path(__file__).resolve().parent.parent.parent / "data"
@@ -639,8 +804,10 @@ class ReformAnalysisEngine:
             path = data_dir / "reform_analysis.json"
 
         presets = self.run_presets()
+        cabins = self.run_cabin_presets()
         bridge = self.value_bridge()
         rec = self.recommendation()
+        cabin_rec = self.cabin_recommendation()
         frontier = self.frontier()
         stress = self.stress_cases()
         rate_sensitivity = self.rate_sensitivity()
@@ -654,6 +821,15 @@ class ReformAnalysisEngine:
                 )
             },
             "presets": presets.to_dict(orient="records"),
+            "cabins": cabins.to_dict(orient="records"),
+            "cabin_cost_ladder": cabin_rec["cost_ladder"].to_dict(orient="records"),
+            "cabin_recommendation": {
+                "verdict": cabin_rec["verdict"],
+                "stance": cabin_rec["stance"],
+                "detail": cabin_rec["detail"],
+                "detail_2": cabin_rec["detail_2"],
+                "conditions": cabin_rec["conditions"],
+            },
             "value_bridge": {
                 k: v
                 for k, v in bridge.items()

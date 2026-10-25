@@ -365,7 +365,7 @@ def build_readme(wb, st: Dict[str, Any], case_facts: Dict[str, Dict[str, Any]], 
         ("Credit Risk & Copula", "Gaussian / Student-t / Clayton tail risk on the Year-2 DSCR."),
         ("Unit Economics & Runway", "RevPAR, TRevPAR, contribution margin and the 24-month cash runway."),
         ("Phase II Expansion", "Landscape suites and biopool: CapEx, P&L, phase gate and consolidated impact."),
-        ("Reform Case", "Separate post-decline layer: R1-R6 presets, value bridge, CapEx/cover frontier, stress tests and recommendation."),
+        ("Reform Case", "Separate post-decline layer: R1-R6 presets, value bridge, CapEx/cover frontier, stress tests, R7 premium cabins and recommendation."),
     ]
     for r, (tab, purpose) in enumerate(model_map, start=6):
         _write_row(ws, r, [tab, purpose], st, number_format="@")

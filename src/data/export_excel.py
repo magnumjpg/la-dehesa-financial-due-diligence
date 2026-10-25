@@ -617,6 +617,9 @@ def export_institutional_excel(filename: str = "La_Dehesa_del_Castrillo_Financia
     reform_stress = reform_engine.stress_cases()
     reform_rate = reform_engine.rate_sensitivity()
     reform_rec = reform_engine.recommendation()
+    cabin_presets = reform_engine.run_cabin_presets()
+    cabin_rec = reform_engine.cabin_recommendation()
+    cabin_ladder = cabin_rec["cost_ladder"]
 
     ws9 = wb.create_sheet(title="Reform Case")
     ws9.views.sheetView[0].showGridLines = True
@@ -856,6 +859,154 @@ def export_institutional_excel(filename: str = "La_Dehesa_del_Castrillo_Financia
         cell.font = regular_font
         cell.alignment = Alignment(wrap_text=True, vertical="top")
         ws9.merge_cells(start_row=r + 5 + offset, start_column=1, end_row=r + 5 + offset, end_column=14)
+        ws9.row_dimensions[r + 5 + offset].height = 28
+
+    # Section 7: R7 premium cabins (a different product, not a fourth as-is case)
+    r = 76
+    ws9.cell(
+        row=r,
+        column=1,
+        value="7. R7 PREMIUM CABINS - A DIFFERENT PRODUCT, SAME 9.5% CAP-RATE HURDLE",
+    ).font = bold_font
+    ws9.cell(
+        row=r + 1,
+        column=1,
+        value=(
+            "R7 replaces the eight-room hotel with six two-bedroom cabins plus the main house. "
+            "The base case is deliberately the good edge of the band: 6 cabins at 110k all-in, "
+            "200 EUR ADR, 50% stabilised occupancy, ten external covers and 45k of experiences. "
+            "At 120k per cabin the same demand fails the bank-facing net total-investment test."
+        ),
+    ).font = Font(name="Calibri", size=10, italic=True, color="64748B")
+    ws9.cell(row=r + 1, column=1).alignment = Alignment(wrap_text=True, vertical="top")
+    ws9.merge_cells(start_row=r + 1, start_column=1, end_row=r + 1, end_column=14)
+    ws9.row_dimensions[r + 1].height = 42
+
+    cabin_cols = [
+        ("key", "Ref"),
+        ("cabin_count", "Cabins"),
+        ("cabin_adr", "ADR (EUR)"),
+        ("cabin_occupancy_mature", "Occupancy"),
+        ("cabin_capex_per_unit", "Cost / cabin (EUR)"),
+        ("capex", "CapEx (EUR)"),
+        ("total_project_investment", "Total inv. (EUR)"),
+        ("ebitda_y5", "EBITDA Y5 (EUR)"),
+        ("dscr_min", "Min DSCR"),
+        ("net_value_gap_total_investment", "Net gap vs total inv. (EUR)"),
+        ("project_npv", "Project NPV (EUR)"),
+        ("project_irr_exit", "Project IRR"),
+    ]
+    for col_idx, (_, label) in enumerate(cabin_cols, start=1):
+        cell = ws9.cell(row=r + 3, column=col_idx, value=label)
+        cell.fill = navy_fill
+        cell.font = header_font
+        cell.alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
+
+    for r_idx, (_, row) in enumerate(cabin_presets.iterrows(), start=r + 4):
+        for c_idx, (key, _) in enumerate(cabin_cols, start=1):
+            val = row[key]
+            if key == "project_irr_exit":
+                val = "n/a" if val is None or pd.isna(val) else float(val)
+            elif key == "key":
+                val = str(val).upper().replace("_", " ")
+            elif isinstance(val, (int, float)):
+                val = round(float(val), 2)
+            cell = ws9.cell(row=r_idx, column=c_idx, value=val)
+            cell.font = regular_font
+            cell.border = thin_border
+            if key in (
+                "cabin_capex_per_unit",
+                "capex",
+                "total_project_investment",
+                "ebitda_y5",
+                "net_value_gap_total_investment",
+                "project_npv",
+            ):
+                cell.number_format = "#,##0"
+            elif key == "cabin_adr":
+                cell.number_format = "#,##0"
+            elif key == "cabin_occupancy_mature":
+                cell.number_format = "0%"
+            elif key == "dscr_min":
+                cell.number_format = "0.00x"
+            elif key == "project_irr_exit" and isinstance(val, float):
+                cell.number_format = "0.00%"
+
+    # Section 8: cost corridor
+    r = 85
+    ws9.cell(
+        row=r,
+        column=1,
+        value="8. R7 COST CORRIDOR - SIX CABINS, 200 EUR ADR, 50% OCCUPANCY (PASS = NET TOTAL-INVESTMENT TEST)",
+    ).font = bold_font
+    ladder_cols = [
+        ("cost_per_cabin", "Cost / cabin (EUR)"),
+        ("capex", "CapEx (EUR)"),
+        ("total_investment", "Total inv. (EUR)"),
+        ("ebitda_y5", "EBITDA Y5 (EUR)"),
+        ("ev_cap_rate", "EV (EUR)"),
+        ("gap_capex", "Gap vs CapEx (EUR)"),
+        ("gap_total_investment", "Gap vs total inv. (EUR)"),
+        ("net_gap_total_investment", "Net gap vs total inv. (EUR)"),
+        ("dscr_min", "Min DSCR"),
+        ("project_npv", "Project NPV (EUR)"),
+    ]
+    for col_idx, (_, label) in enumerate(ladder_cols, start=1):
+        cell = ws9.cell(row=r + 1, column=col_idx, value=label)
+        cell.fill = navy_fill
+        cell.font = header_font
+        cell.alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
+
+    for r_idx, (_, row) in enumerate(cabin_ladder.iterrows(), start=r + 2):
+        passes = bool(row["passes_net_test"])
+        for c_idx, (key, _) in enumerate(ladder_cols, start=1):
+            val = row[key]
+            if isinstance(val, (int, float)):
+                val = round(float(val), 2)
+            cell = ws9.cell(row=r_idx, column=c_idx, value=val)
+            cell.font = regular_font
+            cell.border = thin_border
+            if key == "cost_per_cabin":
+                cell.font = bold_font
+                cell.number_format = "#,##0"
+            elif key == "dscr_min":
+                cell.number_format = "0.00x"
+            else:
+                cell.number_format = "#,##0"
+            if key == "net_gap_total_investment":
+                cell.fill = PatternFill(
+                    start_color="D1FAE5" if passes else "FEE2E2",
+                    end_color="D1FAE5" if passes else "FEE2E2",
+                    fill_type="solid",
+                )
+
+    # Section 9: R7 recommendation
+    r = 94
+    ws9.cell(row=r, column=1, value="9. R7 CABIN RECOMMENDATION").font = bold_font
+    ws9.cell(row=r + 1, column=1, value=cabin_rec["verdict"]).font = Font(
+        name="Calibri", size=12, bold=True, color="0F766E"
+    )
+    ws9.merge_cells(start_row=r + 1, start_column=1, end_row=r + 1, end_column=14)
+    ws9.cell(row=r + 2, column=1, value=cabin_rec["detail"]).font = regular_font
+    ws9.cell(row=r + 2, column=1).alignment = Alignment(wrap_text=True, vertical="top")
+    ws9.merge_cells(start_row=r + 2, start_column=1, end_row=r + 2, end_column=14)
+    ws9.row_dimensions[r + 2].height = 46
+    ws9.cell(row=r + 3, column=1, value=cabin_rec["detail_2"]).font = regular_font
+    ws9.cell(row=r + 3, column=1).alignment = Alignment(wrap_text=True, vertical="top")
+    ws9.merge_cells(start_row=r + 3, start_column=1, end_row=r + 3, end_column=14)
+    ws9.row_dimensions[r + 3].height = 56
+
+    ws9.cell(row=r + 5, column=1, value="R7 conditions attached to any further work").font = bold_font
+    for offset, condition in enumerate(cabin_rec["conditions"], start=1):
+        cell = ws9.cell(row=r + 5 + offset, column=1, value=f"- {condition}")
+        cell.font = regular_font
+        cell.alignment = Alignment(wrap_text=True, vertical="top")
+        ws9.merge_cells(
+            start_row=r + 5 + offset,
+            start_column=1,
+            end_row=r + 5 + offset,
+            end_column=14,
+        )
         ws9.row_dimensions[r + 5 + offset].height = 28
 
     # Add the live, formula-driven tabs (Inputs, Live Model, Funding & Audit, Read Me)

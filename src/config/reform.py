@@ -65,6 +65,28 @@ class ReformConfig:
     incremental_fte: float = 1.0
     loaded_cost_per_fte: float = 28_000.0
 
+    # --- Product / unit mix --------------------------------------------
+    # R1-R6 reform the existing eight-room hotel. R7 replaces the room
+    # inventory with cabins, so it needs its own unit mix and its own
+    # occupancy ramp instead of inheriting the hotel's 31.36% anchor.
+    product: str = "hotel"  # "hotel" (R1-R6) or "cabins" (R7)
+    cabin_count: int = 0
+    cabin_adr: float = 0.0
+    cabin_guests: int = 4
+    cabin_capex_per_unit: float = 0.0
+    house_adr: float = 0.0
+    house_guests: int = 8
+    cabin_occupancy_year1: float = 0.0
+    cabin_occupancy_year2: float = 0.0
+    cabin_occupancy_mature: float = 0.0
+    # External F&B trading days. The hotel presets trade 365 days; the cabin
+    # case assumes 300 because a destination restaurant in a rural finca does
+    # not open every day of the year.
+    external_service_days: int = 365
+    # Extra fixed OPEX on top of the inherited 30.5k schedule (cabins add
+    # grounds, a second access, more utilities and more marketing).
+    fixed_opex_extra: float = 0.0
+
     # Optional demand anchor. When set, the reform is run at this annual
     # occupancy rather than at the management case's 31.36%. It exists so R6
     # can genuinely be an INE-demand downside instead of merely being labelled
@@ -135,6 +157,43 @@ class ReformConfig:
         return round(self.non_land_capex * 0.21, 2)
 
     @property
+    def is_cabin_product(self) -> bool:
+        return self.product == "cabins"
+
+    def cabin_occupancy_for_year(self, year: int) -> float:
+        """Stabilised cabin occupancy for a given projection year."""
+        if year <= 1:
+            return self.cabin_occupancy_year1
+        if year == 2:
+            return self.cabin_occupancy_year2
+        return self.cabin_occupancy_mature
+
+    def with_cabin_cost(self, per_unit: float) -> "ReformConfig":
+        """
+        Rebuilds a cabin preset with a different all-in cost per cabin.
+
+        The house refurbishment is held constant, so the sensitivity isolates
+        the unit cost instead of scaling the whole budget.
+        """
+        if not self.is_cabin_product:
+            raise ValueError("with_cabin_cost requires a cabin product")
+        if self.cabin_capex_per_unit <= 0:
+            raise ValueError("The preset does not define a cabin unit cost")
+        house_refurb = (
+            self.renovation_amount
+            - self.cabin_count * self.cabin_capex_per_unit
+        )
+        if house_refurb < 0:
+            raise ValueError("Cabin cost exceeds the renovation budget")
+        return replace(
+            self,
+            cabin_capex_per_unit=float(per_unit),
+            renovation_amount=round(
+                house_refurb + self.cabin_count * float(per_unit), 2
+            ),
+        )
+
+    @property
     def leader_subsidy(self) -> float:
         """LEADER grant, capped and scaled to the reform budget."""
         return round(
@@ -157,6 +216,16 @@ class ReformConfig:
 
     def build_capex(self) -> CapExStructure:
         """Converts the reform budget into the model's CapEx structure."""
+        if self.is_cabin_product:
+            renovation_name = (
+                f"Cabañas ({self.cabin_count} uds.) y reforma de la casa principal"
+            )
+            kitchen_name = "Restaurante, cocina y sala"
+            biopool_name = "Infraestructura común, biopiscina y paisajismo"
+        else:
+            renovation_name = "Reforma Integral (alcance reformado)"
+            kitchen_name = "Equipamiento de cocina y lavanderia"
+            biopool_name = "Biopiscina y Paisajismo"
         return CapExStructure(
             land=CapExAsset(
                 name="Terreno (25 ha en Segovia)",
@@ -166,14 +235,14 @@ class ReformConfig:
                 is_depreciable=False,
             ),
             renovation=CapExAsset(
-                name="Reforma Integral (alcance reformado)",
+                name=renovation_name,
                 amount=self.renovation_amount,
                 vat_rate=0.21,
                 depreciation_rate=0.03,
                 is_depreciable=True,
             ),
             kitchen_equipment=CapExAsset(
-                name="Equipamiento de cocina y lavanderia",
+                name=kitchen_name,
                 amount=self.kitchen_amount,
                 vat_rate=0.21,
                 depreciation_rate=0.12,
@@ -187,7 +256,7 @@ class ReformConfig:
                 is_depreciable=True,
             ),
             biopool_landscaping=CapExAsset(
-                name="Biopiscina y Paisajismo",
+                name=biopool_name,
                 amount=self.biopool_amount,
                 vat_rate=0.21,
                 depreciation_rate=0.10,
@@ -381,6 +450,131 @@ DOWNSIDE = replace(
     discount_rate=0.09,
     exit_cost_rate=0.04,
 ).scale_non_land_capex(1.20)
+
+
+# ---------------------------------------------------------------------------
+# R7: a different product, not a fourth as-is case
+# ---------------------------------------------------------------------------
+# The R1-R6 presets all reform the same eight-room hotel. R7 asks the next
+# question: if the hotel does not clear its cost of capital even after a
+# sensible reform, would a different product - six two-bedroom cabins and the
+# main house, sold as a private landscape retreat - clear it? The answer is
+# deliberately allowed to be no. The band is documented in
+# BENCHMARKS_R7_ES.md and the numbers below are the implementation of it.
+#
+# Unit economics of the base case:
+#   CapEx  = 250k land + 850k (6 cabins at 110k + 190k house) + 100k restaurant
+#            + 110k infrastructure/biopool + 15k digital + 11% fees/contingency
+#          = 1,441,600 EUR
+#   Revenue= 6 x 365 x 50% x 200 = 219,000 (cabins)
+#            + 365 x 50% x 400  =  73,000 (house)
+#            + 90,000 external F&B + 45,000 experiences
+#            + in-house F&B (5,840 guest-days x 25 = 146,000)
+#          = 573,000 EUR
+CABINS_BASE = ReformConfig(
+    name="R7 Premium cabins (6 x 110k)",
+    thesis=(
+        "Replace the eight-room hotel with six two-bedroom cabins for four "
+        "guests plus the main house. 200 EUR ADR, 35/45/50% occupancy ramp, "
+        "ten external F&B covers a day for 300 days, 45k of agronomic "
+        "experiences and 4.5 FTE."
+    ),
+    product="cabins",
+    renovation_amount=850_000.0,
+    kitchen_amount=100_000.0,
+    ffe_amount=0.0,
+    biopool_amount=110_000.0,
+    digital_amount=15_000.0,
+    cabin_count=6,
+    cabin_adr=200.0,
+    cabin_guests=4,
+    cabin_capex_per_unit=110_000.0,
+    house_adr=400.0,
+    house_guests=8,
+    cabin_occupancy_year1=0.35,
+    cabin_occupancy_year2=0.45,
+    cabin_occupancy_mature=0.50,
+    external_covers_per_day=10.0,
+    external_ticket=30.0,
+    external_cogs_ratio=0.32,
+    external_service_days=300,
+    experiences_revenue=45_000.0,
+    adr_uplift=0.0,
+    cost_savings=0.0,
+    incremental_fte=4.5,
+    fixed_opex_extra=11_500.0,
+    exit_cap_rate=0.095,
+    discount_rate=0.08,
+    exit_cost_rate=0.03,
+)
+
+# R7 stretch: the "VIP" configuration. It only works if the market proves a
+# 230 EUR ADR (top of the local sample), 55% occupancy and 12 external covers.
+# It is an upside case, not the base.
+CABINS_STRETCH = replace(
+    CABINS_BASE,
+    name="R7 Stretch - VIP cabins (6 x 150k)",
+    thesis=(
+        "Six 150k design cabins at 230 EUR ADR, 40/50/55% occupancy, twelve "
+        "external covers, 60k of experiences and 5 FTE. The upside case: it "
+        "requires an ADR at the top of the Segovia sample and a proven "
+        "destination restaurant."
+    ),
+    renovation_amount=1_090_000.0,
+    cabin_adr=230.0,
+    cabin_capex_per_unit=150_000.0,
+    cabin_occupancy_year1=0.40,
+    cabin_occupancy_year2=0.50,
+    cabin_occupancy_mature=0.55,
+    external_covers_per_day=12.0,
+    external_ticket=32.0,
+    experiences_revenue=60_000.0,
+    incremental_fte=5.0,
+    fixed_opex_extra=15_500.0,
+)
+
+# R7 downside: five cabins, 190 EUR ADR, 45% occupancy, eight covers and a
+# 10.5% exit cap with 4% selling costs. It is the case the Phase 0 test has to
+# rule out before any construction capital is committed.
+CABINS_DOWNSIDE = replace(
+    CABINS_BASE,
+    name="R7 Downside - five cabins, weak demand",
+    thesis=(
+        "Five 150k cabins at 190 EUR ADR, 40/43/45% occupancy, eight external "
+        "covers, 25k of experiences, a 10.5% exit cap and 4% selling costs. "
+        "It is the demand failure the Phase 0 test exists to detect."
+    ),
+    renovation_amount=940_000.0,
+    cabin_count=5,
+    cabin_adr=190.0,
+    cabin_capex_per_unit=150_000.0,
+    cabin_occupancy_year1=0.40,
+    cabin_occupancy_year2=0.43,
+    cabin_occupancy_mature=0.45,
+    external_covers_per_day=8.0,
+    external_ticket=28.0,
+    experiences_revenue=25_000.0,
+    incremental_fte=4.0,
+    exit_cap_rate=0.105,
+    discount_rate=0.09,
+    exit_cost_rate=0.04,
+)
+
+
+CABIN_PRESETS: Dict[str, ReformConfig] = {
+    "cabins_base": CABINS_BASE,
+    "cabins_stretch": CABINS_STRETCH,
+    "cabins_downside": CABINS_DOWNSIDE,
+}
+
+
+def get_cabin_preset(name: str) -> ReformConfig:
+    try:
+        return CABIN_PRESETS[name]
+    except KeyError as exc:
+        raise KeyError(
+            f"Unknown cabin preset '{name}'. Available: {sorted(CABIN_PRESETS)}"
+        ) from exc
 
 
 REFORM_PRESETS: Dict[str, ReformConfig] = {

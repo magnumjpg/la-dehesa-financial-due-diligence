@@ -15,7 +15,14 @@ import pytest
 
 from src.config.assumptions import SCENARIOS
 from src.config.ine_weights import MARKET_OCCUPANCY
-from src.config.reform import CAPEX_ONLY, DOWNSIDE, REVENUE_REFORM
+from src.config.reform import (
+    CABINS_BASE,
+    CABINS_DOWNSIDE,
+    CABINS_STRETCH,
+    CAPEX_ONLY,
+    DOWNSIDE,
+    REVENUE_REFORM,
+)
 from src.core.metrics import CreditMetricsEngine
 from src.core.reform import ReformAnalysisEngine
 from src.core.statements import FinancialModelEngine
@@ -191,3 +198,96 @@ def test_reform_presets_keep_the_as_is_returns_engine_consistent():
     assert kpi["dscr"].min() == pytest.approx(2.13, abs=0.01)
     assert (kpi["dscr_covenant_pass"]).all()
     assert df.iloc[-1]["ending_cash"] > 0
+
+
+# ---------------------------------------------------------------------------
+# R7: premium cabins, a different product
+# ---------------------------------------------------------------------------
+def test_cabin_base_revenue_and_ebitda_per_unit_tie_to_the_benchmark_note():
+    result = ENGINE.run_config(CABINS_BASE, key="cabins_base")
+
+    # CapEx and total investment must reproduce the note's arithmetic check.
+    assert result.capex == pytest.approx(1_441_600.0, abs=0.01)
+    assert result.total_project_investment == pytest.approx(1_540_760.04, abs=0.05)
+
+    # 6 x 365 x 50% x 200 = 219,000 (cabins) + 73,000 (house)
+    # + 146,000 in-house F&B + 90,000 external F&B + 45,000 experiences.
+    assert result.revenue_y5 == pytest.approx(573_000.0, abs=0.01)
+    assert result.revenue_y5 / CABINS_BASE.cabin_count == pytest.approx(
+        95_500.0, abs=0.01
+    )
+    assert result.ebitda_y5 == pytest.approx(155_712.50, abs=0.01)
+    assert result.ebitda_margin_y5 == pytest.approx(0.27175, abs=1e-4)
+    assert result.external_covers_y5 == pytest.approx(3_000.0, abs=0.01)
+    assert result.experiences_revenue_y5 == pytest.approx(45_000.0, abs=0.01)
+
+
+def test_cabin_base_passes_the_bank_facing_net_total_investment_test():
+    base = ENGINE.run_config(CABINS_BASE, key="cabins_base")
+
+    # The note's bank test is the *net* gap after 3% exit costs.
+    assert base.value_gap_capex > 0
+    assert base.net_value_gap_capex > 0
+    assert base.net_value_gap_total_investment > 0
+    assert base.net_value_gap_total_investment == pytest.approx(49_146.54, abs=0.05)
+    assert base.net_value_gap_total_investment / base.total_project_investment == pytest.approx(
+        0.0319, abs=0.001
+    )
+    assert base.dscr_min == pytest.approx(1.41, abs=0.01)
+    assert base.project_npv > 0
+    assert base.project_irr_exit == pytest.approx(0.092088, abs=1e-5)
+
+
+def test_cabin_base_still_clears_the_wacc_but_only_by_a_thin_margin():
+    rec = ENGINE.cabin_recommendation()
+
+    assert rec["stance"] == "phase_zero"
+    assert "PHASE 0" in rec["verdict"]
+    assert rec["results"]["cabins_base"].clears_wacc
+    # The base is deliberately the good edge of the band, not a comfortable case.
+    assert rec["results"]["cabins_base"].project_npv < 0.10 * rec["results"][
+        "cabins_base"
+    ].total_project_investment
+
+
+def test_cabin_cost_ladder_is_monotonic_and_flips_at_120k():
+    ladder = ENGINE.cabin_cost_ladder()
+
+    costs = ladder["cost_per_cabin"].tolist()
+    gaps = ladder["net_gap_total_investment"].tolist()
+    assert costs == [110_000, 120_000, 130_000, 150_000, 180_000]
+    assert gaps == sorted(gaps, reverse=True)
+
+    # 110k passes; 120k clears the gross asset test but fails the net bank test.
+    assert bool(ladder.iloc[0]["passes_net_test"]) is True
+    assert bool(ladder.iloc[1]["passes_net_test"]) is False
+    assert ladder.iloc[1]["gap_total_investment"] > 0
+    assert ladder.iloc[1]["net_gap_total_investment"] == pytest.approx(
+        -19_262.59, abs=0.05
+    )
+    assert all(not bool(flag) for flag in ladder.iloc[2:]["passes_net_test"])
+
+
+def test_cabin_downside_is_a_demand_failure_not_a_cost_problem():
+    downside = ENGINE.run_config(CABINS_DOWNSIDE, key="cabins_downside")
+
+    assert downside.capex == pytest.approx(1_541_500.0, abs=0.01)
+    assert downside.ebitda_y5 == pytest.approx(71_597.62, abs=0.01)
+    assert downside.dscr_min == pytest.approx(0.79, abs=0.01)
+    assert downside.dscr_min < 1.0
+    assert downside.net_value_gap_total_investment < 0
+    assert downside.project_npv < 0
+    assert downside.project_irr_exit < 0
+
+
+def test_cabin_stretch_is_an_upside_case_not_the_base():
+    stretch = ENGINE.run_config(CABINS_STRETCH, key="cabins_stretch")
+    base = ENGINE.run_config(CABINS_BASE, key="cabins_base")
+
+    assert stretch.capex == pytest.approx(1_708_000.0, abs=0.01)
+    assert stretch.ebitda_y5 > base.ebitda_y5
+    assert stretch.net_value_gap_total_investment > base.net_value_gap_total_investment
+    # The stretch only works with an ADR at the top of the local sample.
+    assert CABINS_STRETCH.cabin_adr == pytest.approx(230.0, abs=0.01)
+    assert CABINS_STRETCH.cabin_occupancy_mature == pytest.approx(0.55, abs=1e-9)
+
