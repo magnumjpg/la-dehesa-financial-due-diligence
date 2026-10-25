@@ -3,7 +3,7 @@
 ### Hospitality Feasibility, Senior Debt Underwriting & Computed Due Diligence
 
 **A portfolio-grade financial model built from my own university feasibility study.**
-Python 3.11 · 68 automated tests · 16-rule computed audit · 13-tab Excel model · 8 figures · 15-step pipeline
+Python 3.11 · 73 automated tests · 16-rule computed audit · 13-tab Excel model · 8 figures · 15-step pipeline
 
 [![tests](https://github.com/magnumjpg/la-dehesa-financial-due-diligence/actions/workflows/tests.yml/badge.svg)](https://github.com/magnumjpg/la-dehesa-financial-due-diligence/actions/workflows/tests.yml)
 ![Python 3.11](https://img.shields.io/badge/python-3.11-blue)

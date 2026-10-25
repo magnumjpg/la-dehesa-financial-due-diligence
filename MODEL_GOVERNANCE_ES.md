@@ -83,7 +83,7 @@ La subvención de capital no se imputa a resultados; entra en patrimonio.
 
 | Control | Resultado |
 |---|---|
-| Tests | 68 automatizados tras el último cambio (antes 65). |
+| Tests | 73 automatizados tras el último cambio (antes 68). |
 | Auditoría | 16 reglas: 10 pasan, 5 fallos materiales y 1 warning. |
 | Balance | Discrepancia máxima de 0,00 € en los tres casos (tolerancia 0,01 €). |
 | Python ↔ Excel | 13 pestañas y 2.060 fórmulas; DSCR A2 1,1534x y cajas A1/A2 de 20.700,88/183.322,64 €, dentro de 1 € / 0,01x. |
