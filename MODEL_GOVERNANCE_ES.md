@@ -6,7 +6,7 @@
 
 Este documento fija cómo se construye, controla y cambia el modelo financiero de La Dehesa del Castrillo S.L. Su ámbito es el repositorio Python + Excel, no la decisión de inversión; no sustituye una auditoría independiente, una tasación ni un term sheet.
 
-El estado es **reproducible y auditado**, sin revisión de terceros. La auditoría evalúa 16 reglas: 10 pasan, 5 excepciones materiales y 1 warning. El veredicto es `CONDITIONAL - 5 MATERIAL EXCEPTION(S)`; la recomendación es `DECLINE AS STRUCTURED (RESIZE REQUIRED)`. R7 supera el WACC y el test neto con un gap del 3,2%, solo a 110 k€ por cabaña; procede un test de Fase 0, no construir.
+El estado es **reproducible y auditado**, sin revisión de terceros. La auditoría evalúa 16 reglas: 9 pasan, 1 no aplicable, 5 excepciones materiales y 1 warning. El veredicto es `CONDITIONAL - 5 MATERIAL EXCEPTION(S)`; la recomendación es `DECLINE AS STRUCTURED (RESIZE REQUIRED)`. R7 supera el WACC y el test neto con un gap del 3,2%, solo a 110 k€ por cabaña; procede un test de Fase 0, no construir.
 
 ## 2. Mapa del modelo
 
@@ -19,7 +19,7 @@ El estado es **reproducible y auditado**, sin revisión de terceros. La auditor�
 | `model_audit.py` | 16 reglas calculadas y JSON de auditoría. |
 | `funding.py`, `metrics.py`, `expansion.py`, `monthly_cash.py` | Fuentes y usos, DSCR/TIR/VAN, gate de Fase II y liquidez mensual. |
 | `export_excel.py`, `live_excel.py` | Libro de 13 pestañas y 2.060 fórmulas. |
-| `tests/`, `data/*.json`, `data/*.xlsx` | 73 tests y salidas; el Excel y los JSON no son fuente de verdad. |
+| `tests/`, `data/*.json`, `data/*.xlsx` | 74 tests y salidas; el Excel y los JSON no son fuente de verdad. |
 
 ## 3. Flujo de cálculo
 
@@ -83,7 +83,7 @@ La subvención de capital no se imputa a resultados; entra en patrimonio.
 
 | Control | Resultado |
 |---|---|
-| Tests | 73 automatizados tras el último cambio (antes 68). |
+| Tests | 74 automatizados tras el último cambio (antes 68). |
 | Auditoría | 16 reglas: 9 pasan, 1 no aplicable, 5 fallos materiales y 1 warning. |
 | Balance | Discrepancia máxima de 0,00 € en los tres casos (tolerancia 0,01 €). |
 | Python ↔ Excel | 13 pestañas y 2.060 fórmulas; DSCR A2 1,1534x y cajas A1/A2 de 20.700,88/183.322,64 €, dentro de 1 € / 0,01x. |
@@ -151,7 +151,7 @@ El DSCR aguanta porque la deuda se dimensionó sobre el CFADS mínimo; el valor 
 
 ## 9. Control de cambios y reproducibilidad
 
-Cualquier cambio en `assumptions.py`, `config/reform.py` o los motores se registra con SHA y fecha, reejecuta los 73 tests y el pipeline, compara los JSON, regenera el Excel, verifica las 2.060 fórmulas, actualiza este log y se aprueba antes de publicar.
+Cualquier cambio en `assumptions.py`, `config/reform.py` o los motores se registra con SHA y fecha, reejecuta los 74 tests y el pipeline, compara los JSON, regenera el Excel, verifica las 2.060 fórmulas, actualiza este log y se aprueba antes de publicar.
 
 **Cómo ejecutarlo:**
 
@@ -159,7 +159,7 @@ Cualquier cambio en `assumptions.py`, `config/reform.py` o los motores se regist
 pip install -r requirements.txt
 python main.py                 # 15 pasos
 python main.py --no-charts
-python -m pytest tests/ -q     # 73 tests
+python -m pytest tests/ -q     # 74 tests
 ```
 
 Salidas: Excel de 13 pestañas y dos JSON. Monte Carlo: 1.000 iteraciones; cópulas: 50.000; semilla 42. La reproducibilidad es numérica en el mismo entorno Python 3.11 y dependencias; no se garantiza copia idéntica entre librerías o sistemas. No se editan a mano el Excel ni los JSON.

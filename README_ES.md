@@ -3,7 +3,7 @@
 ### Viabilidad hotelera, underwriting de deuda senior y due diligence calculada
 
 **Un modelo financiero de nivel portfolio construido a partir de mi propio trabajo de viabilidad universitario.**
-Python 3.11 · 73 tests automáticos · auditoría calculada de 16 reglas · modelo Excel de 13 pestañas · 8 figuras · pipeline de 15 pasos
+Python 3.11 · 74 tests automáticos · auditoría calculada de 16 reglas · modelo Excel de 13 pestañas · 8 figuras · pipeline de 15 pasos
 
 [![tests](https://github.com/magnumjpg/la-dehesa-financial-due-diligence/actions/workflows/tests.yml/badge.svg)](https://github.com/magnumjpg/la-dehesa-financial-due-diligence/actions/workflows/tests.yml)
 ![Python 3.11](https://img.shields.io/badge/python-3.11-blue)
@@ -17,7 +17,7 @@ Python 3.11 · 73 tests automáticos · auditoría calculada de 16 reglas · mod
 
 **El activo.** Una finca rural de 25 hectáreas en Segovia: 7 habitaciones dobles, una casa rural completa, un restaurante de 21 cubiertos y una biopiscina natural. Empezó como mi trabajo de viabilidad universitario.
 
-**Qué construí.** Tres casos as-is (promotor, mercado INE, gestión), el stack completo de costes, fuentes y usos, una facilidad amortizable a 20 años, una auditoría calculada de 16 reglas, un Excel con fórmulas vivas, 73 tests y ocho figuras.
+**Qué construí.** Tres casos as-is (promotor, mercado INE, gestión), el stack completo de costes, fuentes y usos, una facilidad amortizable a 20 años, una auditoría calculada de 16 reglas, un Excel con fórmulas vivas, 74 tests y ocho figuras.
 
 **La respuesta es no.** El caso de gestión incumple el covenant de 1,25x en el Año 2 con **1,15x**, necesita un **49,6% de equity en caja** en lugar del 30% previsto y devuelve una TIR de proyecto de **-9,49%** incluso con una salida al 8,5%. La recomendación de crédito es **DECLINE AS STRUCTURED (RESIZE REQUIRED)**.
 
@@ -38,7 +38,7 @@ Python 3.11 · 73 tests automáticos · auditoría calculada de 16 reglas · mod
 | **30 min** | Añade [Sección 9](#9-retornos-la-salida-no-rescata-los-casos-realistas) y [Sección 14](#14-red-team-diecisiete-ataques-a-mi-propio-modelo) | Los retornos, el test neto de salida y mis propios diecisiete ataques al modelo |
 | **Completo** | Las 20 secciones + el Excel | El rastro de auditoría completo, fórmulas y limitaciones |
 
-> **La versión de un párrafo.** El modelo realista llega a una conclusión más dura que el trabajo universitario original. Una vez modelados el coste completo, los intereses de construcción, la amortización de la deuda, el OPEX, la reserva de FF&E y el equity plug, el caso de gestión incumple el covenant, el caso de mercado nunca cubre su servicio de deuda y ninguno gana su coste de capital. La auditoría se deja fallar a propósito: **pasan 10 de 16 reglas, quedan 5 excepciones materiales y 1 warning**, veredicto `CONDITIONAL - 5 MATERIAL EXCEPTION(S)`. Una capa separada de reforma también puede decir que no, y lo dice: arregla el covenant pero no el gap de valor. La última capa (R7) cambia el producto a seis cabañas premium y es la única configuración que supera el WACC y el test neto de inversión total —por un 3,2%, y solo a 110 k€ por cabaña.
+> **La versión de un párrafo.** El modelo realista llega a una conclusión más dura que el trabajo universitario original. Una vez modelados el coste completo, los intereses de construcción, la amortización de la deuda, el OPEX, la reserva de FF&E y el equity plug, el caso de gestión incumple el covenant, el caso de mercado nunca cubre su servicio de deuda y ninguno gana su coste de capital. La auditoría se deja fallar a propósito: **pasan 9 de 16 reglas, 1 no aplicable, quedan 5 excepciones materiales y 1 warning**, veredicto `CONDITIONAL - 5 MATERIAL EXCEPTION(S)`. Una capa separada de reforma también puede decir que no, y lo dice: arregla el covenant pero no el gap de valor. La última capa (R7) cambia el producto a seis cabañas premium y es la única configuración que supera el WACC y el test neto de inversión total —por un 3,2%, y solo a 110 k€ por cabaña.
 
 ---
 
@@ -104,7 +104,7 @@ Los tres casos comparten el mismo CapEx (salvo la base original de 725.000 € d
 7. **El "funding gap" de 70,8k del README anterior ha desaparecido, y eso no es una buena noticia.** Lo ha sustituido un equity plug de 521k. Las fuentes igualan a los usos por construcción, pero el promotor tiene que aportar el 49,6% del CapEx en caja. El caso promotor conserva su línea original de 20.000 € y su gap de liquidez.
 8. **El puente de IVA es una fuente de financiación, no creación de valor.** El IVA soportado del CapEx es de 168.021 € (21% sobre la base no terrenal de 800.100 €). Se dispone bajo un puente separado de 175.000 €, se repaga con la devolución de la AEAT en el Mes 18 y devenga intereses. El IVA operativo es pass-through.
 9. **La Fase II no se autofinancia.** La Fase II necesita 435.564 € (359.970 € de CapEx neto + 75.593,70 € de IVA). La caja de la Fase I al final del Año 2 es de 183.322,64 €, así que el gap del phase gate es **-252.241,06 €** y el gate devuelve `DO NOT PROCEED`. Tampoco cumple la condición de DSCR (1,15x < 1,25x).
-10. **La auditoría se calcula y falla.** Pasan 10 de 16 reglas. Las cinco excepciones materiales son el DSCR de gestión, la autofinanciación de la Fase II, los retornos frente al WACC, el DSCR de mercado y el requisito de equity. El warning es la ocupación de gestión frente al INE. Ese es el sentido de la capa de auditoría: informa de lo que el modelo hace realmente, no de lo que la narrativa quiere.
+10. **La auditoría se calcula y falla.** Pasan 9 de 16 reglas y 1 no aplicable. Las cinco excepciones materiales son el DSCR de gestión, la autofinanciación de la Fase II, los retornos frente al WACC, el DSCR de mercado y el requisito de equity. El warning es la ocupación de gestión frente al INE. Ese es el sentido de la capa de auditoría: informa de lo que el modelo hace realmente, no de lo que la narrativa quiere.
 11. **La reforma arregla el covenant, no el gap de valor.** Una reforma realista de ingresos (R2: seis cubiertos externos al día, +5% de ADR, experiencias y 5.000 € de ahorros, un FTE adicional) eleva el EBITDA maduro de 37.042 € a 71.321 € y el DSCR mínimo de 1,15x a 2,13x. El activo vale entonces 839.075 € brutos, **813.903 € después de un 3% de costes de salida**, todavía **236.197 € por debajo del CapEx** y **324.723 € por debajo de la inversión total** en términos netos. El value engineering a 900k (R3) y el alcance lean de 846k (R5) reducen el gap pero siguen por debajo de un WACC del 8%. Solo el caso agresivo de ocho cubiertos y +10% de ADR (R4) produce un VAN positivo (+3.722 €), y aun así falla el test neto de inversión total con **-84.147 €**. La conclusión de la reforma es también un no, con un test de demanda condicional de Fase 0.
 
 ---
@@ -594,7 +594,7 @@ proyecto-dehesa-del-castrillo/
 │   │   └── copula_engine.py      # Gaussian / Student-t / Clayton
 │   └── visualization/
 │       └── charts.py             # ocho figuras institucionales
-├── tests/                        # 12 ficheros, 73 tests
+├── tests/                        # 12 ficheros, 74 tests
 ├── raw_data/                     # libros fuente para la reconciliación
 ├── data/                         # modelo Excel, JSON de auditoría y JSON de reforma
 └── assets/                       # figure_*.png
@@ -615,7 +615,7 @@ python main.py
 # Sin generación de gráficos
 python main.py --no-charts
 
-# Batería de tests (73 tests)
+# Batería de tests (74 tests)
 python -m pytest tests/ -q
 ```
 

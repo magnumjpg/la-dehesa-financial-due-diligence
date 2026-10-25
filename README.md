@@ -3,7 +3,7 @@
 ### Hospitality Feasibility, Senior Debt Underwriting & Computed Due Diligence
 
 **A portfolio-grade financial model built from my own university feasibility study.**
-Python 3.11 · 73 automated tests · 16-rule computed audit · 13-tab Excel model · 8 figures · 15-step pipeline
+Python 3.11 · 74 automated tests · 16-rule computed audit · 13-tab Excel model · 8 figures · 15-step pipeline
 
 [![tests](https://github.com/magnumjpg/la-dehesa-financial-due-diligence/actions/workflows/tests.yml/badge.svg)](https://github.com/magnumjpg/la-dehesa-financial-due-diligence/actions/workflows/tests.yml)
 ![Python 3.11](https://img.shields.io/badge/python-3.11-blue)
@@ -17,7 +17,7 @@ Python 3.11 · 73 automated tests · 16-rule computed audit · 13-tab Excel mode
 
 **The asset.** A 25-hectare rural estate in Segovia: 7 double rooms, one full country house, a 21-cover restaurant and a natural swimming biopool. It started as my university feasibility study.
 
-**What I built.** Three as-is cases (promoter, INE market, management), a full cost stack, sources and uses, a 20-year amortising facility, a computed 16-rule audit, a live-formula Excel workbook, 73 tests and eight figures.
+**What I built.** Three as-is cases (promoter, INE market, management), a full cost stack, sources and uses, a 20-year amortising facility, a computed 16-rule audit, a live-formula Excel workbook, 74 tests and eight figures.
 
 **The answer is no.** The management case fails the 1.25x DSCR covenant in Year 2 at **1.15x**, needs **49.6% cash equity** instead of the planned 30%, and returns a project IRR of **-9.49%** even with an 8.5% exit. The credit recommendation is **DECLINE AS STRUCTURED (RESIZE REQUIRED)**.
 
@@ -38,7 +38,7 @@ Python 3.11 · 73 automated tests · 16-rule computed audit · 13-tab Excel mode
 | **30 min** | Add [Section 9](#9-returns-the-exit-does-not-rescue-the-realistic-cases) and [Section 14](#14-red-team-seventeen-attacks-on-my-own-model) | The returns, the net exit test and my own seventeen attacks on the model |
 | **Full** | All 20 sections + the Excel workbook | The complete audit trail, formulas and limitations |
 
-> **The one-paragraph version.** The realistic model reaches a harsher conclusion than the original university work. Once the full cost stack, construction interest, debt amortisation, OPEX, FF&E reserve and the equity plug are modelled, the management case fails the covenant, the market case never covers its debt service, and neither earns its cost of capital. The audit is deliberately allowed to fail: **10 of 16 rules pass, 5 material exceptions and 1 warning remain open**, verdict `CONDITIONAL - 5 MATERIAL EXCEPTION(S)`. A separate reform layer is allowed to say no as well, and it does: it fixes the covenant but not the value gap. The last layer (R7) changes the product to six premium cabins and is the only configuration that clears both the WACC and the net total-investment test — by 3.2%, and only at €110k per cabin.
+> **The one-paragraph version.** The realistic model reaches a harsher conclusion than the original university work. Once the full cost stack, construction interest, debt amortisation, OPEX, FF&E reserve and the equity plug are modelled, the management case fails the covenant, the market case never covers its debt service, and neither earns its cost of capital. The audit is deliberately allowed to fail: **9 of 16 rules pass, 1 is not applicable, 5 material exceptions and 1 warning remain open**, verdict `CONDITIONAL - 5 MATERIAL EXCEPTION(S)`. A separate reform layer is allowed to say no as well, and it does: it fixes the covenant but not the value gap. The last layer (R7) changes the product to six premium cabins and is the only configuration that clears both the WACC and the net total-investment test — by 3.2%, and only at €110k per cabin.
 
 ---
 
@@ -104,7 +104,7 @@ The three cases share the same CapEx (except the promoter's original €725k bas
 7. **The €70.8k "funding gap" of the old README is gone, and that is not good news.** It was replaced by a €521k equity plug. Sources equal uses at close by construction, but the sponsor has to fund 49.6% of CapEx in cash. The promoter case keeps its original €20,000 line and its liquidity gap.
 8. **The VAT bridge is a financing source, not value creation.** Input VAT on CapEx is €168,021 (21% on the €800,100 non-land base). It is drawn under a separate €175,000 bridge, repaid with the AEAT refund in Month 18, and it carries interest. Operational VAT is a pass-through.
 9. **Phase II is not self-funded.** Phase II needs €435,564 (€359,970 net CapEx + €75,593.70 VAT). Phase I cash at the end of Year 2 is €183,322.64, so the phase-gate gap is **-€252,241.06** and the gate returns `DO NOT PROCEED`. It also fails the DSCR condition (1.15x < 1.25x).
-10. **The audit is computed and it fails.** 10 of 16 rules pass. The five material exceptions are management DSCR, Phase II self-funding, returns versus WACC, market DSCR and the equity requirement. The warning is management occupancy versus INE. This is the point of the audit layer: it reports what the model actually does, not what the narrative wants.
+10. **The audit is computed and it fails.** 9 of 16 rules pass and 1 is not applicable. The five material exceptions are management DSCR, Phase II self-funding, returns versus WACC, market DSCR and the equity requirement. The warning is management occupancy versus INE. This is the point of the audit layer: it reports what the model actually does, not what the narrative wants.
 11. **The reform fixes the covenant, not the value gap.** A realistic revenue reform (R2: six external covers/day, +5% ADR, experiences and €5k of savings, one extra FTE) lifts mature EBITDA from €37,042 to €71,321 and the minimum DSCR from 1.15x to 2.13x. The asset is then worth €839,075 gross, **€813,903 after 3% exit costs**, still **€236,197 below CapEx** and **€324,723 below total project investment** on a net basis. Value engineering to €900k (R3) and a lean €846k scope (R5) soften the gap but remain below an 8% WACC. Only the aggressive eight-cover / +10% ADR case (R4) produces a positive NPV (+€3,722), and even it fails the net total-investment test at **-€84,147**. The reform conclusion is therefore also a decline, with a conditional Phase 0 demand test.
 
 ---
@@ -594,7 +594,7 @@ proyecto-dehesa-del-castrillo/
 │   │   └── copula_engine.py      # Gaussian / Student-t / Clayton
 │   └── visualization/
 │       └── charts.py             # Eight institutional figures
-├── tests/                        # 12 files, 73 tests
+├── tests/                        # 12 files, 74 tests
 ├── raw_data/                     # Source workbooks for the reconciliation
 ├── data/                         # Excel model, audit JSON and reform JSON
 └── assets/                       # figure_*.png
@@ -615,7 +615,7 @@ python main.py
 # Skip chart generation
 python main.py --no-charts
 
-# Test suite (73 tests)
+# Test suite (74 tests)
 python -m pytest tests/ -q
 ```
 

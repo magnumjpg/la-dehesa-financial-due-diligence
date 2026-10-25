@@ -240,7 +240,7 @@
       ],
       "min_cash": -11767.02,
       "funding_status": "LIQUIDITY GAP - cash turns negative during the projection",
-      "notes": "The promoter case re-models the presentation's headline pair on the original financing structure: EUR 507,500 of senior debt (70% LTV) at 4.5% over 25 years, no grace period, no LEADER grant and land purchased rather than contributed in kind. It is not a replication of the source workbooks (README section 2). The EUR 99,750 input VAT exceeds the EUR 20,000 line, so the close-day structure shows a EUR 20,000 gap and Year 1 cash turns negative."
+      "notes": "The promoter case is a re-modelling, not a replication: 86,275 is its own revenue construct and 11,297 is the deck literal, on the original financing structure: EUR 507,500 of senior debt (70% LTV) at 4.5% over 25 years, no grace period, no LEADER grant and land purchased rather than contributed in kind. It is not a replication of the source workbooks (README section 2). The EUR 99,750 input VAT exceeds the EUR 20,000 line, so the close-day structure shows a EUR 20,000 gap and Year 1 cash turns negative."
     },
     "phase2_gate": {
       "phase1_cash_end_y2": 183322.64,
@@ -382,7 +382,7 @@
       "value": 86275.0,
       "unit": "EUR",
       "formula": "491 room-nights * EUR 85 + 72 house-nights * EUR 380 + 859 covers * EUR 20",
-      "statutory_source": "Presentation headline (re-modelled)",
+      "statutory_source": "Python re-modelling (model construct, not source-verified)",
       "category": "Calibration",
       "tolerance": 0.01
     },
@@ -392,7 +392,7 @@
       "value": 11297.0,
       "unit": "EUR",
       "formula": "86,275 revenue - 60,075 realistic payroll - 14,903 other opex",
-      "statutory_source": "Presentation headline (re-modelled)",
+      "statutory_source": "Python re-modelling (deck literal 11,297, no build-up)",
       "category": "Calibration",
       "tolerance": 0.01
     },
@@ -637,19 +637,23 @@
     },
     {
       "rule_id": "RULE_13_PROMOTER_CALIBRATION",
-      "rule_name": "Promoter-case calibration to the presentation headline",
-      "description": "The promoter case must land on its declared calibration target: the presentation's Year-1 revenue (86,275) and EBITDA (11,297). This is not a replication test: the source workbooks report 74,851 net (Conclusiones), 99,487.50 gross (Plan de Negocio formulas) and 96,628 (deck), and the 11,297 EBITDA has no build-up.",
-      "condition_expression": "abs(revenue - 86,275) <= 1 and abs(EBITDA - 11,297) <= 1",
-      "status": "PASSED",
+      "rule_name": "Promoter case: declared calibration, not source reconciliation",
+      "description": "The promoter case is a re-modelling. The source workbooks contain four different Year-1 revenues (99,487.50 from the Plan de Negocio formulas; 74,851 net in Conclusiones!B5; 96,628 in Presentacion!Tablas para PPT!B11; and the 90,570 gross behind the net figure). The model's 86,275 is its own revenue construct (491 x 85 + 72 x 380 + 859 x 20) and its 11,297 is the deck literal, so there is no single source figure to reconcile. The rule is therefore NOT APPLICABLE to source verification and only reports the model target beside the source cells.",
+      "condition_expression": "N/A - the source has no single Year-1 revenue",
+      "status": "NOT_APPLICABLE",
       "actual_value": {
-        "revenue": 86275.0,
-        "ebitda": 11297.0
+        "model_revenue": 86275.0,
+        "model_ebitda": 11297.0,
+        "plan_occupied_days": 66.325,
+        "plan_revenue_formula": 99487.5,
+        "plan_ebitda_formula": 26701.31,
+        "plan_revenue_conclusiones_b5": 74851,
+        "deck_revenue_b11": 96628,
+        "deck_ebitda_b12": 11297,
+        "plan_restaurant_ticket_b19": 25
       },
-      "threshold": {
-        "revenue": 86275.0,
-        "ebitda": 11297.0
-      },
-      "remediation_guidance": "Re-modelled, not replicated. README section 2 reconciles the four revenue figures and the EUR 20 vs EUR 25 restaurant ticket.",
+      "threshold": "No source-consistent target",
+      "remediation_guidance": "Do not describe the promoter case as a replication. README section 2 reconciles the four source figures and the EUR 20 vs EUR 25 restaurant ticket.",
       "severity": "INFO"
     },
     {
@@ -689,8 +693,9 @@
   "execution_status": {
     "all_guardrails_satisfied": false,
     "total_rules_evaluated": 16,
-    "total_rules_passed": 10,
+    "total_rules_passed": 9,
     "total_rules_failed": 6,
+    "total_rules_not_applicable": 1,
     "material_exceptions": [
       "RULE_05_MANAGEMENT_DSCR",
       "RULE_11_PHASE2_SELF_FUNDING",

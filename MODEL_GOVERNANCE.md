@@ -4,7 +4,7 @@
 
 This document records the model's purpose, structure, conventions, controls, exceptions and accountability. It supports a credit and investment decision on a 25-hectare rural estate in Segovia. It is not an investment memorandum or a substitute for an independent model audit; no third-party review has been performed.
 
-Status at 25 October 2026: `CONDITIONAL - 5 MATERIAL EXCEPTION(S)`. All six exceptions are deal findings, not formula errors. The suite has 73 tests (up from 68); the workbook has 13 tabs and 2,060 formulas. The deterministic path is reproducible; simulations use seed 42.
+Status at 25 October 2026: `CONDITIONAL - 5 MATERIAL EXCEPTION(S)`. All six exceptions are deal findings, not formula errors. The suite has 74 tests (up from 68); the workbook has 13 tabs and 2,060 formulas. The deterministic path is reproducible; simulations use seed 42.
 
 ## 2. Model map
 
@@ -21,7 +21,7 @@ Status at 25 October 2026: `CONDITIONAL - 5 MATERIAL EXCEPTION(S)`. All six exce
 | `src/core/model_audit.py` | 16-rule audit and JSON export (schema 4.0.0). |
 | `src/data/export_excel.py`, `live_excel.py` | 13-tab workbook and live formulas. |
 | `src/simulation/` | Monte Carlo and Gaussian/Student-t/Clayton copula. |
-| `tests/` | 12 files, 73 tests. |
+| `tests/` | 12 files, 74 tests. |
 
 ## 3. Calculation flow
 
@@ -49,7 +49,7 @@ The chain is fixed: **as-is three cases → funding → debt → returns → ref
 
 ## 5. Controls and reconciliation
 
-- **Tests.** 73 tests in 12 files cover debt, VAT, tax and BIN, three-statement equality, funding, returns, scenarios, unit economics, liquidity, copulas, the audit and R1-R7. Changes require passing tests.
+- **Tests.** 74 tests in 12 files cover debt, VAT, tax and BIN, three-statement equality, funding, returns, scenarios, unit economics, liquidity, copulas, the audit and R1-R7. Changes require passing tests.
 - **Computed audit.** 16 rules; 9 pass, 1 not applicable, five material failures and one warning failure.
 - **Promoter case.** A re-modelling, not a replication. Its €86,275 revenue is a model construct (491 × 85 + 72 × 380 + 859 × 20) and the €11,297 EBITDA is the deck literal. Both workbooks contain different Year-1 revenues (€74,851 net in `Conclusiones!B5`, €99,487.50 gross from the `Plan de Negocio!B41` formulas, €96,628 hard-coded in `Tablas para PPT!B11`), and the €11,297 EBITDA has no build-up in the source. `RULE_13` reads those source cells and is marked **NOT APPLICABLE** to source verification; README §2 carries the full reconciliation.
 - **Python-to-Excel.** Revenue €154,548, EBITDA €24,280, Year-2 DSCR 1.1534x, Year-1 cash €20,700.88, Year-2 cash €183,322.64 and balance-sheet discrepancy €0.00 all reconcile.
@@ -127,7 +127,7 @@ Changes are made in source control. A change is complete only when the suite pas
 
 ```bash
 python -m pip install -r requirements.txt
-python -m pytest tests/ -q          # 73 tests
+python -m pytest tests/ -q          # 74 tests
 python main.py                      # full pipeline
 python main.py --no-charts          # skip figures
 ```
