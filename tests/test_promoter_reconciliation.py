@@ -1,14 +1,15 @@
 """
-Honesty audit of the promoter case against the two source workbooks.
+Honesty audit of the promoter case against the source workbooks.
 
-The promoter case is a re-modelling calibrated to the presentation headline
-(EUR 86,275 revenue / EUR 11,297 EBITDA), not a replication. This file pins the
+The promoter case is a re-modelling, not a replication. This file pins the
 arithmetic behind that statement so the documentation cannot drift:
 
 * the source contains four mutually inconsistent Year-1 revenues;
 * both summary sheets are entirely hard-coded, so the EUR 11,297 EBITDA has no
   build-up anywhere in the workbooks;
-* the model's own EBITDA is the deck figure by construction, and it prices
+* the model's EUR 86,275 revenue is its own construct (EUR 20 ticket) and does
+  not appear in either source book; only the generated model stores it;
+* the model's EBITDA is the deck figure by construction, and it prices
   restaurant covers at EUR 20 while costing them at EUR 25.
 """
 
@@ -23,6 +24,7 @@ from src.core.statements import FinancialModelEngine
 ROOT = Path(__file__).resolve().parent.parent
 PLAN = ROOT / "raw_data" / "La_Dehesa_de_Castrillo_Proyecto.xlsx"
 DECK = ROOT / "raw_data" / "Presentacion_La_Dehesa.xlsx"
+MODEL = ROOT / "data" / "La_Dehesa_del_Castrillo_Financial_Model.xlsx"
 
 
 def _formula_cells(sheet):
@@ -48,8 +50,16 @@ def test_source_contains_four_inconsistent_year_one_revenues():
     assert occupied_days == pytest.approx(66.325)
     plan = plan_formulas["Plan de Negocio"]
     assert plan["B41"].value == "=SUM(B38:B40)"
+    assert plan["B38"].value == "=D27 * 7 * B17"
+    assert plan["B39"].value == "=D27 * 1 * B18"
+    assert plan["B40"].value == "=((D27*7*2) + (D27*1*7)) * B19"
+    assert plan["B17"].value == 85
+    assert plan["B18"].value == 380
     assert plan["B19"].value == 25  # restaurant ticket in the source
     assert plan["B20"].value == 0.3
+    assert [plan[f"B{r}"].value for r in (24, 25, 26)] == [90, 80, 195]
+    assert [plan[f"C{r}"].value for r in (24, 25, 26)] == [0.42, 0.32, 0.015]
+    assert [plan[f"B{r}"].value for r in (31, 32, 33)] == [35_640, 23_100, 3_600]
     gross_formula_build = (
         occupied_days * 7 * 85
         + occupied_days * 380
@@ -61,18 +71,18 @@ def test_source_contains_four_inconsistent_year_one_revenues():
     assert deck_values["Tablas para PPT"]["B11"].value == 96_628
     assert deck_values["Tablas para PPT"]["B12"].value == 11_297
 
-    # 4. The EUR 74,851 net figure is the 90,570 gross build divided by 1.21.
-    promoter_gross = 491 * 85 + 72 * 380 + 859 * 25
-    assert promoter_gross == 90_570
-    assert promoter_gross / 1.21 == pytest.approx(74_851, abs=1)
-    assert promoter_gross / 1.10 == pytest.approx(82_336.36, abs=0.01)
+    # 4. Arithmetic cross-check, not a stored cell: 74,851 x 1.21 = 90,569.71,
+    #    so the net cell is consistent with a 90,570 gross at 21%. The gross,
+    #    the volume mix and the 90,570 value are not stored in the workbook.
+    assert 74_851 * 1.21 == pytest.approx(90_569.71, abs=0.01)
+    assert 74_851 * 1.10 == pytest.approx(82_336.10, abs=0.01)
 
-    # Four source readings of the same year, no two of which agree: the two
-    # formula-sheet/net figures, the gross build behind the net figure, and the
-    # deck literal. Restating the 90,570 gross at 10% adds a fifth number.
+    # Three stored readings and one derived one, no two of which agree: the
+    # Plan de Negocio formula build, the Conclusiones net cell, the deck
+    # literal, and the 90,570 gross implied by the net cell at 21%.
     source_readings = {74_851, 99_487.50, 96_628, 90_570}
     assert len(source_readings) == 4
-    assert 82_336.36 not in source_readings
+    assert 82_336.10 not in source_readings
 
 
 def test_both_summary_sheets_are_entirely_hard_coded():
@@ -117,6 +127,28 @@ def test_the_deck_pair_cannot_be_reproduced_from_the_source_formula_sheet():
     # The deck's revenue is not any of the figures the source can build.
     for candidate in (74_851, 99_487.50, 82_336.36, 90_570, 86_275):
         assert abs(candidate - 96_628) > 1
+
+
+def test_86_275_is_a_model_construct_not_a_source_figure():
+    # 86,275 = 491 x 85 + 72 x 380 + 859 x 20. It is not in either source
+    # workbook; only the generated model stores it (Read Me C24 / D24).
+    for path in (PLAN, DECK):
+        wb = load_workbook(path, data_only=True)
+        for ws in wb.worksheets:
+            for row in ws.iter_rows():
+                for cell in row:
+                    value = cell.value
+                    if isinstance(value, (int, float)):
+                        assert abs(float(value) - 86_275) > 0.01, (
+                            f"{path.name}!{ws.title}!{cell.coordinate}"
+                        )
+                    elif isinstance(value, str):
+                        assert "86.275" not in value
+                        assert "86,275" not in value
+
+    generated = load_workbook(MODEL, data_only=True)["Read Me & Checks"]
+    assert generated["C24"].value == 86_275
+    assert generated["D24"].value == 11_297
 
 
 def test_the_19_2_percent_occupancy_is_implied_not_quoted():

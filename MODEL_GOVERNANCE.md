@@ -27,7 +27,7 @@ Status at 25 October 2026: `CONDITIONAL - 5 MATERIAL EXCEPTION(S)`. All six exce
 
 The chain is fixed: **as-is three cases → funding → debt → returns → reform R1-R6 → R7**.
 
-1. **As-is.** Management revenue €154,548.00, EBITDA €24,279.92, minimum DSCR 1.15x; market €95,555.00, -€18,565.58, -1.46x; promoter (re-modelled) €86,275.00, €11,297.00, 0.33x. CapEx €1,050,100 in the first two.
+1. **As-is.** Management revenue €154,548.00, EBITDA €24,279.92, minimum DSCR 1.15x; market €95,555.00, -€18,565.58, -1.46x; promoter (re-modelled; €86,275 is a model construct, not the deck's €96,628) €86,275.00, €11,297.00, 0.33x. CapEx €1,050,100 in the first two.
 2. **Funding.** Sources equal uses. Cash equity is a plug: €521,090.22 (49.62% of CapEx) plus €250,000 land in kind.
 3. **Debt.** Sized on minimum pre-tax CFADS from Year 2 at 1.25x DSCR and 35% LTV. DSCR binds: €339,144.92 vs €367,535 requested. 20-year French at 4.0% fixed, 12-month grace; Year-2 service €27,647.64. No cash sweep or cure mechanics.
 4. **Returns.** Year-5 EBITDA over cap rate, floored at zero, less exit costs. Management project IRR at 8.5% exit: -9.49% vs 8% WACC.
@@ -50,8 +50,8 @@ The chain is fixed: **as-is three cases → funding → debt → returns → ref
 ## 5. Controls and reconciliation
 
 - **Tests.** 73 tests in 12 files cover debt, VAT, tax and BIN, three-statement equality, funding, returns, scenarios, unit economics, liquidity, copulas, the audit and R1-R7. Changes require passing tests.
-- **Computed audit.** 16 rules; 10 pass, five material failures and one warning failure.
-- **Promoter case.** Re-modelled to the presentation's headline pair (€86,275 revenue / €11,297 EBITDA), not replicated from the source workbooks. Both workbooks contain different Year-1 revenues (€74,851 net in `Conclusiones`, €99,487.50 gross in the `Plan de Negocio` formulas, €96,628 hard-coded in the deck), and the €11,297 EBITDA has no build-up in the source. `RULE_13` is therefore an *INFO* check that the model hits its stated target; README §2 carries the full reconciliation.
+- **Computed audit.** 16 rules; 9 pass, 1 not applicable, five material failures and one warning failure.
+- **Promoter case.** A re-modelling, not a replication. Its €86,275 revenue is a model construct (491 × 85 + 72 × 380 + 859 × 20) and the €11,297 EBITDA is the deck literal. Both workbooks contain different Year-1 revenues (€74,851 net in `Conclusiones!B5`, €99,487.50 gross from the `Plan de Negocio!B41` formulas, €96,628 hard-coded in `Tablas para PPT!B11`), and the €11,297 EBITDA has no build-up in the source. `RULE_13` reads those source cells and is marked **NOT APPLICABLE** to source verification; README §2 carries the full reconciliation.
 - **Python-to-Excel.** Revenue €154,548, EBITDA €24,280, Year-2 DSCR 1.1534x, Year-1 cash €20,700.88, Year-2 cash €183,322.64 and balance-sheet discrepancy €0.00 all reconcile.
 - **Balance-sheet equality.** Assets equal liabilities plus equity in all three cases; maximum discrepancy €0.00.
 - **Value bridge.** R2 is computed lever by lever and ties to reform EBITDA with a zero residual.

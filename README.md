@@ -9,6 +9,8 @@ Python 3.11 · 73 automated tests · 16-rule computed audit · 13-tab Excel mode
 ![Python 3.11](https://img.shields.io/badge/python-3.11-blue)
 ![License: MIT](https://img.shields.io/badge/license-MIT-green)
 
+**Language:** [Español](README_ES.md) · [Method](METHOD.md) · [Governance](MODEL_GOVERNANCE.md) · [Red team](RED_TEAM.md)
+
 ---
 
 ## The 60-second version
@@ -69,7 +71,7 @@ The Python layer is not a cosmetic rewrite. It adds a three-case architecture, a
 
 **What each case is:**
 
-- **Promoter (re-modelled)**: the presentation's headline pair (€86,275 revenue / €11,297 EBITDA) rebuilt from explicit drivers: 19.2% occupancy in Year 1 (491 room-nights + 72 house-nights), €85 room ADR, €380 house ADR, a **€20** restaurant ticket, 859 covers, 4.5% / 25-year debt, no grace, no grant and land purchased rather than contributed in kind. It is the only case with a positive equity IRR on exit, but it is cash-negative in Years 1-2.
+- **Promoter (re-modelled)**: the deck's hard-coded €11,297 EBITDA rebuilt from explicit drivers, with a **€86,275 revenue construct** (the deck's own revenue is €96,628): 19.2% occupancy in Year 1 (491 room-nights + 72 house-nights), €85 room ADR, €380 house ADR, a **€20** restaurant ticket, 859 covers, 4.5% / 25-year debt, no grace, no grant and land purchased rather than contributed in kind. It is the only case with a positive equity IRR on exit, but it is cash-negative in Years 1-2.
 - **INE market**: the independent demand anchor: 21.24% official Segovia room occupancy in 2025 (INE EOTR table 2070) in Year 1, with the original unit economics and the original 25%/20% volume ramp, which reaches 32.0% by Year 3 and then grows 5% per year. The F&B attachment stays at the original 950 meals at €20. It is the closest thing to a "market" case in the workbook.
 - **Management (upside)**: 31.36% mature occupancy (1.48x the INE average), one on-site meal per guest per day at a €25 ticket, the full variable-cost stack and a 5.5% VAT bridge. It is an operating upside, not a base case. Its "upside" is revenue per occupied day (F&B attachment), not occupancy: the market case actually reaches a similar mature occupancy through the original ramp.
 
@@ -77,13 +79,13 @@ The Python layer is not a cosmetic rewrite. It adds a three-case architecture, a
 
 | Year-1 revenue basis | Figure | Provenance |
 |---|---:|---|
-| `Plan de Negocio` (live formulas) | €99,487.50 gross | 66.325 occupied days × 7 rooms × €85 + 66.325 × €380 + 1,392.825 covers × €25 |
-| `Conclusiones y Viabilidad!B5` | €74,851 net | Hard-coded; equals the €90,570 gross implied by 491 room-nights × €85 + 72 house-nights × €380 + 859 covers × €25, divided by 1.21 |
-| Same €90,570 gross at the statutory 10% | €82,336.36 | €90,570 ÷ 1.10 |
+| `Plan de Negocio!B41` (live formulas) | €99,487.50 gross | `=SUM(B38:B40)`; 66.325 occupied days × 7 rooms × €85 + 66.325 × €380 + 1,392.825 covers × €25 |
+| `Conclusiones y Viabilidad!B5` | €74,851 net | Hard-coded. 74,851 × 1.21 = 90,569.71, consistent with a €90,570 gross at 21%; neither the gross nor its volume mix is stored |
+| Same net cell restated at the statutory 10% | €82,336.10 | 74,851 × 1.10 (arithmetic only; not a cell in the workbook) |
 | `Presentacion!Tablas para PPT!B11` | €96,628 | Hard-coded, no build-up anywhere in either workbook |
-| **Python promoter case** | **€86,275** | 491 × €85 + 72 × €380 + 859 × **€20** |
+| **Python promoter case** | **€86,275** | 491 × €85 + 72 × €380 + 859 × **€20**. A model construct, stored only in the generated model (`Read Me & Checks!C24`), not in either source workbook |
 
-The EBITDA tells the same story. The source's own formula sheet produces **€26,701.31** (€99,487.50 − €10,446.19 of F&B cost − €62,340 of payroll and maintenance). The presentation hard-codes **€11,297** with no build-up. The Python case lands on €11,297 by construction: €86,275 of revenue − €60,075 of realistic payroll − €14,903 of other operating costs, of which €6,444 is F&B purchases costed at the **€25** ticket while revenue prices the same covers at €20. `RULE_13` is therefore reported as *INFO*, not as a passing reconciliation: it checks that the model hits its stated calibration target, and its note records that the two workbooks disagree with each other and with the model.
+The EBITDA tells the same story. The source's own formula sheet produces **€26,701.31** (€99,487.50 − €10,446.19 of F&B cost − €62,340 of payroll and maintenance). The presentation hard-codes **€11,297** with no build-up. The Python case lands on €11,297 by construction: €86,275 of revenue − €60,075 of realistic payroll − €14,903 of other operating costs, of which €6,444 is F&B purchases costed at the **€25** ticket while revenue prices the same covers at €20. `RULE_13` therefore reads the source cells and is reported as **NOT APPLICABLE** to source verification: there is no single source figure to reconcile, so the rule only prints the model target beside the 96,628 deck revenue, the 74,851 net cell and the 99,487.50 formula build.
 
 The occupancy has the same provenance problem. The 19.2% in the case is **implied by the 491/72 night volumes** (491 ÷ 7 rooms ÷ 365 days = 19.22%), not read from the source: the `Plan de Negocio` formula sheet uses 66.325 occupied days, which is 18.17%, and neither workbook contains the value 19.2% anywhere.
 
@@ -495,7 +497,7 @@ It is a test, not a rescue: without an exit the management project IRR is -35.43
 
 ---
 
-## 15. Computed audit: 16 rules, 10 pass, 5 material, 1 warning
+## 15. Computed audit: 16 rules, 9 pass, 1 N/A, 5 material, 1 warning
 
 The audit is computed from the model, not hand-written. It is allowed to fail.
 
@@ -513,14 +515,14 @@ The audit is computed from the model, not hand-written. It is allowed to fail.
 | RULE_10_OCCUPANCY_VS_INE | Warning | **FAIL** | 1.48x | ≤ 1.10x |
 | RULE_11_PHASE2_SELF_FUNDING | Material | **FAIL** | -€252,241 | ≥ €0 |
 | RULE_12_RETURNS_VS_WACC | Material | **FAIL** | -9.49% | ≥ 8.0% |
-| RULE_13_PROMOTER_CALIBRATION | Info | **PASS** | €86,275 / €11,297 | target ± €1 (not source-verified) |
+| RULE_13_PROMOTER_CALIBRATION | Info | **N/A** | €86,275 model / €96,628 deck | no single source figure |
 | RULE_14_MARKET_DSCR | Material | **FAIL** | -1.46x | ≥ 1.25x |
 | RULE_15_EQUITY_REQUIREMENT | Material | **FAIL** | 49.62% | ≤ 30.0% |
 | RULE_16_FFE_RESERVE | Info | **PASS** | €4,636 | 3% of revenue |
 
 **Verdict:** `CONDITIONAL - 5 MATERIAL EXCEPTION(S)`.
 
-The five material exceptions are management DSCR, Phase II self-funding, returns versus WACC, market DSCR and the equity requirement. The warning is the management occupancy assumption (1.48x the INE average). All six are deal findings, not formula errors; the disposition of each is in [MODEL_GOVERNANCE.md](MODEL_GOVERNANCE.md). The audit JSON is exported to `data/model_audit_summary.json` (schema 4.0.0) and the same rules are reproduced in the Excel `Funding & Audit` tab.
+The five material exceptions are management DSCR, Phase II self-funding, returns versus WACC, market DSCR and the equity requirement. The warning is the management occupancy assumption (1.48x the INE average). All six are deal findings, not formula errors; the disposition of each is in [MODEL_GOVERNANCE.md](MODEL_GOVERNANCE.md). RULE_13 is not a pass or a failure: the source books contain four different Year-1 revenues, so there is nothing single to reconcile against and the rule is marked N/A. The audit JSON is exported to `data/model_audit_summary.json` (schema 4.0.0) and the same rules are reproduced in the Excel `Funding & Audit` tab.
 
 ---
 
@@ -548,7 +550,7 @@ The `Live Model` is intentionally simple and transparent: revenue is a formula l
 
 The formulas have been validated with an independent Python calculation engine: revenue €154,548, EBITDA €24,280, Year-2 DSCR 1.1534x, Year-1 cash €20,700.88, Year-2 cash €183,322.64 and balance-sheet discrepancy €0.00 all match within the €1 / 0.01x checks. The `Read Me & Checks` tab correctly shows the covenant check as `FAIL`; the `Funding & Audit` tab is allowed to show `FAIL`. That is the audit working as intended.
 
-The report tabs are Python snapshots and do not recalculate. Open the workbook in Excel or LibreOffice to see the live formulas evaluate.
+Ten tabs are generated artefacts and are declared as such in `Inputs!A2`: `Read Me & Checks`, `Executive Scorecard`, `3-Statement Model`, `Debt Schedule` (formula-driven), `Scenario Stress-Testing`, `Monte Carlo Risk`, `Credit Risk & Copula`, `Unit Economics & Runway`, `Phase II Expansion` and `Reform Case`. `Inputs`, `Live Model` and `Funding & Audit` are the live tabs. Open the workbook in Excel or LibreOffice to see the live formulas evaluate.
 
 ---
 
@@ -641,7 +643,7 @@ This is a portfolio model, not an investment memorandum. The main limitations ar
 6. **The tax model is simplified.** It uses a 25% corporate tax rate, no VAT group, no regional deductions and a BIN schedule limited to the projection horizon.
 7. **The payroll model is part-time.** The hourly rates are compliant, but scheduling, coverage and turnover risk remain.
 8. **The grant is assumed committed.** There is no award letter in the repository; the LEADER timing is modelled at Month 14.
-9. **The two source workbooks used for the reconciliation are included in `raw_data/`.** The original Word report and the live OneDrive workbook are not redistributed; the promoter case is calibrated to the presentation's headline figures and rebuilt from explicit drivers in `statements.py`, and §2 documents where it departs from both workbooks.
+9. **The two source workbooks used for the reconciliation are included in `raw_data/`.** The original Word report and the live OneDrive workbook are not redistributed; the promoter case is a re-modelling with its own €86,275 revenue construct and the deck's €11,297 EBITDA, rebuilt from explicit drivers in `statements.py`, and §2 documents where it departs from both workbooks.
 10. **The restaurant demand is guests-only in the as-is cases.** The management case assumes one meal per guest per day (about 2,163 meals in Year 1), with no external covers, events or beverage revenue. The reform layer adds external covers explicitly, but that demand is an assumption, not evidence.
 11. **No booking curve or competitive set.** ADR is flat in the management case; the market and promoter cases use 5% nominal growth from Year 4. A real mandate would model the booking curve and the local competitive set.
 12. **The monthly engine is a liquidity stress, not a full monthly three-statement model.** It reconciles to the annual statements (difference €0.00) but does not replace them.

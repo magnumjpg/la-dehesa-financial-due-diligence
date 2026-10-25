@@ -33,7 +33,7 @@ Secuencia: as-is → funding → deuda → retornos → reforma R1-R6 → R7 →
 | Mercado INE | 95.555,00 € | -18.565,58 € | -1,46x |
 | Promotor (re-modelado) | 86.275,00 € | 11.297,00 € | 0,33x |
 
-CapEx: 1.050.100 €; equity en caja: 521.090,22 € (49,62%). Gestión es upside; mercado usa el INE 21,24%; el promotor se re-modela sobre las cifras de titular de la presentación (86.275 € / 11.297 €), no es una réplica de los libros fuente: la §2 del README concilia las cuatro cifras de ingresos que contienen.
+CapEx: 1.050.100 €; equity en caja: 521.090,22 € (49,62%). Gestión es upside; mercado usa el INE 21,24%; el promotor se re-modela con un constructo de ingresos de 86.275 € (los ingresos de la presentación son 96.628 €) y el EBITDA de 11.297 €, no es una réplica de los libros fuente: la §2 del README concilia las cuatro cifras de ingresos que contienen.
 
 ### 3.2 Funding
 
@@ -84,14 +84,14 @@ La subvención de capital no se imputa a resultados; entra en patrimonio.
 | Control | Resultado |
 |---|---|
 | Tests | 73 automatizados tras el último cambio (antes 68). |
-| Auditoría | 16 reglas: 10 pasan, 5 fallos materiales y 1 warning. |
+| Auditoría | 16 reglas: 9 pasan, 1 no aplicable, 5 fallos materiales y 1 warning. |
 | Balance | Discrepancia máxima de 0,00 € en los tres casos (tolerancia 0,01 €). |
 | Python ↔ Excel | 13 pestañas y 2.060 fórmulas; DSCR A2 1,1534x y cajas A1/A2 de 20.700,88/183.322,64 €, dentro de 1 € / 0,01x. |
 | Puente de valor R2 | Residuo cero entre palancas y EBITDA de la reforma. |
 | Determinismo | Pipeline determinista; Monte Carlo y cópulas con semilla 42. |
 | Trazabilidad | JSON de auditoría (esquema 4.0.0) y de reforma con presets y stress. |
 
-La auditoría se deja fallar a propósito. Las reglas de integridad —balance, IVA, fuentes y usos, réplica del promotor y FF&E— pasan; los fallos son condiciones económicas, no errores de fórmula. El covenant del Excel muestra `FAIL`, resultado correcto.
+La auditoría se deja fallar a propósito. Las reglas de integridad —balance, IVA, fuentes y usos y FF&E— pasan; la regla del promotor queda como no aplicable porque los libros fuente contienen cuatro ingresos distintos del Año 1, y los fallos son condiciones económicas, no errores de fórmula. El covenant del Excel muestra `FAIL`, resultado correcto.
 
 ## 6. Log de supuestos
 

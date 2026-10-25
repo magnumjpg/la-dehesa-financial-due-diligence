@@ -345,7 +345,8 @@ def build_readme(wb, st: Dict[str, Any], case_facts: Dict[str, Dict[str, Any]], 
     ws["A1"].font = st["title"]
     ws["A2"] = (
         "A live, formula-driven management case alongside the independent INE market case "
-        "and a re-modelled promoter case calibrated to the presentation headline."
+        "and a re-modelled promoter case whose 86,275 revenue is a model construct, not a "
+        "source figure (README section 2)."
     )
     ws["A2"].font = st["note"]
 
@@ -397,7 +398,7 @@ def build_readme(wb, st: Dict[str, Any], case_facts: Dict[str, Dict[str, Any]], 
             case_facts["promoter"]["revenue_y1"],
             case_facts["promoter"]["ebitda_y1"],
             case_facts["promoter"]["dscr_y1"],
-            "Re-modelled from the presentation headline; not a replication (README section 2).",
+            "Re-modelled: 86,275 is a model construct (EUR 20 ticket), not a source figure; not a replication (README section 2).",
         ),
     ]
     for r, row in enumerate(cases, start=22):
@@ -461,9 +462,9 @@ def build_readme(wb, st: Dict[str, Any], case_facts: Dict[str, Dict[str, Any]], 
             f"(EUR {case_facts['market']['ebitda_y1']:,.2f}) and its DSCR is {case_facts['market']['dscr_y1']:.2f}x."
         ),
         (
-            "The promoter case (19.2%) is re-modelled to the presentation's headline pair "
-            "(EUR 86,275 revenue / EUR 11,297 EBITDA) and is structurally insolvent at the debt "
-            "service level. It is not a replication of the source workbooks."
+            "The promoter case (19.2%) is a re-modelling, not a replication: 86,275 is its own "
+            "revenue construct (EUR 20 ticket) and 11,297 is the deck literal. It is structurally "
+            "insolvent at the debt service level."
         ),
         (
             "Phase II needs EUR "
@@ -535,8 +536,10 @@ def build_inputs(wb, engine: FinancialModelEngine, df_proj, st: Dict[str, Any]) 
     ws["A1"] = "MODEL INPUTS - MANAGEMENT CASE (ALL HARD-CODED ASSUMPTIONS IN ONE PLACE)"
     ws["A1"].font = st["title"]
     ws["A2"] = (
-        "Change any blue input and the Live Model recalculates. The report tabs are Python snapshots "
-        "and do not recalculate."
+        "Change any blue input and the Live Model recalculates. Ten tabs are generated artefacts: "
+        "Read Me & Checks, Executive Scorecard, 3-Statement Model, Debt Schedule (formula-driven), "
+        "Scenario Stress-Testing, Monte Carlo Risk, Credit Risk & Copula, Unit Economics & Runway, "
+        "Phase II Expansion and Reform Case. Inputs, Live Model and Funding & Audit are the live tabs."
     )
     ws["A2"].font = st["note"]
 
@@ -1121,7 +1124,12 @@ def build_funding_audit(wb, st: Dict[str, Any], case_facts: Dict[str, Dict[str, 
         ], st, number_format="@")
         status_cell = ws.cell(row=r, column=4)
         status_cell.font = st["bold"]
-        status_cell.fill = st["green"] if rule["status"] == "PASSED" else st["red"]
+        if rule["status"] == "PASSED":
+            status_cell.fill = st["green"]
+        elif rule["status"] == "NOT_APPLICABLE":
+            status_cell.fill = st["amber"]
+        else:
+            status_cell.fill = st["red"]
         status_cell.alignment = Alignment(horizontal="center")
 
     status_row = 43 + len(payload["guardrail_audit_rules"])
@@ -1158,7 +1166,9 @@ def build_funding_audit(wb, st: Dict[str, Any], case_facts: Dict[str, Dict[str, 
         (
             f"The audit verdict is {payload['execution_status']['audit_verdict']}: "
             f"{payload['execution_status']['total_rules_passed']} of "
-            f"{payload['execution_status']['total_rules_evaluated']} rules pass. This is deliberate, not a bug."
+            f"{payload['execution_status']['total_rules_evaluated']} rules pass, "
+            f"{payload['execution_status']['total_rules_not_applicable']} is not applicable. "
+            "This is deliberate, not a bug."
         ),
     ]
     for r, text in enumerate(findings, start=findings_row + 1):

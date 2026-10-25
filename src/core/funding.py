@@ -162,7 +162,8 @@ class SourcesUsesEngine:
 
         if self.case == "promoter":
             notes = (
-                "The promoter case re-models the presentation's headline pair on the original "
+                "The promoter case is a re-modelling, not a replication: 86,275 is its own "
+                "revenue construct and 11,297 is the deck literal, on the original "
                 "financing structure: EUR 507,500 of senior debt (70% LTV) at 4.5% over 25 years, "
                 "no grace period, no LEADER grant and land purchased rather than contributed in "
                 "kind. It is not a replication of the source workbooks (README section 2). The "

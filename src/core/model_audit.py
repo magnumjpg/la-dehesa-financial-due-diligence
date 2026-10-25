@@ -22,7 +22,8 @@ Rules (16):
 10. Management occupancy vs. INE market occupancy.
 11. Phase II self-funding / phase gate.
 12. Project IRR with exit vs. the 8% WACC.
-13. Promoter-case calibration to the presentation's headline figures.
+13. Promoter-case provenance: declared calibration, not applicable as a source
+    reconciliation (the workbooks contain four different Year-1 revenues).
 14. Market-case minimum DSCR (>= 1.25x).
 15. Cash equity requirement vs. the original 30% assumption.
 16. FF&E reserve of 3% of revenue deducted from CFADS.
@@ -32,6 +33,8 @@ from dataclasses import asdict, dataclass
 import json
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+
+from openpyxl import load_workbook
 
 from src.config.assumptions import (
     SCENARIOS,
@@ -64,7 +67,7 @@ class AuditGuardrailRule:
     rule_name: str
     description: str
     condition_expression: str
-    status: str  # "PASSED" or "FAILED"
+    status: str  # "PASSED", "FAILED" or "NOT_APPLICABLE"
     actual_value: Any
     threshold: Any
     remediation_guidance: str
@@ -78,10 +81,53 @@ class ModelAuditEngine:
         self.export_dir = export_dir or (Path(__file__).resolve().parent.parent.parent / "data")
         self.export_dir.mkdir(parents=True, exist_ok=True)
         self.export_file = self.export_dir / "model_audit_summary.json"
+        self.repo_root = Path(__file__).resolve().parent.parent.parent
 
     # ------------------------------------------------------------------
     # Helpers
     # ------------------------------------------------------------------
+    def read_promoter_source(self) -> Dict[str, Any]:
+        """Read the Year-1 revenue figures the two source workbooks contain.
+
+        The source workbooks were never calculated by Excel, so the formula
+        sheet has no cached values. The gross revenue and EBITDA are rebuilt
+        from the live formulas in ``Plan de Negocio`` (rows 17-20, 24-26 and
+        31-33) rather than from a hard-coded constant.
+
+        Returns an empty dict when ``raw_data`` is not available, so the audit
+        can report the rule as not applicable instead of inventing a target.
+        """
+        plan_path = self.repo_root / "raw_data" / "La_Dehesa_de_Castrillo_Proyecto.xlsx"
+        deck_path = self.repo_root / "raw_data" / "Presentacion_La_Dehesa.xlsx"
+        if not (plan_path.exists() and deck_path.exists()):
+            return {}
+
+        plan = load_workbook(plan_path, data_only=True)["Plan de Negocio"]
+        conclusions = load_workbook(plan_path, data_only=True)["Conclusiones y Viabilidad"]
+        deck = load_workbook(deck_path, data_only=True)["Tablas para PPT"]
+
+        occupied_days = sum(
+            plan[f"B{row}"].value * plan[f"C{row}"].value for row in (24, 25, 26)
+        )
+        room_revenue = occupied_days * 7 * plan["B17"].value
+        house_revenue = occupied_days * plan["B18"].value
+        covers = occupied_days * 7 * 2 + occupied_days * 1 * 7
+        fnb_revenue = covers * plan["B19"].value
+        fnb_cost = fnb_revenue * plan["B20"].value
+        payroll = sum(plan[f"B{row}"].value for row in (31, 32, 33))
+
+        return {
+            "plan_occupied_days": round(occupied_days, 3),
+            "plan_revenue_formula": round(room_revenue + house_revenue + fnb_revenue, 2),
+            "plan_ebitda_formula": round(
+                room_revenue + house_revenue + fnb_revenue - fnb_cost - payroll, 2
+            ),
+            "plan_revenue_conclusiones_b5": conclusions["B5"].value,
+            "deck_revenue_b11": deck["B11"].value,
+            "deck_ebitda_b12": deck["B12"].value,
+            "plan_restaurant_ticket_b19": plan["B19"].value,
+        }
+
     @staticmethod
     def _rule(
         rule_id: str,
@@ -93,13 +139,14 @@ class ModelAuditEngine:
         threshold: Any,
         remediation: str,
         severity: str = "MATERIAL",
+        status: Optional[str] = None,
     ) -> AuditGuardrailRule:
         return AuditGuardrailRule(
             rule_id=rule_id,
             rule_name=rule_name,
             description=description,
             condition_expression=condition_expression,
-            status="PASSED" if passed else "FAILED",
+            status=status or ("PASSED" if passed else "FAILED"),
             actual_value=actual_value,
             threshold=threshold,
             remediation_guidance=remediation,
@@ -183,8 +230,7 @@ class ModelAuditEngine:
         market_occ = get_market_occupancy()
         occ_ratio = mgmt_occ / market_occ if market_occ else 0.0
 
-        prom_rev_ok = abs(float(prom_y1["total_revenue"]) - 86_275.0) <= 1.0
-        prom_ebitda_ok = abs(float(prom_y1["ebitda"]) - 11_297.0) <= 1.0
+        promoter_source = self.read_promoter_source()
 
         ffe_ok = abs(
             float(mgmt_y1["ffe_reserve"])
@@ -249,12 +295,12 @@ class ModelAuditEngine:
             AuditMetric(
                 "promoter_revenue_y1", "Promoter-case Year-1 revenue (re-modelled)", float(prom_y1["total_revenue"]), "EUR",
                 "491 room-nights * EUR 85 + 72 house-nights * EUR 380 + 859 covers * EUR 20",
-                "Presentation headline (re-modelled)", "Calibration",
+                "Python re-modelling (model construct, not source-verified)", "Calibration",
             ),
             AuditMetric(
                 "promoter_ebitda_y1", "Promoter-case Year-1 EBITDA (re-modelled)", float(prom_y1["ebitda"]), "EUR",
                 "86,275 revenue - 60,075 realistic payroll - 14,903 other opex",
-                "Presentation headline (re-modelled)", "Calibration",
+                "Python re-modelling (deck literal 11,297, no build-up)", "Calibration",
             ),
             AuditMetric(
                 "management_occupancy", "Management-case mature occupancy", round(mgmt_occ, 4), "percentage",
@@ -417,18 +463,26 @@ class ModelAuditEngine:
             ),
             self._rule(
                 "RULE_13_PROMOTER_CALIBRATION",
-                "Promoter-case calibration to the presentation headline",
-                "The promoter case must land on its declared calibration target: the presentation's "
-                "Year-1 revenue (86,275) and EBITDA (11,297). This is not a replication test: the "
-                "source workbooks report 74,851 net (Conclusiones), 99,487.50 gross (Plan de Negocio "
-                "formulas) and 96,628 (deck), and the 11,297 EBITDA has no build-up.",
-                "abs(revenue - 86,275) <= 1 and abs(EBITDA - 11,297) <= 1",
-                prom_rev_ok and prom_ebitda_ok,
-                {"revenue": float(prom_y1["total_revenue"]), "ebitda": float(prom_y1["ebitda"])},
-                {"revenue": 86_275.0, "ebitda": 11_297.0},
-                "Re-modelled, not replicated. README section 2 reconciles the four revenue "
-                "figures and the EUR 20 vs EUR 25 restaurant ticket.",
+                "Promoter case: declared calibration, not source reconciliation",
+                "The promoter case is a re-modelling. The source workbooks contain four different "
+                "Year-1 revenues (99,487.50 from the Plan de Negocio formulas; 74,851 net in "
+                "Conclusiones!B5; 96,628 in Presentacion!Tablas para PPT!B11; and the 90,570 gross "
+                "behind the net figure). The model's 86,275 is its own revenue construct "
+                "(491 x 85 + 72 x 380 + 859 x 20) and its 11,297 is the deck literal, so there is "
+                "no single source figure to reconcile. The rule is therefore NOT APPLICABLE to "
+                "source verification and only reports the model target beside the source cells.",
+                "N/A - the source has no single Year-1 revenue",
+                False,
+                {
+                    "model_revenue": float(prom_y1["total_revenue"]),
+                    "model_ebitda": float(prom_y1["ebitda"]),
+                    **promoter_source,
+                },
+                "No source-consistent target",
+                "Do not describe the promoter case as a replication. README section 2 reconciles "
+                "the four source figures and the EUR 20 vs EUR 25 restaurant ticket.",
                 severity="INFO",
+                status="NOT_APPLICABLE",
             ),
             self._rule(
                 "RULE_14_MARKET_DSCR",
@@ -467,7 +521,7 @@ class ModelAuditEngine:
             g.rule_id for g in guardrails
             if g.status == "FAILED" and g.severity == "WARNING"
         ]
-        all_passed = all(g.status == "PASSED" for g in guardrails)
+        all_passed = all(g.status in ("PASSED", "NOT_APPLICABLE") for g in guardrails)
 
         if material_failures:
             verdict = f"CONDITIONAL - {len(material_failures)} MATERIAL EXCEPTION(S)"
@@ -541,6 +595,9 @@ class ModelAuditEngine:
                 "total_rules_evaluated": len(guardrails),
                 "total_rules_passed": sum(1 for g in guardrails if g.status == "PASSED"),
                 "total_rules_failed": sum(1 for g in guardrails if g.status == "FAILED"),
+                "total_rules_not_applicable": sum(
+                    1 for g in guardrails if g.status == "NOT_APPLICABLE"
+                ),
                 "material_exceptions": material_failures,
                 "warning_exceptions": warning_failures,
                 "audit_verdict": verdict,
@@ -568,6 +625,7 @@ class ModelAuditEngine:
         print(f"Ground-Truth Metrics Count:      {len(payload['ground_truth_metrics'])}")
         print(f"Audit Rules Evaluated:           {status['total_rules_evaluated']}")
         print(f"Rules Passed:                    {status['total_rules_passed']} / {status['total_rules_evaluated']}")
+        print(f"Rules Not Applicable:            {status['total_rules_not_applicable']}")
         print(f"Material Exceptions:             {len(status['material_exceptions'])}")
         print(f"Warning Exceptions:              {len(status['warning_exceptions'])}")
         print(f"Audit Verdict:                   {status['audit_verdict']}")
@@ -588,6 +646,9 @@ class ModelAuditEngine:
         print("-" * 88)
         print("Guardrail Integrity Status:")
         for r in payload["guardrail_audit_rules"]:
-            flag = "[PASS]" if r["status"] == "PASSED" else "[FAIL]"
+            flag = {
+                "PASSED": "[PASS]",
+                "NOT_APPLICABLE": "[N/A]",
+            }.get(r["status"], "[FAIL]")
             print(f"  {flag} {r['rule_id']}: {r['rule_name']} (Actual: {r['actual_value']})")
         print("=" * 88)

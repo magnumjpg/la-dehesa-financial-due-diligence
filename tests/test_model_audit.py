@@ -2,9 +2,10 @@
 Unit tests for ModelAuditEngine and the computed due-diligence audit.
 
 The audit is deliberately allowed to fail. These tests lock in the honest
-result: 10 of 16 rules pass, 5 material exceptions and 1 warning remain open.
-If a future change fixes a material exception, update the expected counts and
-the verdict rather than weakening the rule.
+result: 9 of 16 rules pass, 1 is not applicable (the promoter case has no
+single source figure to reconcile), and 5 material plus 1 warning exception
+remain open. If a future change fixes a material exception, update the expected
+counts and the verdict rather than weakening the rule.
 """
 
 from pathlib import Path
@@ -110,11 +111,22 @@ def test_model_audit_payload_generation():
     assert failed_material == EXPECTED_MATERIAL
     assert failed_warning == EXPECTED_WARNING
 
+    # RULE_13 must not claim a source reconciliation: it reads the source
+    # cells, reports them and is marked NOT_APPLICABLE.
+    rule_13 = by_id["RULE_13_PROMOTER_CALIBRATION"]
+    assert rule_13["status"] == "NOT_APPLICABLE"
+    assert rule_13["actual_value"]["deck_revenue_b11"] == 96_628
+    assert rule_13["actual_value"]["deck_ebitda_b12"] == 11_297
+    assert rule_13["actual_value"]["plan_revenue_conclusiones_b5"] == 74_851
+    assert rule_13["actual_value"]["plan_revenue_formula"] == 99_487.50
+    assert rule_13["actual_value"]["model_revenue"] == 86_275.0
+
     status = payload["execution_status"]
     assert status["all_guardrails_satisfied"] is False
     assert status["total_rules_evaluated"] == 16
-    assert status["total_rules_passed"] == 10
+    assert status["total_rules_passed"] == 9
     assert status["total_rules_failed"] == 6
+    assert status["total_rules_not_applicable"] == 1
     assert status["material_exceptions"] == sorted(EXPECTED_MATERIAL)
     assert status["warning_exceptions"] == sorted(EXPECTED_WARNING)
     assert status["audit_verdict"] == "CONDITIONAL - 5 MATERIAL EXCEPTION(S)"
@@ -133,5 +145,6 @@ def test_model_audit_json_export_file(tmp_path: Path):
     assert data["meta"]["project_name"] == "La Dehesa del Castrillo S.L."
     assert data["meta"]["schema_version"] == "4.0.0"
     assert data["execution_status"]["all_guardrails_satisfied"] is False
-    assert data["execution_status"]["total_rules_passed"] == 10
+    assert data["execution_status"]["total_rules_passed"] == 9
     assert data["execution_status"]["total_rules_failed"] == 6
+    assert data["execution_status"]["total_rules_not_applicable"] == 1

@@ -112,7 +112,7 @@ def run_executive_pipeline(generate_charts: bool = True):
     df_cases = pd.DataFrame(case_rows)
     print(df_cases.to_string(index=False))
     print("-> The management case is an upside case (31.36% mature occupancy, 1.48x the INE market average).")
-    print("-> The INE market case (21.24%) is the independent benchmark; the promoter case is re-modelled to the presentation headline, not replicated (README section 2).")
+    print("-> The INE market case (21.24%) is the independent benchmark; the promoter case is a re-modelling (86,275 is a model construct, the deck says 96,628), not a replication (README section 2).")
     print()
 
     # Demand reconciliation: the management case is weekend-weighted, not a

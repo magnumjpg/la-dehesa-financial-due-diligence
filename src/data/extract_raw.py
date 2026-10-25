@@ -154,11 +154,12 @@ def generate_reconciliation_summary() -> pd.DataFrame:
     Executive reconciliation of the original university workbooks and the three
     refined cases.
 
-    The promoter case is not the original workbook: it is re-modelled to the
-    presentation headline (EUR 86,275 / EUR 11,297). The "Original Excel"
-    column reports what the source actually contains, including the two
-    mutually inconsistent Year-1 revenues. The refined columns are computed
-    from the model, not from stale hard-coded cells.
+    The promoter case is not the original workbook: it is re-modelled with a
+    EUR 86,275 revenue construct and the deck's EUR 11,297 EBITDA. The
+    "Original Excel" column reports what the source actually contains,
+    including the mutually inconsistent Year-1 revenues (74,851; 96,628;
+    99,487.50). The refined columns are computed from the model, not from
+    stale hard-coded cells.
     """
     from src.config.assumptions import SCENARIOS
     from src.core.metrics import CreditMetricsEngine

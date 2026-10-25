@@ -9,6 +9,8 @@ Python 3.11 · 73 tests automáticos · auditoría calculada de 16 reglas · mod
 ![Python 3.11](https://img.shields.io/badge/python-3.11-blue)
 ![License: MIT](https://img.shields.io/badge/license-MIT-green)
 
+**Idioma:** [English](README.md) · [Gobierno del modelo](MODEL_GOVERNANCE_ES.md) · [Red team](RED_TEAM.md)
+
 ---
 
 ## La versión de 60 segundos
@@ -69,7 +71,7 @@ La capa Python no es un lavado de cara. Añade una arquitectura de tres casos, u
 
 **Qué es cada caso:**
 
-- **Promotor (re-modelado)**: el par de titulares de la presentación (86.275 € de ingresos / 11.297 € de EBITDA) reconstruido desde inductores explícitos: 19,2% de ocupación en el Año 1 (491 noches de habitación + 72 de casa), ADR de 85 € en habitación, 380 € en casa, ticket de restaurante de **20 €**, 859 cubiertos, deuda al 4,5% a 25 años, sin carencia, sin subvención y con el terreno comprado en lugar de aportado en especie. Es el único caso con TIR de equity positiva en la salida, pero tiene caja negativa en los Años 1-2.
+- **Promotor (re-modelado)**: el EBITDA de 11.297 € que la presentación fija a mano, reconstruido desde inductores explícitos, con un **constructo de ingresos de 86.275 €** (los ingresos de la presentación son 96.628 €): 19,2% de ocupación en el Año 1 (491 noches de habitación + 72 de casa), ADR de 85 € en habitación, 380 € en casa, ticket de restaurante de **20 €**, 859 cubiertos, deuda al 4,5% a 25 años, sin carencia, sin subvención y con el terreno comprado en lugar de aportado en especie. Es el único caso con TIR de equity positiva en la salida, pero tiene caja negativa en los Años 1-2.
 - **Mercado INE**: el ancla de demanda independiente: 21,24% de ocupación oficial de Segovia en 2025 (INE EOTR, tabla 2070) en el Año 1, con la economía unitaria original y la rampa original de volumen del 25%/20%, que llega al 32,0% en el Año 3 y después crece un 5% anual. El attachment de F&B se mantiene en las 950 comidas originales a 20 €. Es lo más parecido a un caso "de mercado" en el libro.
 - **Gestión (upside)**: 31,36% de ocupación en madurez (1,48x la media del INE), una comida en el establecimiento por huésped y día a un ticket de 25 €, el stack variable completo y un puente de IVA al 5,5%. Es un upside operativo, no un caso base. Su "upside" está en el ingreso por día ocupado (attachment de F&B), no en la ocupación: el caso de mercado llega de hecho a una ocupación madura parecida a través de la rampa original.
 
@@ -77,13 +79,13 @@ La capa Python no es un lavado de cara. Añade una arquitectura de tres casos, u
 
 | Base de ingresos del Año 1 | Cifra | Procedencia |
 |---|---:|---|
-| `Plan de Negocio` (fórmulas vivas) | 99.487,50 € brutos | 66,325 días ocupados × 7 habitaciones × 85 € + 66,325 × 380 € + 1.392,825 cubiertos × 25 € |
-| `Conclusiones y Viabilidad!B5` | 74.851 € netos | Celda fija; equivale a los 90.570 € brutos implícitos en 491 noches de habitación × 85 € + 72 noches de casa × 380 € + 859 cubiertos × 25 €, dividido por 1,21 |
-| Los mismos 90.570 € brutos al 10% estatutario | 82.336,36 € | 90.570 € ÷ 1,10 |
+| `Plan de Negocio!B41` (fórmulas vivas) | 99.487,50 € brutos | `=SUM(B38:B40)`; 66,325 días ocupados × 7 habitaciones × 85 € + 66,325 × 380 € + 1.392,825 cubiertos × 25 € |
+| `Conclusiones y Viabilidad!B5` | 74.851 € netos | Celda fija. 74.851 × 1,21 = 90.569,71, coherente con unos 90.570 € brutos al 21%; ni el bruto ni su mezcla de volúmenes están guardados |
+| La misma celda neta al 10% estatutario | 82.336,10 € | 74.851 × 1,10 (solo aritmética; no es una celda del libro) |
 | `Presentacion!Tablas para PPT!B11` | 96.628 € | Celda fija, sin build-up en ninguno de los dos libros |
-| **Caso promotor en Python** | **86.275 €** | 491 × 85 € + 72 × 380 € + 859 × **20 €** |
+| **Caso promotor en Python** | **86.275 €** | 491 × 85 € + 72 × 380 € + 859 × **20 €**. Constructo del modelo, guardado solo en el modelo generado (`Read Me & Checks!C24`), no en los libros fuente |
 
-El EBITDA cuenta la misma historia. La hoja de fórmulas del propio libro produce **26.701,31 €** (99.487,50 € − 10.446,19 € de coste de A&B − 62.340 € de personal y mantenimiento). La presentación fija **11.297 €** sin build-up. El caso Python llega a 11.297 € por construcción: 86.275 € de ingresos − 60.075 € de nómina realista − 14.903 € de otros costes operativos, de los cuales 6.444 € son compras de A&B valoradas al ticket de **25 €** mientras los ingresos valoran los mismos cubiertos a 20 €. Por eso `RULE_13` se reporta como *INFO* y no como una réplica superada: comprueba que el modelo alcanza su objetivo de calibración declarado, y su nota deja constancia de que los dos libros no coinciden entre sí ni con el modelo.
+El EBITDA cuenta la misma historia. La hoja de fórmulas del propio libro produce **26.701,31 €** (99.487,50 € − 10.446,19 € de coste de A&B − 62.340 € de personal y mantenimiento). La presentación fija **11.297 €** sin build-up. El caso Python llega a 11.297 € por construcción: 86.275 € de ingresos − 60.075 € de nómina realista − 14.903 € de otros costes operativos, de los cuales 6.444 € son compras de A&B valoradas al ticket de **25 €** mientras los ingresos valoran los mismos cubiertos a 20 €. Por eso `RULE_13` lee las celdas fuente y se reporta como **NO APLICABLE** a la verificación contra la fuente: no hay una cifra única que conciliar, así que la regla solo imprime el objetivo del modelo junto a los 96.628 € de la presentación, la celda neta de 74.851 € y el build de 99.487,50 € de las fórmulas.
 
 La ocupación tiene el mismo problema de procedencia. El 19,2% del caso está **implícito en los volúmenes de 491/72 noches** (491 ÷ 7 habitaciones ÷ 365 días = 19,22%), no se lee de la fuente: la hoja de fórmulas `Plan de Negocio` usa 66,325 días ocupados, que es 18,17%, y ninguno de los dos libros contiene el valor 19,2% en ninguna celda.
 
@@ -495,7 +497,7 @@ Es un test, no un rescate: sin salida la TIR de proyecto de gestión es -35,43%,
 
 ---
 
-## 15. Auditoría calculada: 16 reglas, 10 pasan, 5 materiales, 1 warning
+## 15. Auditoría calculada: 16 reglas, 9 pasan, 1 N/A, 5 materiales, 1 warning
 
 La auditoría se calcula desde el modelo, no se escribe a mano. Se deja fallar.
 
@@ -513,14 +515,14 @@ La auditoría se calcula desde el modelo, no se escribe a mano. Se deja fallar.
 | RULE_10_OCCUPANCY_VS_INE | Warning | **FAIL** | 1,48x | ≤ 1,10x |
 | RULE_11_PHASE2_SELF_FUNDING | Material | **FAIL** | -252.241 € | ≥ 0 € |
 | RULE_12_RETURNS_VS_WACC | Material | **FAIL** | -9,49% | ≥ 8,0% |
-| RULE_13_PROMOTER_CALIBRATION | Info | **PASS** | 86.275 € / 11.297 € | objetivo ± 1 € (no verificado contra la fuente) |
+| RULE_13_PROMOTER_CALIBRATION | Info | **N/A** | 86.275 € modelo / 96.628 € presentación | sin cifra única en la fuente |
 | RULE_14_MARKET_DSCR | Material | **FAIL** | -1,46x | ≥ 1,25x |
 | RULE_15_EQUITY_REQUIREMENT | Material | **FAIL** | 49,62% | ≤ 30,0% |
 | RULE_16_FFE_RESERVE | Info | **PASS** | 4.636 € | 3% de ingresos |
 
 **Veredicto:** `CONDITIONAL - 5 MATERIAL EXCEPTION(S)`.
 
-Las cinco excepciones materiales son el DSCR de gestión, la autofinanciación de la Fase II, los retornos frente al WACC, el DSCR de mercado y el requisito de equity. El warning es el supuesto de ocupación de gestión (1,48x la media del INE). Las seis son hallazgos del deal, no errores de fórmula; la disposición de cada una está en [MODEL_GOVERNANCE_ES.md](MODEL_GOVERNANCE_ES.md). El JSON de auditoría se exporta a `data/model_audit_summary.json` (schema 4.0.0) y las mismas reglas se reproducen en la pestaña `Funding & Audit` del Excel.
+Las cinco excepciones materiales son el DSCR de gestión, la autofinanciación de la Fase II, los retornos frente al WACC, el DSCR de mercado y el requisito de equity. El warning es el supuesto de ocupación de gestión (1,48x la media del INE). Las seis son hallazgos del deal, no errores de fórmula; la disposición de cada una está en [MODEL_GOVERNANCE_ES.md](MODEL_GOVERNANCE_ES.md). RULE_13 no es un pase ni un fallo: los libros fuente contienen cuatro ingresos distintos del Año 1, así que no hay una cifra única contra la que conciliar y la regla se marca N/A. El JSON de auditoría se exporta a `data/model_audit_summary.json` (schema 4.0.0) y las mismas reglas se reproducen en la pestaña `Funding & Audit` del Excel.
 
 ---
 
@@ -548,7 +550,7 @@ El `Live Model` es intencionadamente simple y transparente: los ingresos son una
 
 Las fórmulas se han validado con un motor de cálculo independiente en Python: ingresos 154.548 €, EBITDA 24.280 €, DSCR del Año 2 1,1534x, caja del Año 1 20.700,88 €, caja del Año 2 183.322,64 € y descuadre de balance 0,00 € coinciden dentro de las tolerancias de 1 € / 0,01x. La pestaña `Read Me & Checks` muestra correctamente el check del covenant como `FAIL`; la pestaña `Funding & Audit` puede mostrar `FAIL`. Eso es la auditoría funcionando como debe.
 
-Las pestañas de informe son snapshots de Python y no recalculan. Abre el libro en Excel o LibreOffice para ver evaluar las fórmulas vivas.
+Diez pestañas son artefactos generados y así se declaran en `Inputs!A2`: `Read Me & Checks`, `Executive Scorecard`, `3-Statement Model`, `Debt Schedule` (con fórmulas), `Scenario Stress-Testing`, `Monte Carlo Risk`, `Credit Risk & Copula`, `Unit Economics & Runway`, `Phase II Expansion` y `Reform Case`. `Inputs`, `Live Model` y `Funding & Audit` son las pestañas vivas. Abre el libro en Excel o LibreOffice para ver evaluar las fórmulas vivas.
 
 ---
 
@@ -641,7 +643,7 @@ Esto es un modelo de portfolio, no un memorando de inversión. Las limitaciones 
 6. **El modelo fiscal es simplificado.** Usa un tipo de sociedades del 25%, sin grupo de IVA, sin deducciones autonómicas y con un schedule de BIN limitado al horizonte de proyección.
 7. **El modelo de personal es a tiempo parcial.** Las tarifas horarias cumplen, pero el riesgo de planificación, cobertura y rotación sigue existiendo.
 8. **La subvención se asume comprometida.** No hay carta de concesión en el repositorio; el timing LEADER se modela en el Mes 14.
-9. **Los dos libros fuente de la reconciliación están en `raw_data/`.** La memoria Word original y el libro vivo de OneDrive no se redistribuyen; el caso promotor está calibrado a las cifras de titular de la presentación y reconstruido desde inductores explícitos en `statements.py`, y la §2 documenta dónde se separa de ambos libros.
+9. **Los dos libros fuente de la reconciliación están en `raw_data/`.** La memoria Word original y el libro vivo de OneDrive no se redistribuyen; el caso promotor es un re-modelado con su propio constructo de ingresos de 86.275 € y el EBITDA de 11.297 € de la presentación, reconstruido desde inductores explícitos en `statements.py`, y la §2 documenta dónde se separa de ambos libros.
 10. **La demanda del restaurante es solo de huéspedes en los casos as-is.** El modelo asume una comida por huésped y día en el caso de gestión (unas 2.163 comidas en el Año 1), sin cubiertos externos, eventos ni ingresos de bebidas. La capa de reforma añade cubiertos externos de forma explícita, pero esa demanda es un supuesto, no evidencia.
 11. **Sin booking curve ni competitive set.** El ADR es plano en el caso de gestión; los casos de mercado y promotor usan un crecimiento nominal del 5% desde el Año 4. Un mandato real modelaría la curva de reservas y el set competitivo local.
 12. **El motor mensual es un stress de liquidez, no un modelo mensual completo de tres estados.** Reconcilia con los estados anuales (diferencia 0,00 €) pero no los sustituye.

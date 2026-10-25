@@ -170,11 +170,12 @@ class FinancialModelEngine:
         #   realistic cost stack and the re-sized 35% LTV structure.
         # - market: official INE Segovia occupancy (21.24%) with the original
         #   unit economics and the same realistic cost stack and structure.
-        # - promoter: re-modelled to the presentation's headline pair (EUR
-        #   86,275 revenue / EUR 11,297 EBITDA) on the original demand drivers,
-        #   4.5%/25Y debt, no grant and the original EUR 725k cost basis. It is
-        #   not a replication of either source workbook; README section 2
-        #   reconciles the four revenue figures the source contains.
+        # - promoter: re-modelled on the original demand drivers, 4.5%/25Y
+        #   debt, no grant and the original EUR 725k cost basis. Its EUR 86,275
+        #   revenue is a model construct (EUR 20 ticket) and EUR 11,297 is the
+        #   deck literal; the deck's own revenue is EUR 96,628. It is not a
+        #   replication of either source workbook; README section 2 reconciles
+        #   the four revenue figures the source contains.
         if case == "promoter":
             self.rev_cfg = replace(
                 self.rev_cfg,

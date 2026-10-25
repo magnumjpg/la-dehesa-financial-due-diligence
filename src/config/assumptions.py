@@ -14,11 +14,11 @@ This module formalizes institutional parameters for:
 
 The management and market cases use the realistic 2026 cost structure. The
 promoter case keeps the original simulator's demand drivers and financing
-structure, but it is a re-modelling calibrated to the presentation's headline
-figures, not a replication of either source workbook: the workbooks disagree
-with each other on Year-1 revenue and the EUR 11,297 EBITDA has no build-up.
-README section 2 reconciles the four revenue figures and the two EBITDA
-figures the source contains.
+structure, but it is a re-modelling, not a replication of either source
+workbook. Its EUR 86,275 revenue is a model construct (491 x 85 + 72 x 380 +
+859 x 20); the deck's revenue is EUR 96,628 and its EUR 11,297 EBITDA has no
+build-up. README section 2 reconciles the four revenue figures and the two
+EBITDA figures the source contains.
 """
 
 from dataclasses import dataclass, field, replace
@@ -490,11 +490,12 @@ class RevenueModelConfig:
 
     calibration_mode: str = "ine_market"
 
-    # Promoter case: volumes and prices behind the presentation's EUR 86,275.
-    # The source cell `Plan de Negocio!B19` prices the restaurant at EUR 25;
-    # the EUR 20 ticket is the one that reproduces the deck's revenue, so the
-    # purchases line below (EUR 6,444) is costed at a different ticket from
-    # the revenue it supports. README section 2 documents the mismatch.
+    # Promoter case: volumes and prices behind the model's EUR 86,275
+    # construct. The source cell `Plan de Negocio!B19` prices the restaurant at
+    # EUR 25; the EUR 20 ticket is the one that reproduces the deck's EBITDA,
+    # so the purchases line below (EUR 6,444) is costed at a different ticket
+    # from the revenue it supports. The deck's own revenue is EUR 96,628, not
+    # 86,275. README section 2 documents the mismatch.
     promoter_room_nights_y1: int = 491
     promoter_house_nights_y1: int = 72
     promoter_meals_y1: int = 859
