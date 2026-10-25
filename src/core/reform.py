@@ -80,6 +80,7 @@ class ReformCaseResult:
     dscr_y1: float
     dscr_y2: float
     dscr_y3: float
+    dscr_y5: float
     dscr_min: float
     ending_cash_y1: float
     ending_cash_y5: float
@@ -211,6 +212,7 @@ class ReformAnalysisEngine:
             dscr_y1=float(y1["dscr"]),
             dscr_y2=float(kpi.iloc[1]["dscr"]),
             dscr_y3=float(kpi.iloc[2]["dscr"]),
+            dscr_y5=float(y5["dscr"]),
             dscr_min=float(kpi["dscr"].min()),
             ending_cash_y1=float(y1["ending_cash"]),
             ending_cash_y5=float(y5["ending_cash"]),
@@ -380,6 +382,228 @@ class ReformAnalysisEngine:
             "conditions": conditions,
             "results": results,
             "cost_ladder": ladder,
+        }
+
+    # ------------------------------------------------------------------
+    # R7: robustness, valuation cross-checks and the distress playbook
+    # ------------------------------------------------------------------
+    def cost_inflation_stress(
+        self,
+        base_config: Optional[ReformConfig] = None,
+        rates: Iterable[float] = (0.0, 0.02, 0.025, 0.03),
+    ) -> pd.DataFrame:
+        """
+        Margin squeeze from real cost inflation with flat real prices.
+
+        The reform layer is modelled in constant 2026 euros. This stress
+        breaks the symmetry on purpose: payroll and fixed OPEX grow in real
+        terms while ADR and occupancy stay at the base case. It is not a
+        forecast; it is the answer to "what if price power is weaker than
+        cost inflation?".
+        """
+        base_config = base_config or get_cabin_preset("cabins_base")
+        rows = []
+        for rate in rates:
+            config = replace(base_config, cost_inflation_rate=float(rate))
+            result = self.run_config(
+                config, key=f"cabin_cost_inflation_{float(rate):.3f}"
+            )
+            rows.append(
+                {
+                    "cost_inflation": float(rate),
+                    "revenue_y5": result.revenue_y5,
+                    "opex_y5": round(result.revenue_y5 - result.ebitda_y5, 2),
+                    "ebitda_y5": result.ebitda_y5,
+                    "ebitda_margin_y5": round(result.ebitda_margin_y5, 4),
+                    "dscr_min": result.dscr_min,
+                    "dscr_y5": result.dscr_y5,
+                    "ev_cap_rate": result.ev_cap_rate,
+                    "net_gap_total_investment": result.net_value_gap_total_investment,
+                    "project_npv": result.project_npv,
+                    "project_irr_exit": result.project_irr_exit,
+                    "passes_net_test": result.net_value_gap_total_investment > 0.0,
+                }
+            )
+        return pd.DataFrame(rows)
+
+    def valuation_cross_check(
+        self,
+        config: Optional[ReformConfig] = None,
+        multiples: Iterable[float] = (9.0, 10.5, 12.0),
+    ) -> Dict[str, Any]:
+        """
+        Three independent reads of the same asset value.
+
+        1. The exit cap rate used in the base case (EBITDA / cap).
+        2. The implied exit multiple (1 / cap) and a multiple table.
+        3. The development yield on cost, the break-even exit cap and the
+           no-compression case.
+
+        A development profit exists when the yield on cost exceeds the exit
+        cap: the asset is built at 10.1% and sold at 9.5%. That spread is the
+        value gap, so the case depends on the exit cap staying below the
+        yield on cost. At no compression the net gap is just the exit costs.
+        """
+        config = config or get_cabin_preset("cabins_base")
+        base = self.run_config(config, key="valuation_cross_check")
+        ebitda = base.ebitda_y5
+        net_factor = 1.0 - base.exit_cost_rate
+        rows = []
+        for multiple in multiples:
+            ev = ebitda * float(multiple)
+            net = ev * net_factor
+            rows.append(
+                {
+                    "exit_multiple": float(multiple),
+                    "ev": round(ev, 2),
+                    "net_exit_value": round(net, 2),
+                    "net_gap_total_investment": round(
+                        net - base.total_project_investment, 2
+                    ),
+                }
+            )
+        break_even_cap = (
+            ebitda * net_factor / base.total_project_investment
+            if base.total_project_investment
+            else 0.0
+        )
+        break_even_ebitda_net = (
+            base.total_project_investment * base.exit_cap_rate / net_factor
+            if net_factor
+            else 0.0
+        )
+        return {
+            "implied_exit_multiple": round(base.ev_cap_rate / ebitda, 2)
+            if ebitda
+            else None,
+            "going_in_yield_on_cost": round(
+                ebitda / base.total_project_investment, 4
+            )
+            if base.total_project_investment
+            else None,
+            "exit_cap_rate": base.exit_cap_rate,
+            "break_even_cap_rate": round(break_even_cap, 4),
+            "cap_rate_headroom_bp": round(
+                (break_even_cap - base.exit_cap_rate) * 10_000, 1
+            ),
+            "no_compression_cap_rate": round(
+                ebitda / base.total_project_investment, 4
+            )
+            if base.total_project_investment
+            else None,
+            "net_gap_at_no_compression": round(
+                -base.total_project_investment * base.exit_cost_rate, 2
+            ),
+            "break_even_ebitda_net": round(break_even_ebitda_net, 2),
+            "ebitda_headroom": round(ebitda - break_even_ebitda_net, 2),
+            "ev_cap_rate": base.ev_cap_rate,
+            "replacement_cost": base.total_project_investment,
+            "gross_value_gap_total_investment": base.value_gap_total_investment,
+            "net_value_gap_total_investment": base.net_value_gap_total_investment,
+            "exit_multiple_table": pd.DataFrame(rows),
+        }
+
+    def distress_playbook(
+        self, config: Optional[ReformConfig] = None
+    ) -> Dict[str, Any]:
+        """
+        What happens if R7 lands on the downside and the covenant breaks.
+
+        It computes the annual CFADS shortfall, the equity cure needed to hold
+        a 1.25x DSCR, the DSRA cover in months, and whether a sale at the
+        downside cap repays the outstanding debt. The point is to show the
+        lender's loss given default, not to rescue the case.
+        """
+        config = config or get_cabin_preset("cabins_downside")
+        engine = FinancialModelEngine(
+            case="reform", reform=config, scenario=SCENARIOS["base"]
+        )
+        df = engine.run_projection(self.projection_years)
+        debt = engine.debt_engine.get_annual_schedule_df()
+        credit = CreditMetricsEngine(target_dscr=1.25, discount_wacc=config.discount_rate)
+        kpi = credit.compute_credit_kpis(df, debt)
+
+        rows = []
+        for _, row in kpi.iterrows():
+            cfads = float(row["cfads"])
+            debt_service = float(row["debt_service"])
+            rows.append(
+                {
+                    "year": int(row["year"]),
+                    "cfads": round(cfads, 2),
+                    "debt_service": round(debt_service, 2),
+                    "shortfall": round(max(0.0, debt_service - cfads), 2),
+                    "dscr": round(float(row["dscr"]), 2),
+                    "ending_cash": round(float(row["ending_cash"]), 2),
+                }
+            )
+        play = pd.DataFrame(rows)
+        cumulative_shortfall = round(float(play["shortfall"].sum()), 2)
+        min_row = play.loc[play["dscr"].idxmin()]
+        cure = round(
+            sum(
+                max(0.0, 1.25 * float(r["debt_service"]) - float(r["cfads"]))
+                for _, r in kpi.iterrows()
+            ),
+            2,
+        )
+
+        first_amortising = debt[debt["year"] == 2]
+        dsra_six_months = (
+            round(0.5 * float(first_amortising.iloc[0]["payment"]), 2)
+            if not first_amortising.empty
+            else 0.0
+        )
+        ending_debt_row = debt[debt["year"] == self.projection_years]
+        ending_debt = (
+            float(ending_debt_row.iloc[-1]["ending_balance"])
+            if not ending_debt_row.empty
+            else 0.0
+        )
+        result = self.run_config(config)
+        net_exit_value = result.net_exit_value
+        lender_recovery = (
+            round(net_exit_value / ending_debt, 4) if ending_debt > 0 else 1.0
+        )
+        sale_shortfall = round(max(0.0, ending_debt - net_exit_value), 2)
+        equity_at_exit = round(max(0.0, net_exit_value - ending_debt), 2)
+        equity_invested = float(engine.total_equity_at_close)
+        equity_recovery = (
+            round(equity_at_exit / equity_invested, 4) if equity_invested else 0.0
+        )
+
+        if cumulative_shortfall <= 0.0:
+            verdict = "NO SHORTFALL - CFADS COVERS DEBT SERVICE IN EVERY YEAR"
+            stance = "covered"
+        elif lender_recovery >= 1.0:
+            verdict = (
+                "THE LENDER IS REPAID ON SALE, BUT THE EQUITY IS WIPED OUT - "
+                "DO NOT THROW A CURE AT A DEMAND FAILURE"
+            )
+            stance = "lender_repaid_equity_wiped"
+        else:
+            verdict = (
+                "CURE OR RESTRUCTURE - A SALE AT THE DOWNSIDE CAP DOES NOT "
+                "REPAY THE DEBT"
+            )
+            stance = "cure_or_restructure"
+
+        return {
+            "verdict": verdict,
+            "stance": stance,
+            "min_dscr": round(float(play["dscr"].min()), 2),
+            "min_dscr_year": int(min_row["year"]),
+            "cumulative_shortfall": cumulative_shortfall,
+            "equity_cure_to_125x": cure,
+            "dsra_six_months": dsra_six_months,
+            "ending_debt": round(ending_debt, 2),
+            "net_exit_value": net_exit_value,
+            "lender_recovery": lender_recovery,
+            "sale_shortfall": sale_shortfall,
+            "equity_invested": round(equity_invested, 2),
+            "equity_at_exit": equity_at_exit,
+            "equity_recovery": equity_recovery,
+            "annual": play,
         }
 
     # ------------------------------------------------------------------
@@ -797,6 +1021,68 @@ class ReformAnalysisEngine:
             print(f"   - {condition}")
         print()
 
+        valuation = self.valuation_cross_check()
+        print("R7 VALUATION CROSS-CHECK - CAP RATE, EXIT MULTIPLE AND BREAK-EVEN")
+        print(
+            f"  Going-in yield on cost:      {valuation['going_in_yield_on_cost']*100:>6.2f}%"
+        )
+        print(f"  Exit cap rate:               {valuation['exit_cap_rate']*100:>6.2f}%")
+        print(
+            f"  Break-even exit cap (net):  {valuation['break_even_cap_rate']*100:>6.2f}%"
+            f"  (headroom {valuation['cap_rate_headroom_bp']:.0f} bp)"
+        )
+        print(
+            f"  Break-even EBITDA (net):    EUR {valuation['break_even_ebitda_net']:>10,.0f}"
+            f"  (headroom EUR {valuation['ebitda_headroom']:,.0f})"
+        )
+        print(
+            f"  Implied exit multiple:       {valuation['implied_exit_multiple']:>6.1f}x"
+        )
+        print(
+            f"  No-compression case:        exit at {valuation['no_compression_cap_rate']*100:.2f}%"
+            f" -> net gap EUR {valuation['net_gap_at_no_compression']:+,.0f}"
+        )
+        print()
+        for _, row in valuation["exit_multiple_table"].iterrows():
+            print(
+                f"    {row['exit_multiple']:>4.1f}x  EV {row['ev']:>10,.0f}  "
+                f"net {row['net_exit_value']:>10,.0f}  "
+                f"gap {row['net_gap_total_investment']:>+10,.0f}"
+            )
+        print()
+
+        stress = self.cost_inflation_stress()
+        print("R7 COST-INFLATION STRESS - REAL COST GROWTH, FLAT REAL PRICES")
+        for _, row in stress.iterrows():
+            print(
+                f"    {row['cost_inflation']*100:>4.1f}%/yr  EBITDA {row['ebitda_y5']:>9,.0f}  "
+                f"DSCR Y5 {row['dscr_y5']:>4.2f}x  net gap "
+                f"{row['net_gap_total_investment']:>+10,.0f}  "
+                f"{'PASS' if row['passes_net_test'] else 'FAIL'}"
+            )
+        print()
+
+        distress = self.distress_playbook()
+        print(f"DISTRESS PLAYBOOK (R7 DOWNSIDE): {distress['verdict']}")
+        print(
+            f"  Minimum DSCR {distress['min_dscr']:.2f}x in Year "
+            f"{distress['min_dscr_year']}; cumulative shortfall "
+            f"EUR {distress['cumulative_shortfall']:,.0f}; six-month DSRA "
+            f"EUR {distress['dsra_six_months']:,.0f}"
+        )
+        print(
+            f"  Cash cure to 1.25x DSCR: EUR {distress['equity_cure_to_125x']:,.0f}; "
+            f"sale at the downside cap: EUR {distress['net_exit_value']:,.0f} vs "
+            f"EUR {distress['ending_debt']:,.0f} of debt"
+        )
+        print(
+            f"  Lender recovery {distress['lender_recovery']*100:.0f}%; equity "
+            f"EUR {distress['equity_at_exit']:,.0f} vs "
+            f"EUR {distress['equity_invested']:,.0f} invested "
+            f"({distress['equity_recovery']*100:.0f}% recovery)"
+        )
+        print()
+
     def export_json(self, path: Optional[Path] = None) -> Path:
         if path is None:
             data_dir = Path(__file__).resolve().parent.parent.parent / "data"
@@ -811,6 +1097,9 @@ class ReformAnalysisEngine:
         frontier = self.frontier()
         stress = self.stress_cases()
         rate_sensitivity = self.rate_sensitivity()
+        cost_inflation = self.cost_inflation_stress()
+        valuation = self.valuation_cross_check()
+        distress = self.distress_playbook()
 
         payload = {
             "generated_by": "src.core.reform.ReformAnalysisEngine",
@@ -829,6 +1118,25 @@ class ReformAnalysisEngine:
                 "detail": cabin_rec["detail"],
                 "detail_2": cabin_rec["detail_2"],
                 "conditions": cabin_rec["conditions"],
+            },
+            "cabin_valuation_cross_check": {
+                **{
+                    k: v
+                    for k, v in valuation.items()
+                    if k != "exit_multiple_table"
+                },
+                "exit_multiple_table": valuation[
+                    "exit_multiple_table"
+                ].to_dict(orient="records"),
+            },
+            "cabin_cost_inflation_stress": cost_inflation.to_dict(orient="records"),
+            "distress_playbook": {
+                **{
+                    k: v
+                    for k, v in distress.items()
+                    if k != "annual"
+                },
+                "annual": distress["annual"].to_dict(orient="records"),
             },
             "value_bridge": {
                 k: v

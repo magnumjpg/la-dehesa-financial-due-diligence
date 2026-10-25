@@ -28,6 +28,7 @@
       "dscr_y1": 1.56,
       "dscr_y2": 1.34,
       "dscr_y3": 1.34,
+      "dscr_y5": 1.34,
       "dscr_min": 1.34,
       "ending_cash_y1": 24489.99,
       "ending_cash_y5": 193092.45,
@@ -78,6 +79,7 @@
       "dscr_y1": 2.48,
       "dscr_y2": 2.13,
       "dscr_y3": 2.3,
+      "dscr_y5": 2.21,
       "dscr_min": 2.13,
       "ending_cash_y1": 37461.63,
       "ending_cash_y5": 332507.56,
@@ -128,6 +130,7 @@
       "dscr_y1": 2.88,
       "dscr_y2": 2.48,
       "dscr_y3": 2.48,
+      "dscr_y5": 2.44,
       "dscr_min": 2.44,
       "ending_cash_y1": 41250.74,
       "ending_cash_y5": 316286.82,
@@ -178,6 +181,7 @@
       "dscr_y1": 3.53,
       "dscr_y2": 2.72,
       "dscr_y3": 2.74,
+      "dscr_y5": 2.73,
       "dscr_min": 2.72,
       "ending_cash_y1": 52993.99,
       "ending_cash_y5": 402771.49,
@@ -228,6 +232,7 @@
       "dscr_y1": 3.07,
       "dscr_y2": 2.59,
       "dscr_y3": 2.58,
+      "dscr_y5": 2.57,
       "dscr_min": 2.57,
       "ending_cash_y1": 42668.76,
       "ending_cash_y5": 311156.39,
@@ -278,6 +283,7 @@
       "dscr_y1": -3.82,
       "dscr_y2": -1.58,
       "dscr_y3": -1.5,
+      "dscr_y5": -1.5,
       "dscr_min": -3.82,
       "ending_cash_y1": 125367.93,
       "ending_cash_y5": 15000.0,
@@ -330,6 +336,7 @@
       "dscr_y1": 1.41,
       "dscr_y2": 2.68,
       "dscr_y3": 3.35,
+      "dscr_y5": 3.15,
       "dscr_min": 1.41,
       "ending_cash_y1": 19597.83,
       "ending_cash_y5": 492421.62,
@@ -384,6 +391,7 @@
       "dscr_y1": 3.34,
       "dscr_y2": 3.3,
       "dscr_y3": 3.85,
+      "dscr_y5": 3.84,
       "dscr_min": 3.3,
       "ending_cash_y1": 64213.46,
       "ending_cash_y5": 705757.02,
@@ -438,6 +446,7 @@
       "dscr_y1": 0.79,
       "dscr_y2": 1.07,
       "dscr_y3": 1.45,
+      "dscr_y5": 1.45,
       "dscr_min": 0.79,
       "ending_cash_y1": 15000.0,
       "ending_cash_y5": 227638.9,
@@ -557,6 +566,157 @@
       "Do not budget the 180k ultra-luxury unit. It only works at 250 EUR ADR or more, which the Segovia comparables do not support.",
       "Treat the 45k of agronomic experiences as an operating programme with a host, a calendar and marketing, not as passive income.",
       "Charge the land at its 250k opportunity value; the case does not pass by treating the site as free."
+    ]
+  },
+  "cabin_valuation_cross_check": {
+    "implied_exit_multiple": 10.53,
+    "going_in_yield_on_cost": 0.1011,
+    "exit_cap_rate": 0.095,
+    "break_even_cap_rate": 0.098,
+    "cap_rate_headroom_bp": 30.3,
+    "no_compression_cap_rate": 0.1011,
+    "net_gap_at_no_compression": -46222.8,
+    "break_even_ebitda_net": 150899.18,
+    "ebitda_headroom": 4813.32,
+    "ev_cap_rate": 1639078.95,
+    "replacement_cost": 1540760.04,
+    "gross_value_gap_total_investment": 98318.91,
+    "net_value_gap_total_investment": 49146.54,
+    "exit_multiple_table": [
+      {
+        "exit_multiple": 9.0,
+        "ev": 1401412.5,
+        "net_exit_value": 1359370.12,
+        "net_gap_total_investment": -181389.92
+      },
+      {
+        "exit_multiple": 10.5,
+        "ev": 1634981.25,
+        "net_exit_value": 1585931.81,
+        "net_gap_total_investment": 45171.77
+      },
+      {
+        "exit_multiple": 12.0,
+        "ev": 1868550.0,
+        "net_exit_value": 1812493.5,
+        "net_gap_total_investment": 271733.46
+      }
+    ]
+  },
+  "cabin_cost_inflation_stress": [
+    {
+      "cost_inflation": 0.0,
+      "revenue_y5": 573000.0,
+      "opex_y5": 417287.5,
+      "ebitda_y5": 155712.5,
+      "ebitda_margin_y5": 0.2717,
+      "dscr_min": 1.41,
+      "dscr_y5": 3.15,
+      "ev_cap_rate": 1639078.95,
+      "net_gap_total_investment": 49146.54,
+      "project_npv": 76416.23,
+      "project_irr_exit": 0.092088,
+      "passes_net_test": true
+    },
+    {
+      "cost_inflation": 0.02,
+      "revenue_y5": 573000.0,
+      "opex_y5": 436088.21,
+      "ebitda_y5": 136911.79,
+      "ebitda_margin_y5": 0.2389,
+      "dscr_min": 1.41,
+      "dscr_y5": 2.78,
+      "ev_cap_rate": 1441176.74,
+      "net_gap_total_investment": -142818.6,
+      "project_npv": -83984.03,
+      "project_irr_exit": 0.06606,
+      "passes_net_test": false
+    },
+    {
+      "cost_inflation": 0.025,
+      "revenue_y5": 573000.0,
+      "opex_y5": 440964.62,
+      "ebitda_y5": 132035.38,
+      "ebitda_margin_y5": 0.2304,
+      "dscr_min": 1.41,
+      "dscr_y5": 2.69,
+      "ev_cap_rate": 1389846.11,
+      "net_gap_total_investment": -192609.31,
+      "project_npv": -125501.41,
+      "project_irr_exit": 0.058889,
+      "passes_net_test": false
+    },
+    {
+      "cost_inflation": 0.03,
+      "revenue_y5": 573000.0,
+      "opex_y5": 445912.92,
+      "ebitda_y5": 127087.08,
+      "ebitda_margin_y5": 0.2218,
+      "dscr_min": 1.41,
+      "dscr_y5": 2.59,
+      "ev_cap_rate": 1337758.74,
+      "net_gap_total_investment": -243134.06,
+      "project_npv": -167596.64,
+      "project_irr_exit": 0.051413,
+      "passes_net_test": false
+    }
+  ],
+  "distress_playbook": {
+    "verdict": "THE LENDER IS REPAID ON SALE, BUT THE EQUITY IS WIPED OUT - DO NOT THROW A CURE AT A DEMAND FAILURE",
+    "stance": "lender_repaid_equity_wiped",
+    "min_dscr": 0.79,
+    "min_dscr_year": 1,
+    "cumulative_shortfall": 4577.04,
+    "equity_cure_to_125x": 17455.75,
+    "dsra_six_months": 20292.72,
+    "ending_debt": 457236.43,
+    "net_exit_value": 654606.82,
+    "lender_recovery": 1.4317,
+    "sale_shortfall": 0.0,
+    "equity_invested": 1113342.89,
+    "equity_at_exit": 197370.39,
+    "equity_recovery": 0.1773,
+    "annual": [
+      {
+        "year": 1,
+        "cfads": 17004.0,
+        "debt_service": 21581.04,
+        "shortfall": 4577.04,
+        "dscr": 0.79,
+        "ending_cash": 15000.0
+      },
+      {
+        "year": 2,
+        "cfads": 43248.35,
+        "debt_service": 40585.44,
+        "shortfall": 0.0,
+        "dscr": 1.07,
+        "ending_cash": 173204.5
+      },
+      {
+        "year": 3,
+        "cfads": 58730.24,
+        "debt_service": 40585.44,
+        "shortfall": 0.0,
+        "dscr": 1.45,
+        "ending_cash": 191349.3
+      },
+      {
+        "year": 4,
+        "cfads": 58730.24,
+        "debt_service": 40585.44,
+        "shortfall": 0.0,
+        "dscr": 1.45,
+        "ending_cash": 209494.1
+      },
+      {
+        "year": 5,
+        "cfads": 58730.24,
+        "debt_service": 40585.44,
+        "shortfall": 0.0,
+        "dscr": 1.45,
+        "ending_cash": 227638.9
+      }
     ]
   },
   "value_bridge": {

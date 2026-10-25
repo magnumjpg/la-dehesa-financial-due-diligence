@@ -86,6 +86,17 @@ class ReformConfig:
     # Extra fixed OPEX on top of the inherited 30.5k schedule (cabins add
     # grounds, a second access, more utilities and more marketing).
     fixed_opex_extra: float = 0.0
+    # Price basis. The reform layer is modelled in constant 2026 euros, so
+    # this is 0.0 in every preset. The cost-inflation stress sets it above
+    # zero to model a *relative* price shift: costs grow in real terms while
+    # ADR stays flat. It is a margin-squeeze scenario, not a forecast.
+    cost_inflation_rate: float = 0.0
+
+    def cost_index_for_year(self, year: int) -> float:
+        """Cumulative cost index, first year at 1.00."""
+        if self.cost_inflation_rate == 0.0 or year <= 1:
+            return 1.0
+        return (1.0 + self.cost_inflation_rate) ** (year - 1)
 
     # Optional demand anchor. When set, the reform is run at this annual
     # occupancy rather than at the management case's 31.36%. It exists so R6

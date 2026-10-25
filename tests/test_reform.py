@@ -291,3 +291,57 @@ def test_cabin_stretch_is_an_upside_case_not_the_base():
     assert CABINS_STRETCH.cabin_adr == pytest.approx(230.0, abs=0.01)
     assert CABINS_STRETCH.cabin_occupancy_mature == pytest.approx(0.55, abs=1e-9)
 
+
+def test_cabin_cost_inflation_with_flat_prices_wipes_the_gap():
+    stress = ENGINE.cost_inflation_stress()
+
+    assert stress["cost_inflation"].tolist() == [0.0, 0.02, 0.025, 0.03]
+    gaps = stress["net_gap_total_investment"].tolist()
+    assert gaps == sorted(gaps, reverse=True)
+    assert gaps[0] == pytest.approx(49_146.54, abs=0.05)
+    assert bool(stress.iloc[0]["passes_net_test"]) is True
+    assert all(not bool(flag) for flag in stress.iloc[1:]["passes_net_test"])
+    assert stress["dscr_y5"].is_monotonic_decreasing
+    # 2% real cost inflation with a flat ADR removes the entire 3.2% margin.
+    assert stress.iloc[1]["net_gap_total_investment"] == pytest.approx(
+        -142_818.60, abs=0.5
+    )
+    assert stress.iloc[1]["ebitda_y5"] < 0.9 * stress.iloc[0]["ebitda_y5"]
+
+
+def test_cabin_valuation_cross_check_exposes_the_development_spread():
+    valuation = ENGINE.valuation_cross_check()
+
+    assert valuation["implied_exit_multiple"] == pytest.approx(10.53, abs=0.01)
+    assert valuation["going_in_yield_on_cost"] == pytest.approx(0.1011, abs=1e-4)
+    assert valuation["break_even_cap_rate"] == pytest.approx(0.0980, abs=1e-4)
+    assert valuation["cap_rate_headroom_bp"] == pytest.approx(30.3, abs=0.5)
+    # At no cap compression the gap is exactly the exit-cost bill.
+    assert valuation["net_gap_at_no_compression"] == pytest.approx(
+        -46_222.80, abs=0.5
+    )
+    assert valuation["net_gap_at_no_compression"] < 0
+    table = valuation["exit_multiple_table"]
+    assert table["net_gap_total_investment"].tolist() == sorted(
+        table["net_gap_total_investment"].tolist()
+    )
+    assert table.iloc[0]["net_gap_total_investment"] < 0 < table.iloc[-1][
+        "net_gap_total_investment"
+    ]
+
+
+def test_cabin_distress_playbook_repays_the_lender_but_not_the_equity():
+    distress = ENGINE.distress_playbook()
+
+    assert distress["stance"] == "lender_repaid_equity_wiped"
+    assert distress["min_dscr"] == pytest.approx(0.79, abs=0.01)
+    assert distress["min_dscr_year"] == 1
+    assert distress["cumulative_shortfall"] == pytest.approx(4_577.04, abs=0.5)
+    # The DSRA is sized at six months of service, so it covers the Year-1 hole.
+    assert distress["dsra_six_months"] > distress["cumulative_shortfall"]
+    assert distress["lender_recovery"] >= 1.0
+    assert distress["equity_recovery"] < 0.25
+    # The loan is sized on years 2+, so the shortfall is a Year-1 liquidity event.
+    assert distress["annual"]["shortfall"].iloc[1:].sum() == 0
+
+

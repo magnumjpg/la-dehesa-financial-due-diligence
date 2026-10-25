@@ -757,7 +757,7 @@ class FinancialModelEngine:
             total_variable = float(variable["total_variable_costs"])
             gross_margin = round(rev["total_revenue"] - total_variable, 2)
 
-            incremental_payroll = (
+            incremental_payroll_nominal = (
                 round(
                     self.reform.incremental_fte
                     * self.reform.loaded_cost_per_fte,
@@ -771,9 +771,18 @@ class FinancialModelEngine:
                 if self.reform is not None
                 else 0.0
             )
+            cost_index = (
+                self.reform.cost_index_for_year(y)
+                if self.reform is not None
+                else 1.0
+            )
+            # The index is applied once to each cost line. The output column
+            # reports the indexed incremental payroll for transparency.
+            incremental_payroll = round(incremental_payroll_nominal * cost_index, 2)
             labor_cost = round(
-                (self.labor.total_annual_payroll + incremental_payroll)
-                * self.scenario.opex_multiplier,
+                (self.labor.total_annual_payroll + incremental_payroll_nominal)
+                * self.scenario.opex_multiplier
+                * cost_index,
                 2,
             )
             fixed_opex_cost = round(
@@ -781,7 +790,8 @@ class FinancialModelEngine:
                     0.0,
                     self.opex.total_fixed_opex - reform_cost_savings,
                 )
-                * self.scenario.opex_multiplier,
+                * self.scenario.opex_multiplier
+                * cost_index,
                 2,
             )
             total_opex = round(labor_cost + fixed_opex_cost, 2)

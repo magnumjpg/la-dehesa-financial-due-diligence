@@ -1009,6 +1009,183 @@ def export_institutional_excel(filename: str = "La_Dehesa_del_Castrillo_Financia
         )
         ws9.row_dimensions[r + 5 + offset].height = 28
 
+    # Section 10: valuation cross-check
+    r = 107
+    valuation = reform_engine.valuation_cross_check()
+    stress = reform_engine.cost_inflation_stress()
+    distress = reform_engine.distress_playbook()
+
+    ws9.cell(
+        row=r,
+        column=1,
+        value="10. R7 VALUATION CROSS-CHECK - DEVELOPMENT YIELD vs EXIT CAP",
+    ).font = bold_font
+    ws9.cell(
+        row=r + 1,
+        column=1,
+        value=(
+            "The positive gap is a development spread: the asset is built at a 10.1% yield on cost "
+            "and sold at a 9.5% cap. The break-even exit cap is only 30bp above the assumption; at "
+            "no compression the net gap is just the exit costs."
+        ),
+    ).font = Font(name="Calibri", size=10, italic=True, color="64748B")
+    ws9.cell(row=r + 1, column=1).alignment = Alignment(wrap_text=True, vertical="top")
+    ws9.merge_cells(start_row=r + 1, start_column=1, end_row=r + 1, end_column=14)
+    ws9.row_dimensions[r + 1].height = 40
+
+    valuation_rows = [
+        ("Development yield on cost", valuation["going_in_yield_on_cost"], "0.00%"),
+        ("Exit cap rate", valuation["exit_cap_rate"], "0.00%"),
+        ("Break-even exit cap (net of costs)", valuation["break_even_cap_rate"], "0.00%"),
+        ("Cap-rate headroom (bp)", valuation["cap_rate_headroom_bp"], "0.0"),
+        ("No-compression net gap (EUR)", valuation["net_gap_at_no_compression"], "#,##0"),
+        ("Break-even EBITDA, net (EUR)", valuation["break_even_ebitda_net"], "#,##0"),
+        ("EBITDA headroom (EUR)", valuation["ebitda_headroom"], "#,##0"),
+        ("Implied exit multiple", valuation["implied_exit_multiple"], "0.00x"),
+    ]
+    for offset, (label, value, fmt) in enumerate(valuation_rows, start=2):
+        label_cell = ws9.cell(row=r + offset, column=1, value=label)
+        label_cell.font = regular_font
+        label_cell.border = thin_border
+        value_cell = ws9.cell(row=r + offset, column=2, value=value)
+        value_cell.font = regular_font
+        value_cell.border = thin_border
+        value_cell.number_format = fmt
+
+    multiple_header = r + 11
+    for col_idx, label in enumerate(
+        ("Exit multiple", "EV (EUR)", "Net exit value (EUR)", "Net gap vs total inv. (EUR)"),
+        start=1,
+    ):
+        cell = ws9.cell(row=multiple_header, column=col_idx, value=label)
+        cell.fill = navy_fill
+        cell.font = header_font
+        cell.alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
+    for offset, (_, row) in enumerate(
+        valuation["exit_multiple_table"].iterrows(), start=1
+    ):
+        ws9.cell(row=multiple_header + offset, column=1, value=row["exit_multiple"]).number_format = "0.0x"
+        ws9.cell(row=multiple_header + offset, column=2, value=row["ev"]).number_format = "#,##0"
+        ws9.cell(row=multiple_header + offset, column=3, value=row["net_exit_value"]).number_format = "#,##0"
+        gap_cell = ws9.cell(
+            row=multiple_header + offset,
+            column=4,
+            value=row["net_gap_total_investment"],
+        )
+        gap_cell.number_format = "#,##0"
+        gap_cell.fill = PatternFill(
+            start_color="D1FAE5" if row["net_gap_total_investment"] > 0 else "FEE2E2",
+            end_color="D1FAE5" if row["net_gap_total_investment"] > 0 else "FEE2E2",
+            fill_type="solid",
+        )
+        for col_idx in range(1, 5):
+            ws9.cell(row=multiple_header + offset, column=col_idx).font = regular_font
+            ws9.cell(row=multiple_header + offset, column=col_idx).border = thin_border
+
+    # Section 11: cost-inflation stress
+    r = multiple_header + 6
+    ws9.cell(
+        row=r,
+        column=1,
+        value="11. R7 COST-INFLATION STRESS - REAL COST GROWTH, FLAT REAL PRICES",
+    ).font = bold_font
+    stress_cols = [
+        ("cost_inflation", "Cost inflation / yr"),
+        ("ebitda_y5", "EBITDA Y5 (EUR)"),
+        ("ebitda_margin_y5", "EBITDA margin"),
+        ("dscr_y5", "DSCR Y5"),
+        ("ev_cap_rate", "EV (EUR)"),
+        ("net_gap_total_investment", "Net gap vs total inv. (EUR)"),
+        ("project_npv", "Project NPV (EUR)"),
+        ("project_irr_exit", "Project IRR"),
+        ("passes_net_test", "Net test"),
+    ]
+    for col_idx, (_, label) in enumerate(stress_cols, start=1):
+        cell = ws9.cell(row=r + 1, column=col_idx, value=label)
+        cell.fill = navy_fill
+        cell.font = header_font
+        cell.alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
+    for offset, (_, row) in enumerate(stress.iterrows(), start=2):
+        for col_idx, (key, _) in enumerate(stress_cols, start=1):
+            value = row[key]
+            if key == "passes_net_test":
+                value = "PASS" if bool(value) else "FAIL"
+            elif key == "project_irr_exit":
+                value = "n/a" if value is None or pd.isna(value) else float(value)
+            cell = ws9.cell(row=r + offset, column=col_idx, value=value)
+            cell.font = regular_font
+            cell.border = thin_border
+            if key == "cost_inflation":
+                cell.number_format = "0.0%"
+            elif key == "ebitda_margin_y5":
+                cell.number_format = "0.0%"
+            elif key == "dscr_y5":
+                cell.number_format = "0.00x"
+            elif key == "project_irr_exit" and isinstance(value, float):
+                cell.number_format = "0.00%"
+            elif key in ("ebitda_y5", "ev_cap_rate", "net_gap_total_investment", "project_npv"):
+                cell.number_format = "#,##0"
+            if key == "passes_net_test":
+                cell.fill = PatternFill(
+                    start_color="D1FAE5" if value == "PASS" else "FEE2E2",
+                    end_color="D1FAE5" if value == "PASS" else "FEE2E2",
+                    fill_type="solid",
+                )
+
+    # Section 12: distress playbook
+    r = r + 7
+    ws9.cell(row=r, column=1, value="12. R7 DISTRESS PLAYBOOK (DOWNSIDE CASE)").font = bold_font
+    verdict_cell = ws9.cell(row=r + 1, column=1, value=distress["verdict"])
+    verdict_cell.font = Font(name="Calibri", size=11, bold=True, color="BE123C")
+    verdict_cell.alignment = Alignment(wrap_text=True, vertical="top")
+    ws9.merge_cells(start_row=r + 1, start_column=1, end_row=r + 1, end_column=14)
+    ws9.row_dimensions[r + 1].height = 32
+
+    playbook_rows = [
+        ("Minimum DSCR / year", f"{distress['min_dscr']:.2f}x in Year {distress['min_dscr_year']}"),
+        ("Cumulative CFADS shortfall (EUR)", distress["cumulative_shortfall"]),
+        ("Equity cure to 1.25x DSCR (EUR)", distress["equity_cure_to_125x"]),
+        ("Six-month DSRA (EUR)", distress["dsra_six_months"]),
+        ("Net exit value (EUR)", distress["net_exit_value"]),
+        ("Debt outstanding at exit (EUR)", distress["ending_debt"]),
+        ("Lender recovery", distress["lender_recovery"]),
+        ("Equity at exit (EUR)", distress["equity_at_exit"]),
+        ("Equity invested (EUR)", distress["equity_invested"]),
+        ("Equity recovery", distress["equity_recovery"]),
+    ]
+    for offset, (label, value) in enumerate(playbook_rows, start=3):
+        label_cell = ws9.cell(row=r + offset, column=1, value=label)
+        label_cell.font = regular_font
+        label_cell.border = thin_border
+        value_cell = ws9.cell(row=r + offset, column=2, value=value)
+        value_cell.font = regular_font
+        value_cell.border = thin_border
+        if isinstance(value, float) and label.startswith(("Lender", "Equity recovery")):
+            value_cell.number_format = "0.0%"
+        elif isinstance(value, (int, float)):
+            value_cell.number_format = "#,##0"
+
+    annual_header = r + len(playbook_rows) + 4
+    for col_idx, label in enumerate(
+        ("Year", "CFADS (EUR)", "Debt service (EUR)", "Shortfall (EUR)", "DSCR", "Ending cash (EUR)"),
+        start=1,
+    ):
+        cell = ws9.cell(row=annual_header, column=col_idx, value=label)
+        cell.fill = navy_fill
+        cell.font = header_font
+        cell.alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
+    for offset, (_, row) in enumerate(distress["annual"].iterrows(), start=1):
+        for col_idx, key in enumerate(
+            ("year", "cfads", "debt_service", "shortfall", "dscr", "ending_cash"),
+            start=1,
+        ):
+            value = row[key]
+            value = int(value) if key == "year" else float(value)
+            cell = ws9.cell(row=annual_header + offset, column=col_idx, value=value)
+            cell.font = regular_font
+            cell.border = thin_border
+            cell.number_format = "0" if key == "year" else ("0.00x" if key == "dscr" else "#,##0")
+
     # Add the live, formula-driven tabs (Inputs, Live Model, Funding & Audit, Read Me)
     add_live_model_tabs(wb, engine, df_proj, df_kpi, debt_sched)
 

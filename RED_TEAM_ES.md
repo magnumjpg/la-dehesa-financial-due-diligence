@@ -1,4 +1,4 @@
-# Red team: quince ataques al modelo de la Dehesa del Castrillo
+# Red team: diecisiete ataques al modelo de la Dehesa del Castrillo
 
 **Propósito.** Este memo es la contraparte adversarial del caso de inversión. Asume que el lector cobra por encontrar el punto más débil del modelo, no por aprobarlo. Cada ataque va seguido de lo que el libro dice realmente, lo que concedo y lo que sigue sin resolverse.
 
@@ -191,6 +191,26 @@ R7 es la única configuración del libro que supera a la vez el WACC y el test n
 
 **Riesgo residual.** Los 250 k€ son un valor de oportunidad interno, no una tasación. Una valoración formal podría moverlo en cualquier dirección, y con ella el tamaño del gap.
 
+## Ataque 16: "Todo tu gap de +49 k€ son 30 puntos básicos de compresión de cap rate."
+
+**Por qué duele.** El yield on cost de desarrollo es 10,11% y el cap de salida es 9,50%. El cap de equilibrio es 9,80%, así que el caso pasa por 30 pb. Sin compresión, el gap neto es -46.223 €, que es exactamente la factura de costes de salida del 3%. El "beneficio" es el diferencial entre lo que cuesta construir y el cap al que se vende.
+
+**Qué dice el modelo.** El contraste de valoración muestra el yield on cost, el cap de equilibrio y el caso sin compresión junto al gap titular. La tabla de múltiplos es explícita: a 9,0x el gap neto es -181.390 €, a 10,5x es +45.172 € y a 12,0x es +271.733 €. La base está en 10,53x, así que necesita que la salida ocurra a un yield más ajustado que el que implica el coste de construcción.
+
+**Respuesta.** El gap se etiqueta como diferencial de desarrollo, no como creación de valor operativo. El cap de salida del 9,5% ya es el caso central, no uno agresivo, y el gate de Fase 0 incluye una opinión de tasador local antes de comprometer capital de construcción. Si el tasador confirma 9,8% o mejor, el caso sobrevive; si no, no.
+
+**Riesgo residual.** Los cap rates de la Segovia rural para una operación de seis llaves podrían estar en 10,0-10,5%. Al 10,5% R7 falla incluso con la cabaña a 110 k€, y ningún ADR arregla un problema de cap rate.
+
+## Ataque 17: "Modelas cinco años de costes planos. ¿Dónde está la inflación?"
+
+**Por qué duele.** La nómina, la energía y el mantenimiento no se quedan planos cinco años. Si los costes reales crecen un 2% anual mientras el ADR se queda plano, el gap neto cae de +49.147 € a -142.819 €. Al 2,5% es -192.609 € y al 3% es -243.134 €. La base no tiene margen para un diferencial real coste-precio.
+
+**Qué dice el modelo.** Las capas de reforma y R7 están en euros constantes de 2026 en ambos lados: ADR, nómina y OPEX planos. Es internamente coherente y está declarado. El stress de inflación rompe la simetría a propósito para aislar la compresión de margen, porque un modelo nominal completo necesitaría ingresos indexados y un WACC nominal; indexar solo los ingresos inflaría el valor terminal frente a un CapEx gastado en t=0.
+
+**Respuesta.** El stress se reporta como escenario, no como previsión, y la conclusión base no depende de que los costes se queden planos para siempre. El gate de Fase 0 debería incluir una cotización de nómina y energía, y la familia debería tratar el margen del 3,2% como contingente a mantener la base real de costes.
+
+**Riesgo residual.** Si la nómina y la energía superan al ADR en un 2% anual, R7 falla con cualquier coste de cabaña dentro del corredor. Es un problema estructural de margen, no de construcción.
+
 ---
 
 ## Qué cambiaría el veredicto
@@ -203,7 +223,7 @@ El decline es robusto a los ataques anteriores, pero no es infalsificable. Tres 
 
 Aun con las tres, R2 necesitaría un cap rate por debajo de aproximadamente 7,2% para superar el test de inversión total con 71.321 € de EBITDA. Eso no es un cap rate de la Segovia rural. La conclusión honesta es que el proyecto es una **opción de Fase 0**, no un proyecto de construcción.
 
-Para R7 la lista es distinta y más estrecha: una temporada de Fase 0 firmada con 45% de ocupación, 190 € de ADR realizado, ocho cubiertos externos al día y 25 k€ de experiencias, más una oferta vinculante de cabaña all-in a 110 k€ o menos. Si falla el gate de ocupación, el caso muere independientemente del ADR; si falla el de coste, la respuesta es menos cabañas o un restaurante más pequeño, no un precio más alto.
+Para R7 la lista es distinta y más estrecha: una temporada de Fase 0 firmada con 45% de ocupación, 190 € de ADR realizado, ocho cubiertos externos al día y 25 k€ de experiencias, más una oferta vinculante de cabaña all-in a 110 k€ o menos. Si falla el gate de ocupación, el caso muere independientemente del ADR; si falla el de coste, la respuesta es menos cabañas o un restaurante más pequeño, no un precio más alto. Hay dos condiciones más, ya explícitas: una opinión de tasador con cap de salida igual o inferior al 9,8%, y un diferencial real coste-precio no peor que el 1% anual.
 
 ---
 
@@ -218,5 +238,6 @@ Para R7 la lista es distinta y más estrecha: una temporada de Fase 0 firmada co
 - La sensibilidad de tipos es una re-ejecución a tipo fijo, no un modelo de refinanciación.
 - Los 45 k€ de experiencias de R7 no tienen programa firmado, solo un build-up.
 - El coste all-in de 110 k€ por cabaña de R7 es un benchmark, no una oferta de contratista.
+- R7 pasa por 30 pb de diferencial de cap rate y por una base de costes real plana; ambas son supuestos, no evidencia.
 
 Estas cuestiones aparecen en la sección de limitaciones del README. No están escondidas en un apéndice.

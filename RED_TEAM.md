@@ -1,4 +1,4 @@
-# Red team: fifteen attacks on the Dehesa del Castrillo model
+# Red team: seventeen attacks on the Dehesa del Castrillo model
 
 **Purpose.** This memo is the adversarial counterpart to the investment case. It assumes the reader is paid to find the weakest point in the model, not to approve it. Each attack is followed by what the workbook actually says, what I would concede, and what is still unresolved.
 
@@ -191,6 +191,26 @@ R7 is the only configuration in the workbook that clears both the WACC and the n
 
 **Residual risk.** The €250k is an internal opportunity value, not an appraisal. A formal valuation could move it in either direction, and with it the size of the gap.
 
+## Attack 16: "Your entire +€49k gap is 30 basis points of cap compression."
+
+**Why it bites.** The development yield on cost is 10.11% and the exit cap is 9.50%. The break-even exit cap is 9.80%, so the case clears by 30bp. At no compression the net gap is -€46,223, which is exactly the 3% exit-cost bill. The "profit" is the spread between what it costs to build and the cap rate at which it is sold.
+
+**What the model says.** The valuation cross-check reports the yield on cost, the break-even cap and the no-compression case next to the headline gap. The multiple table is explicit: at 9.0x the net gap is -€181,390, at 10.5x it is +€45,172 and at 12.0x it is +€271,733. The base sits at 10.53x, so it needs the exit to happen at a tighter yield than the build cost implies.
+
+**Response.** The gap is labelled as a development spread, not as operating value creation. The 9.5% exit cap is already the central case, not an aggressive one, and the Phase 0 gate includes a local valuer's opinion before any construction capital is committed. If the valuer clears 9.8% or better, the case survives; if not, it does not.
+
+**Residual risk.** Rural Segovia cap rates for a six-key cabin operation could sit at 10.0-10.5%. At 10.5% R7 fails even with a €110k cabin, and no amount of ADR fixes a cap-rate problem.
+
+## Attack 17: "You model five years of flat costs. Where is inflation?"
+
+**Why it bites.** Payroll, energy and maintenance do not stay flat for five years. If real costs grow 2% a year while the ADR stays flat, the net gap falls from +€49,147 to -€142,819. At 2.5% it is -€192,609 and at 3% it is -€243,134. The base has no room for a real cost-price gap.
+
+**What the model says.** The reform and R7 layers are in constant 2026 euros on both sides: ADR, payroll and OPEX are flat. That is internally consistent, and it is disclosed. The cost-inflation stress deliberately breaks the symmetry to isolate the margin squeeze, because a full nominal model would need indexed revenue and a nominal WACC; indexing revenue alone would flatter the terminal value against a CapEx spent at t=0.
+
+**Response.** The stress is reported as a scenario, not a forecast, and the base conclusion is not allowed to depend on costs staying flat forever. The Phase 0 gate should include a payroll and energy quote, and the family should treat the 3.2% margin as contingent on holding the real cost base.
+
+**Residual risk.** If payroll and energy outrun ADR by 2% a year, R7 fails at any cabin cost in the corridor. That is a structural margin problem, not a construction problem.
+
 ---
 
 ## What would change the verdict
@@ -203,7 +223,7 @@ The decline is robust to the attacks above, but it is not unfalsifiable. Three p
 
 Even with all three, R2 would still need a cap rate below roughly 7.2% to clear the total-investment test at €71,321 of EBITDA. That is not a rural Segovia cap rate. The honest conclusion is that the project is a **Phase 0 option**, not a construction project.
 
-For R7 the list is different and narrower: a signed Phase 0 season at 45% occupancy, €190 realised ADR, eight external covers a day and €25k of experiences, plus a binding all-in cabin quote at or below €110k. If the occupancy gate fails, the case is dead regardless of the ADR; if the cost gate fails, the answer is fewer cabins or a smaller restaurant, not a higher price.
+For R7 the list is different and narrower: a signed Phase 0 season at 45% occupancy, €190 realised ADR, eight external covers a day and €25k of experiences, plus a binding all-in cabin quote at or below €110k. If the occupancy gate fails, the case is dead regardless of the ADR; if the cost gate fails, the answer is fewer cabins or a smaller restaurant, not a higher price. Two further conditions are now explicit: a valuer's exit cap at or below 9.8%, and a real cost-price gap no worse than 1% a year.
 
 ---
 
@@ -218,5 +238,6 @@ For R7 the list is different and narrower: a signed Phase 0 season at 45% occupa
 - The rate sensitivity is a fixed-rate re-run, not a refinancing model.
 - R7's €45k experience revenue has no signed programme, only a build-up.
 - R7's €110k all-in cabin cost is a benchmark, not a contractor quote.
+- R7 passes on a 30bp cap-rate spread and a flat real cost base; both are assumptions, not evidence.
 
 These are listed in the README's limitations section. They are not hidden in an appendix.

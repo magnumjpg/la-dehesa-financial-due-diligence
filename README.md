@@ -3,7 +3,7 @@
 ### Hospitality Feasibility, Senior Debt Underwriting & Computed Due Diligence
 
 **A portfolio-grade financial model built from my own university feasibility study.**
-Python 3.11 · 65 automated tests · 16-rule computed audit · 13-tab Excel model · 8 figures · 15-step pipeline
+Python 3.11 · 68 automated tests · 16-rule computed audit · 13-tab Excel model · 8 figures · 15-step pipeline
 
 [![tests](https://github.com/magnumjpg/la-dehesa-financial-due-diligence/actions/workflows/tests.yml/badge.svg)](https://github.com/magnumjpg/la-dehesa-financial-due-diligence/actions/workflows/tests.yml)
 ![Python 3.11](https://img.shields.io/badge/python-3.11-blue)
@@ -15,7 +15,7 @@ Python 3.11 · 65 automated tests · 16-rule computed audit · 13-tab Excel mode
 
 **The asset.** A 25-hectare rural estate in Segovia: 7 double rooms, one full country house, a 21-cover restaurant and a natural swimming biopool. It started as my university feasibility study.
 
-**What I built.** Three as-is cases (promoter, INE market, management), a full cost stack, sources and uses, a 20-year amortising facility, a computed 16-rule audit, a live-formula Excel workbook, 65 tests and eight figures.
+**What I built.** Three as-is cases (promoter, INE market, management), a full cost stack, sources and uses, a 20-year amortising facility, a computed 16-rule audit, a live-formula Excel workbook, 68 tests and eight figures.
 
 **The answer is no.** The management case fails the 1.25x DSCR covenant in Year 2 at **1.15x**, needs **49.6% cash equity** instead of the planned 30%, and returns a project IRR of **-9.49%** even with an 8.5% exit. The credit recommendation is **DECLINE AS STRUCTURED (RESIZE REQUIRED)**.
 
@@ -33,7 +33,7 @@ Python 3.11 · 65 automated tests · 16-rule computed audit · 13-tab Excel mode
 |---|---|---|
 | **5 min** | [The 60-second version](#the-60-second-version) + [Section 3](#3-the-findings-that-matter) | The verdict and the eleven findings that drive it |
 | **15 min** | Add [Section 6](#6-demand-calibration-ine-promoter-and-management) and [Section 13](#13-reform--resize-what-would-have-to-be-true) | Why 31.36% occupancy is defensible, and why the reform still fails |
-| **30 min** | Add [Section 9](#9-returns-the-exit-does-not-rescue-the-realistic-cases) and [Section 14](#14-red-team-fifteen-attacks-on-my-own-model) | The returns, the net exit test and my own fifteen attacks on the model |
+| **30 min** | Add [Section 9](#9-returns-the-exit-does-not-rescue-the-realistic-cases) and [Section 14](#14-red-team-seventeen-attacks-on-my-own-model) | The returns, the net exit test and my own seventeen attacks on the model |
 | **Full** | All 20 sections + the Excel workbook | The complete audit trail, formulas and limitations |
 
 > **The one-paragraph version.** The realistic model reaches a harsher conclusion than the original university work. Once the full cost stack, construction interest, debt amortisation, OPEX, FF&E reserve and the equity plug are modelled, the management case fails the covenant, the market case never covers its debt service, and neither earns its cost of capital. The audit is deliberately allowed to fail: **10 of 16 rules pass, 5 material exceptions and 1 warning remain open**, verdict `CONDITIONAL - 5 MATERIAL EXCEPTION(S)`. A separate reform layer is allowed to say no as well, and it does: it fixes the covenant but not the value gap. The last layer (R7) changes the product to six premium cabins and is the only configuration that clears both the WACC and the net total-investment test — by 3.2%, and only at €110k per cabin.
@@ -431,7 +431,7 @@ Without the grant the project loses a further €119,838 of value and needs more
 
 ### 13.4 What would falsify the reform
 
-The reform is a set of assumptions, not a forecast. The [red team](#14-red-team-fifteen-attacks-on-my-own-model) lists the fifteen attacks I would expect from a credit committee and how each one is answered. The three that would change the conclusion fastest are: external covers below four per day, weekend occupancy materially below 72%, and a construction quote above €1.05M. Any one of them moves R2 from "negative but close" to "clearly unviable".
+The reform is a set of assumptions, not a forecast. The [red team](#14-red-team-seventeen-attacks-on-my-own-model) lists the seventeen attacks I would expect from a credit committee and how each one is answered. The three that would change the conclusion fastest are: external covers below four per day, weekend occupancy materially below 72%, and a construction quote above €1.05M. Any one of them moves R2 from "negative but close" to "clearly unviable".
 
 **Reform recommendation:** `DECLINE AS STRUCTURED - ONLY THE AGGRESSIVE, UNPROVEN DEMAND CASE CLEARS THE WACC`.
 
@@ -439,11 +439,13 @@ The honest continuation is a low-cost **Phase 0 demand test**: prove the externa
 
 **Next layer: R7 (cabins and agritourism).** The R2-R6 reform fixes the credit but not the value. The remaining question is whether a different product — five or six two-bedroom cabins plus the main house — could clear it. [BENCHMARKS_R7_ES.md](BENCHMARKS_R7_ES.md) fixes the band: €180-210 ADR, 45-55% stabilised occupancy, €110-150k per cabin all-in and a 9.5% exit cap. R7 is implemented as a separate preset (`CABIN_PRESETS`), not a fourth as-is case. The base case — six cabins at €110k, €200 ADR, 50% occupancy, ten external covers and €45k of experiences — produces €155,713 of mature EBITDA, **+€49,147 of net value gap on €1,540,760 of total investment (3.2%)**, a 1.41x minimum DSCR, +€76,416 NPV and a 9.21% IRR. It clears, but only at the good edge of the corridor: at €120k per cabin the same case fails by -€19,263, and the downside (five cabins, €190, 45%) collapses to a 0.79x DSCR and -€988,767. The recommendation is therefore **proceed to a Phase 0 demand test only**, not to construction.
 
+**Three robustness tests now sit under that margin.** The valuation cross-check shows that the +€49k is a development spread: a 10.11% yield on cost against a 9.50% exit cap. The break-even exit cap is 9.80%, only 30bp higher, and with no cap compression the net gap is -€46,223, which is exactly the exit-cost bill. The cost-inflation stress shows that 2% real cost growth with flat prices turns +€49,147 into -€142,819; at 2.5% it is -€192,609. And the distress playbook on the downside shows the lender is repaid on a sale (143% recovery) while the equity recovers only 17.7% of €1.11M — a demand failure that a cash cure should not be thrown at. The full detail is in the `Reform Case` tab and `data/reform_analysis.json`.
+
 ---
 
-## 14. Red team: fifteen attacks on my own model
+## 14. Red team: seventeen attacks on my own model
 
-A model that only survives friendly questions is not a model. These are the fifteen attacks I would make if I were paid to break this one, and what the workbook actually says. The long-form memo is in [RED_TEAM.md](RED_TEAM.md).
+A model that only survives friendly questions is not a model. These are the ten attacks I would make first if I were paid to break this one, and what the workbook actually says. The long-form memo lists all seventeen in [RED_TEAM.md](RED_TEAM.md).
 
 **1. "31.36% is 48% above the INE average. You invented the demand."**
 Fair, and the audit says the same (Rule 10 fails at 1.48x). The bridge is the answer: 72% weekends, 65% bridges and 10.1% midweek, with 68% of the 10.1 pp gap coming from weekend capture. It is a premium weekend story, not a seven-day market, and it remains an upside case. **Verdict: weakens the base case, but it is disclosed and tested; the market case is the downside anchor.**
@@ -504,7 +506,7 @@ The audit is computed from the model, not hand-written. It is allowed to fail.
 
 **Verdict:** `CONDITIONAL - 5 MATERIAL EXCEPTION(S)`.
 
-The five material exceptions are management DSCR, Phase II self-funding, returns versus WACC, market DSCR and the equity requirement. The warning is the management occupancy assumption (1.48x the INE average). The audit JSON is exported to `data/model_audit_summary.json` (schema 4.0.0) and the same rules are reproduced in the Excel `Funding & Audit` tab.
+The five material exceptions are management DSCR, Phase II self-funding, returns versus WACC, market DSCR and the equity requirement. The warning is the management occupancy assumption (1.48x the INE average). All six are deal findings, not formula errors; the disposition of each is in [MODEL_GOVERNANCE.md](MODEL_GOVERNANCE.md). The audit JSON is exported to `data/model_audit_summary.json` (schema 4.0.0) and the same rules are reproduced in the Excel `Funding & Audit` tab.
 
 ---
 
@@ -530,7 +532,7 @@ The workbook has **13 tabs** and **2,060 live formulas**:
 
 The `Live Model` is intentionally simple and transparent: revenue is a formula linked to `Inputs`, debt comes from `Debt Schedule`, and the checks compare the live output with Python. The debt tab reproduces the monthly `ROUND` of the Python engine, so the Year-2 service is €27,647.64 and the loan closes at zero in Month 240.
 
-The formulas have been validated with an independent Python calculation engine: revenue €154,548, EBITDA €24,280, Year-2 DSCR 1.1534x, Year-1 cash €20,700.89, Year-2 cash €183,322.65 and balance-sheet discrepancy €0.00 all match within the €1 / 0.01x checks. The `Read Me & Checks` tab correctly shows the covenant check as `FAIL`; the `Funding & Audit` tab is allowed to show `FAIL`. That is the audit working as intended.
+The formulas have been validated with an independent Python calculation engine: revenue €154,548, EBITDA €24,280, Year-2 DSCR 1.1534x, Year-1 cash €20,700.88, Year-2 cash €183,322.64 and balance-sheet discrepancy €0.00 all match within the €1 / 0.01x checks. The `Read Me & Checks` tab correctly shows the covenant check as `FAIL`; the `Funding & Audit` tab is allowed to show `FAIL`. That is the audit working as intended.
 
 The report tabs are Python snapshots and do not recalculate. Open the workbook in Excel or LibreOffice to see the live formulas evaluate.
 
@@ -542,7 +544,8 @@ The report tabs are Python snapshots and do not recalculate. Open the workbook i
 proyecto-dehesa-del-castrillo/
 ├── main.py                       # 15-step pipeline
 ├── README.md / README_ES.md
-├── RED_TEAM.md / RED_TEAM_ES.md # fifteen attacks on the model and the responses
+├── RED_TEAM.md / RED_TEAM_ES.md # seventeen attacks on the model and the responses
+├── MODEL_GOVERNANCE.md / MODEL_GOVERNANCE_ES.md # model map, assumptions log, exception disposition
 ├── BENCHMARKS_R7_ES.md          # evidence note for the R7 cabin / agritourism case (Spanish)
 ├── requirements.txt
 ├── .github/workflows/tests.yml   # CI: test suite + pipeline
@@ -575,7 +578,7 @@ proyecto-dehesa-del-castrillo/
 │   │   └── copula_engine.py      # Gaussian / Student-t / Clayton
 │   └── visualization/
 │       └── charts.py             # Eight institutional figures
-├── tests/                        # 12 files, 65 tests
+├── tests/                        # 11 files, 68 tests
 ├── raw_data/                     # Source workbooks for the reconciliation
 ├── data/                         # Excel model, audit JSON and reform JSON
 └── assets/                       # figure_*.png
@@ -596,7 +599,7 @@ python main.py
 # Skip chart generation
 python main.py --no-charts
 
-# Test suite (65 tests)
+# Test suite (68 tests)
 python -m pytest tests/ -q
 ```
 
@@ -604,6 +607,7 @@ python -m pytest tests/ -q
 
 - `data/La_Dehesa_del_Castrillo_Financial_Model.xlsx`: 13 tabs, 2,060 formulas.
 - `data/model_audit_summary.json`: computed audit, schema 4.0.0.
+- `MODEL_GOVERNANCE.md` / `MODEL_GOVERNANCE_ES.md`: model map, conventions, assumption log, audit-exception disposition and change control.
 - `data/reform_analysis.json`: R1-R6 presets, value bridge, frontier, stress cases, the R7 cabin presets and cost ladder, and both recommendations.
 - `assets/figure_*.png`: eight institutional charts.
 
