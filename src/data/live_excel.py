@@ -345,7 +345,7 @@ def build_readme(wb, st: Dict[str, Any], case_facts: Dict[str, Dict[str, Any]], 
     ws["A1"].font = st["title"]
     ws["A2"] = (
         "A live, formula-driven management case alongside the independent INE market case "
-        "and a faithful replication of the original promoter simulator."
+        "and a re-modelled promoter case calibrated to the presentation headline."
     )
     ws["A2"].font = st["note"]
 
@@ -392,12 +392,12 @@ def build_readme(wb, st: Dict[str, Any], case_facts: Dict[str, Dict[str, Any]], 
             "Independent benchmark: EBITDA is negative in Year 1 and does not cover debt service.",
         ),
         (
-            "Promoter (original Excel)",
+            "Promoter (re-modelled)",
             f"{PROMOTER_OCCUPANCY * 100:.2f}%",
             case_facts["promoter"]["revenue_y1"],
             case_facts["promoter"]["ebitda_y1"],
             case_facts["promoter"]["dscr_y1"],
-            "Faithful replication of the author's original university simulator.",
+            "Re-modelled from the presentation headline; not a replication (README section 2).",
         ),
     ]
     for r, row in enumerate(cases, start=22):
@@ -461,8 +461,9 @@ def build_readme(wb, st: Dict[str, Any], case_facts: Dict[str, Dict[str, Any]], 
             f"(EUR {case_facts['market']['ebitda_y1']:,.2f}) and its DSCR is {case_facts['market']['dscr_y1']:.2f}x."
         ),
         (
-            "The original promoter case (19.2%) replicates the author's university Excel "
-            "(EUR 86,275 revenue / EUR 11,297 EBITDA) and is structurally insolvent at the debt service level."
+            "The promoter case (19.2%) is re-modelled to the presentation's headline pair "
+            "(EUR 86,275 revenue / EUR 11,297 EBITDA) and is structurally insolvent at the debt "
+            "service level. It is not a replication of the source workbooks."
         ),
         (
             "Phase II needs EUR "
@@ -584,7 +585,7 @@ def build_inputs(wb, engine: FinancialModelEngine, df_proj, st: Dict[str, Any]) 
         ("Cash equity (plug)", engine.cash_equity, "money", "EUR", "Closes the structure; 49.6% of CapEx"),
         ("Total equity at close", engine.total_equity_at_close, "money", "EUR", "Cash equity + land in kind"),
         ("INE market occupancy", get_market_occupancy(), "pct", "%", "INE EOTR Segovia 2025 (reference only)"),
-        ("Promoter occupancy", PROMOTER_OCCUPANCY, "pct", "%", "Original Excel (491 / 2,555 room-nights)"),
+        ("Promoter occupancy", PROMOTER_OCCUPANCY, "pct", "%", "Promoter case (491 room-nights in Year 1)"),
         ("Committed revolver limit", engine.financing.credit_line_limit, "money", "EUR", "Seasonal liquidity backstop"),
     ]
 
@@ -627,8 +628,8 @@ def build_inputs(wb, engine: FinancialModelEngine, df_proj, st: Dict[str, Any]) 
         ),
         (
             "Promoter",
-            "19.20% occupancy, 491 room-nights, 72 house-nights, 859 meals at EUR 20, 4.5% / 25-year debt, "
-            "no grant and the original EUR 729k cost base. Replicates the original university Excel exactly.",
+            "19.20% occupancy, 491 room-nights, 72 house-nights, 859 covers at EUR 20, 4.5% / 25-year debt, "
+            "no grant and the original EUR 725k cost base. Re-modelled, not replicated: see README section 2.",
         ),
     ]
     for r, (name, text) in enumerate(definitions, start=51):

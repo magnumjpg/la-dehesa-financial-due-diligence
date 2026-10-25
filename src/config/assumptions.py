@@ -13,9 +13,12 @@ This module formalizes institutional parameters for:
    construction/grace period, minimum DSCR).
 
 The management and market cases use the realistic 2026 cost structure. The
-promoter case intentionally keeps the original university simulator's cost
-basis so that the replication test remains a genuine reconciliation of the
-author's own Excel, not a restatement of it.
+promoter case keeps the original simulator's demand drivers and financing
+structure, but it is a re-modelling calibrated to the presentation's headline
+figures, not a replication of either source workbook: the workbooks disagree
+with each other on Year-1 revenue and the EUR 11,297 EBITDA has no build-up.
+README section 2 reconciles the four revenue figures and the two EBITDA
+figures the source contains.
 """
 
 from dataclasses import dataclass, field, replace
@@ -52,9 +55,9 @@ class CapExStructure:
     infrastructure, professional fees (6% of works) and a 5% contingency.
 
     Land is non-depreciable and, in the management/market cases, is contributed
-    in kind by the sponsor. The promoter case uses the original EUR 729k budget
-    and purchases the land, so that its cash flow still replicates the original
-    university Excel.
+    in kind by the sponsor. The promoter case uses the original EUR 725k budget
+    and purchases the land, which is the financing structure the original
+    university Excel assumed.
     """
     land: CapExAsset = CapExAsset(
         name="Terreno (25 ha en Segovia)",
@@ -173,7 +176,7 @@ class CapExStructure:
 
     @classmethod
     def original_promoter(cls) -> "CapExStructure":
-        """The exact EUR 729k budget used by the original university Excel."""
+        """The original EUR 725k budget: land 250k + works 440k + biopool 35k."""
         return cls(
             renovation=CapExAsset(
                 name="Reforma Integral (550 m2 civil works)",
@@ -410,7 +413,9 @@ class FixedOpexStructure:
     restaurant, a biopool and 25 ha of grounds. The realistic schedule below
     totals EUR 30,500 and includes property tax, accounting/legal support,
     waste and a maintenance contract. The promoter case overrides it with the
-    original cost lines so that the replication test remains exact.
+    source's own four cost lines (maintenance, insurance, utilities and
+    purchases), which with the realistic payroll produce the presentation's
+    EUR 11,297 EBITDA.
     """
     maintenance: float = 6_000.0
     insurance: float = 2_500.0
@@ -485,7 +490,11 @@ class RevenueModelConfig:
 
     calibration_mode: str = "ine_market"
 
-    # Original promoter simulator.
+    # Promoter case: volumes and prices behind the presentation's EUR 86,275.
+    # The source cell `Plan de Negocio!B19` prices the restaurant at EUR 25;
+    # the EUR 20 ticket is the one that reproduces the deck's revenue, so the
+    # purchases line below (EUR 6,444) is costed at a different ticket from
+    # the revenue it supports. README section 2 documents the mismatch.
     promoter_room_nights_y1: int = 491
     promoter_house_nights_y1: int = 72
     promoter_meals_y1: int = 859

@@ -19,7 +19,7 @@ El estado es **reproducible y auditado**, sin revisión de terceros. La auditor�
 | `model_audit.py` | 16 reglas calculadas y JSON de auditoría. |
 | `funding.py`, `metrics.py`, `expansion.py`, `monthly_cash.py` | Fuentes y usos, DSCR/TIR/VAN, gate de Fase II y liquidez mensual. |
 | `export_excel.py`, `live_excel.py` | Libro de 13 pestañas y 2.060 fórmulas. |
-| `tests/`, `data/*.json`, `data/*.xlsx` | 68 tests y salidas; el Excel y los JSON no son fuente de verdad. |
+| `tests/`, `data/*.json`, `data/*.xlsx` | 73 tests y salidas; el Excel y los JSON no son fuente de verdad. |
 
 ## 3. Flujo de cálculo
 
@@ -31,9 +31,9 @@ Secuencia: as-is → funding → deuda → retornos → reforma R1-R6 → R7 →
 |---|---:|---:|---:|
 | Gestión | 154.548,00 € | 24.279,92 € | 1,15x |
 | Mercado INE | 95.555,00 € | -18.565,58 € | -1,46x |
-| Promotor | 86.275,00 € | 11.297,00 € | 0,33x |
+| Promotor (re-modelado) | 86.275,00 € | 11.297,00 € | 0,33x |
 
-CapEx: 1.050.100 €; equity en caja: 521.090,22 € (49,62%). Gestión es upside; mercado usa el INE 21,24%; promotor replica el Excel.
+CapEx: 1.050.100 €; equity en caja: 521.090,22 € (49,62%). Gestión es upside; mercado usa el INE 21,24%; el promotor se re-modela sobre las cifras de titular de la presentación (86.275 € / 11.297 €), no es una réplica de los libros fuente: la §2 del README concilia las cuatro cifras de ingresos que contienen.
 
 ### 3.2 Funding
 
@@ -151,7 +151,7 @@ El DSCR aguanta porque la deuda se dimensionó sobre el CFADS mínimo; el valor 
 
 ## 9. Control de cambios y reproducibilidad
 
-Cualquier cambio en `assumptions.py`, `config/reform.py` o los motores se registra con SHA y fecha, reejecuta los 68 tests y el pipeline, compara los JSON, regenera el Excel, verifica las 2.060 fórmulas, actualiza este log y se aprueba antes de publicar.
+Cualquier cambio en `assumptions.py`, `config/reform.py` o los motores se registra con SHA y fecha, reejecuta los 73 tests y el pipeline, compara los JSON, regenera el Excel, verifica las 2.060 fórmulas, actualiza este log y se aprueba antes de publicar.
 
 **Cómo ejecutarlo:**
 
@@ -159,7 +159,7 @@ Cualquier cambio en `assumptions.py`, `config/reform.py` o los motores se regist
 pip install -r requirements.txt
 python main.py                 # 15 pasos
 python main.py --no-charts
-python -m pytest tests/ -q     # 68 tests
+python -m pytest tests/ -q     # 73 tests
 ```
 
 Salidas: Excel de 13 pestañas y dos JSON. Monte Carlo: 1.000 iteraciones; cópulas: 50.000; semilla 42. La reproducibilidad es numérica en el mismo entorno Python 3.11 y dependencias; no se garantiza copia idéntica entre librerías o sistemas. No se editan a mano el Excel ni los JSON.

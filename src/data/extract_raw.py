@@ -6,11 +6,14 @@ Sources audited:
 2. raw_data/Presentacion_La_Dehesa.xlsx (Segovia collective agreement & costs)
 
 Highlights:
-- Reconciles the original university Excel (promoter case) with the refined
-  management (upside) and INE market cases.
-- The original Excel did not apply 21% output VAT to sales; the "VAT paper
-  trap" was a narrative claim, not a spreadsheet error. The refined model
-  applies the statutory 10% hospitality rate and a 21% input-VAT bridge.
+- Compares the original university workbooks with the refined management
+  (upside) and INE market cases. The promoter case is a re-modelling, not a
+  replication: the source reports four different Year-1 revenues (EUR 74,851
+  net in `Conclusiones`, EUR 99,487.50 gross in the `Plan de Negocio`
+  formulas, EUR 96,628 hard-coded in the deck).
+- The formula sheet reports revenue gross; the hard-coded summary divides by
+  1.21. The refined model applies the statutory 10% hospitality rate and a
+  21% input-VAT bridge.
 - Checks part-time labor hours against the Segovia hospitality agreement.
 """
 
@@ -148,12 +151,14 @@ def extract_raw_excel_data() -> Dict[str, Any]:
 
 def generate_reconciliation_summary() -> pd.DataFrame:
     """
-    Executive reconciliation of the original university Excel and the three
+    Executive reconciliation of the original university workbooks and the three
     refined cases.
 
-    The original Excel is the promoter case. The Python layer adds an
-    independent INE market case and a management/upside case. The table is
-    computed from the model, not from stale hard-coded cells.
+    The promoter case is not the original workbook: it is re-modelled to the
+    presentation headline (EUR 86,275 / EUR 11,297). The "Original Excel"
+    column reports what the source actually contains, including the two
+    mutually inconsistent Year-1 revenues. The refined columns are computed
+    from the model, not from stale hard-coded cells.
     """
     from src.config.assumptions import SCENARIOS
     from src.core.metrics import CreditMetricsEngine
@@ -183,21 +188,21 @@ def generate_reconciliation_summary() -> pd.DataFrame:
     rows = [
         {
             "Category": "Occupancy (mature)",
-            "Original Excel": "19.20%",
+            "Original Excel": "19.20% (implied by 491 / 72 nights)",
             "Refined: mgmt / market / promoter": "31.36% / 21.24% / 19.20%",
-            "Notes": "Management is 1.48x INE; promoter is the original.",
+            "Notes": "Management is 1.48x INE; the promoter case keeps the original 19.2%.",
         },
         {
             "Category": "Year 1 revenue",
-            "Original Excel": "86,275.00 €",
+            "Original Excel": "74,851 net / 99,488 gross",
             "Refined: mgmt / market / promoter": triple("revenue", "{:,.0f} €"),
-            "Notes": "Management adds 1 meal/guest/day at €25.",
+            "Notes": "Conclusiones hard-codes 74,851 (= 90,570 / 1.21); the Plan de Negocio formulas build 99,487.50 gross; the deck shows 96,628 with no build-up.",
         },
         {
             "Category": "Year 1 EBITDA",
-            "Original Excel": "11,297.00 €",
+            "Original Excel": "26,701 (formulas) / 11,297 (deck)",
             "Refined: mgmt / market / promoter": triple("ebitda", "{:,.0f} €"),
-            "Notes": "Promoter matches the original to the euro.",
+            "Notes": "The formula sheet produces 26,701.31; the deck hard-codes 11,297 with no build-up. The promoter case reaches 11,297 with a 20 € ticket and 25 € purchases.",
         },
         {
             "Category": "Year 1 ending cash",
@@ -237,9 +242,9 @@ def generate_reconciliation_summary() -> pd.DataFrame:
         },
         {
             "Category": "Output VAT",
-            "Original Excel": "Not modeled (net revenue)",
+            "Original Excel": "21% in the summary, gross in the formulas",
             "Refined: mgmt / market / promoter": "10.0% statutory",
-            "Notes": "Original sheet did not apply 21% to sales.",
+            "Notes": "At the statutory 10% the 90,570 gross becomes 82,336; the deck's 96,628 has no VAT build-up.",
         },
         {
             "Category": "Balance sheet",

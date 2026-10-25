@@ -3,7 +3,7 @@ Three-case tests: management (upside), INE market, and promoter (original).
 
 The management case is the headline Python case, but it is not the base case.
 The market case uses the official INE Segovia occupancy, and the promoter case
-replicates the author's original university Excel.
+is re-modelled to the presentation headline (EUR 86,275 / EUR 11,297).
 """
 
 import pytest
@@ -78,11 +78,12 @@ def test_market_case_does_not_cover_debt_service_in_year_one():
     assert engine.total_equity_at_close == pytest.approx(806_465.05, abs=0.01)
 
 
-def test_promoter_case_replicates_the_original_excel():
+def test_promoter_case_lands_on_the_presentation_headline():
     engine, df, kpi, returns = _case("promoter")
     y1 = kpi.iloc[0]
 
-    # The original Excel reports EUR 86,275 revenue and EUR 11,297 EBITDA.
+    # The presentation hard-codes EUR 86,275 revenue and EUR 11,297 EBITDA.
+    # Neither is a formula output in the source; the case reproduces them.
     assert y1["total_revenue"] == 86_275.00
     assert y1["ebitda"] == 11_297.00
     assert y1["cfads"] == 11_297.00

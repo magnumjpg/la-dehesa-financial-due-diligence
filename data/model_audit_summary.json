@@ -240,7 +240,7 @@
       ],
       "min_cash": -11767.02,
       "funding_status": "LIQUIDITY GAP - cash turns negative during the projection",
-      "notes": "The promoter case replicates the original university Excel: EUR 507,500 of senior debt (70% LTV) at 4.5% over 25 years, no grace period, no LEADER grant and land purchased rather than contributed in kind. The EUR 99,750 input VAT exceeds the EUR 20,000 line, so the close-day structure shows a EUR 20,000 gap and Year 1 cash turns negative."
+      "notes": "The promoter case re-models the presentation's headline pair on the original financing structure: EUR 507,500 of senior debt (70% LTV) at 4.5% over 25 years, no grace period, no LEADER grant and land purchased rather than contributed in kind. It is not a replication of the source workbooks (README section 2). The EUR 99,750 input VAT exceeds the EUR 20,000 line, so the close-day structure shows a EUR 20,000 gap and Year 1 cash turns negative."
     },
     "phase2_gate": {
       "phase1_cash_end_y2": 183322.64,
@@ -378,22 +378,22 @@
     },
     "promoter_revenue_y1": {
       "metric_id": "promoter_revenue_y1",
-      "name": "Promoter-case Year-1 revenue",
+      "name": "Promoter-case Year-1 revenue (re-modelled)",
       "value": 86275.0,
       "unit": "EUR",
-      "formula": "491 room-nights * EUR 85 + 72 house-nights * EUR 380 + 859 meals * EUR 20",
-      "statutory_source": "Original university simulator",
-      "category": "Replication",
+      "formula": "491 room-nights * EUR 85 + 72 house-nights * EUR 380 + 859 covers * EUR 20",
+      "statutory_source": "Presentation headline (re-modelled)",
+      "category": "Calibration",
       "tolerance": 0.01
     },
     "promoter_ebitda_y1": {
       "metric_id": "promoter_ebitda_y1",
-      "name": "Promoter-case Year-1 EBITDA",
+      "name": "Promoter-case Year-1 EBITDA (re-modelled)",
       "value": 11297.0,
       "unit": "EUR",
-      "formula": "86,275 revenue - 14,903 opex - 60,075 payroll",
-      "statutory_source": "Original university simulator",
-      "category": "Replication",
+      "formula": "86,275 revenue - 60,075 realistic payroll - 14,903 other opex",
+      "statutory_source": "Presentation headline (re-modelled)",
+      "category": "Calibration",
       "tolerance": 0.01
     },
     "management_occupancy": {
@@ -636,9 +636,9 @@
       "severity": "MATERIAL"
     },
     {
-      "rule_id": "RULE_13_PROMOTER_REPLICATION",
-      "rule_name": "Promoter-case replication of the original simulator",
-      "description": "The promoter case must reproduce the original Excel's Year-1 revenue (86,275) and EBITDA (11,297).",
+      "rule_id": "RULE_13_PROMOTER_CALIBRATION",
+      "rule_name": "Promoter-case calibration to the presentation headline",
+      "description": "The promoter case must land on its declared calibration target: the presentation's Year-1 revenue (86,275) and EBITDA (11,297). This is not a replication test: the source workbooks report 74,851 net (Conclusiones), 99,487.50 gross (Plan de Negocio formulas) and 96,628 (deck), and the 11,297 EBITDA has no build-up.",
       "condition_expression": "abs(revenue - 86,275) <= 1 and abs(EBITDA - 11,297) <= 1",
       "status": "PASSED",
       "actual_value": {
@@ -649,7 +649,7 @@
         "revenue": 86275.0,
         "ebitda": 11297.0
       },
-      "remediation_guidance": "Reconcile the original Excel units, prices and opex.",
+      "remediation_guidance": "Re-modelled, not replicated. README section 2 reconciles the four revenue figures and the EUR 20 vs EUR 25 restaurant ticket.",
       "severity": "INFO"
     },
     {

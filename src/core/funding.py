@@ -162,11 +162,12 @@ class SourcesUsesEngine:
 
         if self.case == "promoter":
             notes = (
-                "The promoter case replicates the original university Excel: EUR 507,500 of senior "
-                "debt (70% LTV) at 4.5% over 25 years, no grace period, no LEADER grant and land "
-                "purchased rather than contributed in kind. The EUR 99,750 input VAT exceeds the "
-                "EUR 20,000 line, so the close-day structure shows a EUR 20,000 gap and Year 1 cash "
-                "turns negative."
+                "The promoter case re-models the presentation's headline pair on the original "
+                "financing structure: EUR 507,500 of senior debt (70% LTV) at 4.5% over 25 years, "
+                "no grace period, no LEADER grant and land purchased rather than contributed in "
+                "kind. It is not a replication of the source workbooks (README section 2). The "
+                "EUR 99,750 input VAT exceeds the EUR 20,000 line, so the close-day structure "
+                "shows a EUR 20,000 gap and Year 1 cash turns negative."
             )
         elif self.case == "market":
             notes = (

@@ -52,7 +52,7 @@ def run_executive_pipeline(generate_charts: bool = True):
     print()
 
     # Step 1: Raw Data Audit & Reconciliation
-    print("[1/15] AUDIT RECONCILIATION: ORIGINAL EXCEL VS. REFINED MODEL")
+    print("[1/15] AUDIT RECONCILIATION: SOURCE WORKBOOKS VS. REFINED MODEL")
     print("-" * 88)
     df_audit = generate_reconciliation_summary()
     print(df_audit.to_string(index=False))
@@ -112,7 +112,7 @@ def run_executive_pipeline(generate_charts: bool = True):
     df_cases = pd.DataFrame(case_rows)
     print(df_cases.to_string(index=False))
     print("-> The management case is an upside case (31.36% mature occupancy, 1.48x the INE market average).")
-    print("-> The INE market case (21.24%) is the independent benchmark; the promoter case replicates the original Excel.")
+    print("-> The INE market case (21.24%) is the independent benchmark; the promoter case is re-modelled to the presentation headline, not replicated (README section 2).")
     print()
 
     # Demand reconciliation: the management case is weekend-weighted, not a

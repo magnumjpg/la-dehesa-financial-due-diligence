@@ -11,7 +11,9 @@ winter trough (January ~9.6%) and summer peak (August ~36.8%).
 
 Three occupancy anchors are used across the model:
 
-1. PROMOTER_OCCUPANCY = 19.2%  -> the original university simulator
+1. PROMOTER_OCCUPANCY = 19.2%  -> implied by the 491 / 72 night volumes in the
+   promoter case (491 / 7 / 365 = 19.22%). It is not a cell in either workbook:
+   the `Plan de Negocio` formula sheet uses 66.325 occupied days (18.17%).
    (491 room-nights / 2,555 available room-nights). This is the "as-promoted"
    case and the most conservative anchor.
 2. MARKET_OCCUPANCY = 21.24%   -> official INE Segovia 2025. This is the

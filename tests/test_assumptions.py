@@ -153,5 +153,6 @@ def test_raw_excel_extraction_integrity():
     text = df_summary.to_string()
     assert "Flawed standard" not in text
     assert "Solvency confirmed" not in text
-    assert "did not apply 21%" in text
+    assert "74,851 net / 99,488 gross" in text
+    assert "96,628 with no build-up" in text
     assert "729,000" not in text

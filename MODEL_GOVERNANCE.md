@@ -4,7 +4,7 @@
 
 This document records the model's purpose, structure, conventions, controls, exceptions and accountability. It supports a credit and investment decision on a 25-hectare rural estate in Segovia. It is not an investment memorandum or a substitute for an independent model audit; no third-party review has been performed.
 
-Status at 25 October 2026: `CONDITIONAL - 5 MATERIAL EXCEPTION(S)`. All six exceptions are deal findings, not formula errors. The suite has 68 tests (up from 65); the workbook has 13 tabs and 2,060 formulas. The deterministic path is reproducible; simulations use seed 42.
+Status at 25 October 2026: `CONDITIONAL - 5 MATERIAL EXCEPTION(S)`. All six exceptions are deal findings, not formula errors. The suite has 73 tests (up from 68); the workbook has 13 tabs and 2,060 formulas. The deterministic path is reproducible; simulations use seed 42.
 
 ## 2. Model map
 
@@ -21,13 +21,13 @@ Status at 25 October 2026: `CONDITIONAL - 5 MATERIAL EXCEPTION(S)`. All six exce
 | `src/core/model_audit.py` | 16-rule audit and JSON export (schema 4.0.0). |
 | `src/data/export_excel.py`, `live_excel.py` | 13-tab workbook and live formulas. |
 | `src/simulation/` | Monte Carlo and Gaussian/Student-t/Clayton copula. |
-| `tests/` | 11 files, 68 tests. |
+| `tests/` | 12 files, 73 tests. |
 
 ## 3. Calculation flow
 
 The chain is fixed: **as-is three cases → funding → debt → returns → reform R1-R6 → R7**.
 
-1. **As-is.** Management revenue €154,548.00, EBITDA €24,279.92, minimum DSCR 1.15x; market €95,555.00, -€18,565.58, -1.46x; promoter €86,275.00, €11,297.00, 0.33x. CapEx €1,050,100 in the first two.
+1. **As-is.** Management revenue €154,548.00, EBITDA €24,279.92, minimum DSCR 1.15x; market €95,555.00, -€18,565.58, -1.46x; promoter (re-modelled) €86,275.00, €11,297.00, 0.33x. CapEx €1,050,100 in the first two.
 2. **Funding.** Sources equal uses. Cash equity is a plug: €521,090.22 (49.62% of CapEx) plus €250,000 land in kind.
 3. **Debt.** Sized on minimum pre-tax CFADS from Year 2 at 1.25x DSCR and 35% LTV. DSCR binds: €339,144.92 vs €367,535 requested. 20-year French at 4.0% fixed, 12-month grace; Year-2 service €27,647.64. No cash sweep or cure mechanics.
 4. **Returns.** Year-5 EBITDA over cap rate, floored at zero, less exit costs. Management project IRR at 8.5% exit: -9.49% vs 8% WACC.
@@ -49,8 +49,9 @@ The chain is fixed: **as-is three cases → funding → debt → returns → ref
 
 ## 5. Controls and reconciliation
 
-- **Tests.** 68 tests in 11 files cover debt, VAT, tax and BIN, three-statement equality, funding, returns, scenarios, unit economics, liquidity, copulas, the audit and R1-R7. Changes require passing tests.
+- **Tests.** 73 tests in 12 files cover debt, VAT, tax and BIN, three-statement equality, funding, returns, scenarios, unit economics, liquidity, copulas, the audit and R1-R7. Changes require passing tests.
 - **Computed audit.** 16 rules; 10 pass, five material failures and one warning failure.
+- **Promoter case.** Re-modelled to the presentation's headline pair (€86,275 revenue / €11,297 EBITDA), not replicated from the source workbooks. Both workbooks contain different Year-1 revenues (€74,851 net in `Conclusiones`, €99,487.50 gross in the `Plan de Negocio` formulas, €96,628 hard-coded in the deck), and the €11,297 EBITDA has no build-up in the source. `RULE_13` is therefore an *INFO* check that the model hits its stated target; README §2 carries the full reconciliation.
 - **Python-to-Excel.** Revenue €154,548, EBITDA €24,280, Year-2 DSCR 1.1534x, Year-1 cash €20,700.88, Year-2 cash €183,322.64 and balance-sheet discrepancy €0.00 all reconcile.
 - **Balance-sheet equality.** Assets equal liabilities plus equity in all three cases; maximum discrepancy €0.00.
 - **Value bridge.** R2 is computed lever by lever and ties to reform EBITDA with a zero residual.
@@ -126,7 +127,7 @@ Changes are made in source control. A change is complete only when the suite pas
 
 ```bash
 python -m pip install -r requirements.txt
-python -m pytest tests/ -q          # 68 tests
+python -m pytest tests/ -q          # 73 tests
 python main.py                      # full pipeline
 python main.py --no-charts          # skip figures
 ```

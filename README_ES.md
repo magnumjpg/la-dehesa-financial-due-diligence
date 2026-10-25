@@ -3,7 +3,7 @@
 ### Viabilidad hotelera, underwriting de deuda senior y due diligence calculada
 
 **Un modelo financiero de nivel portfolio construido a partir de mi propio trabajo de viabilidad universitario.**
-Python 3.11 · 68 tests automáticos · auditoría calculada de 16 reglas · modelo Excel de 13 pestañas · 8 figuras · pipeline de 15 pasos
+Python 3.11 · 73 tests automáticos · auditoría calculada de 16 reglas · modelo Excel de 13 pestañas · 8 figuras · pipeline de 15 pasos
 
 [![tests](https://github.com/magnumjpg/la-dehesa-financial-due-diligence/actions/workflows/tests.yml/badge.svg)](https://github.com/magnumjpg/la-dehesa-financial-due-diligence/actions/workflows/tests.yml)
 ![Python 3.11](https://img.shields.io/badge/python-3.11-blue)
@@ -15,7 +15,7 @@ Python 3.11 · 68 tests automáticos · auditoría calculada de 16 reglas · mod
 
 **El activo.** Una finca rural de 25 hectáreas en Segovia: 7 habitaciones dobles, una casa rural completa, un restaurante de 21 cubiertos y una biopiscina natural. Empezó como mi trabajo de viabilidad universitario.
 
-**Qué construí.** Tres casos as-is (promotor, mercado INE, gestión), el stack completo de costes, fuentes y usos, una facilidad amortizable a 20 años, una auditoría calculada de 16 reglas, un Excel con fórmulas vivas, 68 tests y ocho figuras.
+**Qué construí.** Tres casos as-is (promotor, mercado INE, gestión), el stack completo de costes, fuentes y usos, una facilidad amortizable a 20 años, una auditoría calculada de 16 reglas, un Excel con fórmulas vivas, 73 tests y ocho figuras.
 
 **La respuesta es no.** El caso de gestión incumple el covenant de 1,25x en el Año 2 con **1,15x**, necesita un **49,6% de equity en caja** en lugar del 30% previsto y devuelve una TIR de proyecto de **-9,49%** incluso con una salida al 8,5%. La recomendación de crédito es **DECLINE AS STRUCTURED (RESIZE REQUIRED)**.
 
@@ -42,7 +42,7 @@ Python 3.11 · 68 tests automáticos · auditoría calculada de 16 reglas · mod
 
 ## 1. Qué es este proyecto
 
-Partí de mi propio trabajo de viabilidad universitario para una finca rural de 25 hectáreas en Segovia (7 habitaciones dobles, una casa rural completa, un restaurante de 21 cubiertos y una biopiscina natural). El Excel original es un simulador de promotor de una sola hoja con fórmulas vivas; usa una ocupación del 19,2%. La memoria Word documenta una ocupación más conservadora del 16,5-17%, contratos a tiempo parcial y una solicitud de subvención LEADER. Esa brecha entre la Word y el Excel es lo primero que tuvo que reconciliar la auditoría.
+Partí de mi propio trabajo de viabilidad universitario para una finca rural de 25 hectáreas en Segovia (7 habitaciones dobles, una casa rural completa, un restaurante de 21 cubiertos y una biopiscina natural). El libro original es un simulador de promotor de dos hojas: una P&L con fórmulas vivas y un resumen de celdas fijas que nunca se concilió con ella. Su hoja de fórmulas implica una ocupación del 18,17% (66,325 días ocupados), su resumen fija unos ingresos distintos, y la memoria Word documenta una ocupación más conservadora del 16,5-17%, contratos a tiempo parcial y una solicitud de subvención LEADER. Conciliar esas fuentes es lo primero que tuvo que hacer la auditoría.
 
 Después reconstruí el análisis en Python para responder a las preguntas que el trabajo original no podía responder:
 
@@ -65,13 +65,27 @@ La capa Python no es un lavado de cara. Añade una arquitectura de tres casos, u
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
 | **Gestión (upside)** | 28,23% → 31,36% | 154.548 € | 24.280 € | 19.643 € | 1,34x | **1,15x** | 20.701 € | -9,49% | -23,16% |
 | **Mercado INE** | 21,24% → 32,00% | 95.555 € | -18.566 € | -21.432 € | -1,46x | **-1,46x** | 15.000 € | -15,18% | -50,22% |
-| **Promotor (Excel original)** | 19,20% → 28,92% | 86.275 € | 11.297 € | 11.297 € | 0,33x | **0,33x** | -8.039 € | 6,84% | 12,12% |
+| **Promotor (re-modelado)** | 19,20% → 28,92% | 86.275 € | 11.297 € | 11.297 € | 0,33x | **0,33x** | -8.039 € | 6,84% | 12,12% |
 
 **Qué es cada caso:**
 
-- **Promotor**: réplica fiel del Excel universitario original: 19,2% de ocupación en el Año 1 (491 noches de habitación + 72 de casa), ADR de 85 € en habitación, 380 € en casa, ticket de restaurante de 20 €, 859 comidas, deuda al 4,5% a 25 años, sin carencia, sin subvención y con el terreno comprado en lugar de aportado en especie. El modelo Python reproduce los ingresos y el EBITDA originales al euro. Es el caso que el autor suscribió realmente, y el único con TIR de equity positiva en la salida, pero tiene caja negativa en los Años 1-2.
+- **Promotor (re-modelado)**: el par de titulares de la presentación (86.275 € de ingresos / 11.297 € de EBITDA) reconstruido desde inductores explícitos: 19,2% de ocupación en el Año 1 (491 noches de habitación + 72 de casa), ADR de 85 € en habitación, 380 € en casa, ticket de restaurante de **20 €**, 859 cubiertos, deuda al 4,5% a 25 años, sin carencia, sin subvención y con el terreno comprado en lugar de aportado en especie. Es el único caso con TIR de equity positiva en la salida, pero tiene caja negativa en los Años 1-2.
 - **Mercado INE**: el ancla de demanda independiente: 21,24% de ocupación oficial de Segovia en 2025 (INE EOTR, tabla 2070) en el Año 1, con la economía unitaria original y la rampa original de volumen del 25%/20%, que llega al 32,0% en el Año 3 y después crece un 5% anual. El attachment de F&B se mantiene en las 950 comidas originales a 20 €. Es lo más parecido a un caso "de mercado" en el libro.
 - **Gestión (upside)**: 31,36% de ocupación en madurez (1,48x la media del INE), una comida en el establecimiento por huésped y día a un ticket de 25 €, el stack variable completo y un puente de IVA al 5,5%. Es un upside operativo, no un caso base. Su "upside" está en el ingreso por día ocupado (attachment de F&B), no en la ocupación: el caso de mercado llega de hecho a una ocupación madura parecida a través de la rampa original.
+
+**Por qué "re-modelado" y no "réplica".** El libro fuente no contiene un único ingreso del Año 1. Contiene cuatro, y las hojas de resumen nunca se conciliaron con la hoja de fórmulas:
+
+| Base de ingresos del Año 1 | Cifra | Procedencia |
+|---|---:|---|
+| `Plan de Negocio` (fórmulas vivas) | 99.487,50 € brutos | 66,325 días ocupados × 7 habitaciones × 85 € + 66,325 × 380 € + 1.392,825 cubiertos × 25 € |
+| `Conclusiones y Viabilidad!B5` | 74.851 € netos | Celda fija; equivale a los 90.570 € brutos implícitos en 491 noches de habitación × 85 € + 72 noches de casa × 380 € + 859 cubiertos × 25 €, dividido por 1,21 |
+| Los mismos 90.570 € brutos al 10% estatutario | 82.336,36 € | 90.570 € ÷ 1,10 |
+| `Presentacion!Tablas para PPT!B11` | 96.628 € | Celda fija, sin build-up en ninguno de los dos libros |
+| **Caso promotor en Python** | **86.275 €** | 491 × 85 € + 72 × 380 € + 859 × **20 €** |
+
+El EBITDA cuenta la misma historia. La hoja de fórmulas del propio libro produce **26.701,31 €** (99.487,50 € − 10.446,19 € de coste de A&B − 62.340 € de personal y mantenimiento). La presentación fija **11.297 €** sin build-up. El caso Python llega a 11.297 € por construcción: 86.275 € de ingresos − 60.075 € de nómina realista − 14.903 € de otros costes operativos, de los cuales 6.444 € son compras de A&B valoradas al ticket de **25 €** mientras los ingresos valoran los mismos cubiertos a 20 €. Por eso `RULE_13` se reporta como *INFO* y no como una réplica superada: comprueba que el modelo alcanza su objetivo de calibración declarado, y su nota deja constancia de que los dos libros no coinciden entre sí ni con el modelo.
+
+La ocupación tiene el mismo problema de procedencia. El 19,2% del caso está **implícito en los volúmenes de 491/72 noches** (491 ÷ 7 habitaciones ÷ 365 días = 19,22%), no se lee de la fuente: la hoja de fórmulas `Plan de Negocio` usa 66,325 días ocupados, que es 18,17%, y ninguno de los dos libros contiene el valor 19,2% en ninguna celda.
 
 Los tres casos comparten el mismo CapEx (salvo la base original de 725.000 € del promotor), el mismo tipo impositivo y la misma mecánica de balance. La diferencia es la demanda, la economía unitaria y la financiación, que es exactamente donde está el riesgo.
 
@@ -107,7 +121,7 @@ Los tres casos comparten el mismo CapEx (salvo la base original de 725.000 € d
 | Contingencia (5%) | 35.500 € | 3% = 1.065 € |
 | **CapEx all-in** | **1.050.100 €** | **38.943 €/año** |
 
-Los costes de preapertura de 35.000 € se capitalizan y se amortizan en cinco años (7.000 €/año), así que la D&A total es de **45.943 €/año**. El IVA soportado es de **168.021 €** (21% sobre la base no terrenal de 800.100 €). El caso promotor conserva la base original de 725.000 €, 99.750 € de IVA soportado y ninguna capitalización de preapertura, de modo que el test de réplica sigue siendo exacto.
+Los costes de preapertura de 35.000 € se capitalizan y se amortizan en cinco años (7.000 €/año), así que la D&A total es de **45.943 €/año**. El IVA soportado es de **168.021 €** (21% sobre la base no terrenal de 800.100 €). El caso promotor conserva la base original de 725.000 €, 99.750 € de IVA soportado y ninguna capitalización de preapertura.
 
 La partida digital es de 12.000 € y no de 4.000 €: una propiedad de 550 m² con 8 llaves, restaurante y biopiscina necesita PMS, TPV, Wi-Fi, control de accesos y CCTV, no un único Kit Digital.
 
@@ -499,7 +513,7 @@ La auditoría se calcula desde el modelo, no se escribe a mano. Se deja fallar.
 | RULE_10_OCCUPANCY_VS_INE | Warning | **FAIL** | 1,48x | ≤ 1,10x |
 | RULE_11_PHASE2_SELF_FUNDING | Material | **FAIL** | -252.241 € | ≥ 0 € |
 | RULE_12_RETURNS_VS_WACC | Material | **FAIL** | -9,49% | ≥ 8,0% |
-| RULE_13_PROMOTER_REPLICATION | Info | **PASS** | 86.275 € / 11.297 € | exacto |
+| RULE_13_PROMOTER_CALIBRATION | Info | **PASS** | 86.275 € / 11.297 € | objetivo ± 1 € (no verificado contra la fuente) |
 | RULE_14_MARKET_DSCR | Material | **FAIL** | -1,46x | ≥ 1,25x |
 | RULE_15_EQUITY_REQUIREMENT | Material | **FAIL** | 49,62% | ≤ 30,0% |
 | RULE_16_FFE_RESERVE | Info | **PASS** | 4.636 € | 3% de ingresos |
@@ -578,7 +592,7 @@ proyecto-dehesa-del-castrillo/
 │   │   └── copula_engine.py      # Gaussian / Student-t / Clayton
 │   └── visualization/
 │       └── charts.py             # ocho figuras institucionales
-├── tests/                        # 11 ficheros, 68 tests
+├── tests/                        # 12 ficheros, 73 tests
 ├── raw_data/                     # libros fuente para la reconciliación
 ├── data/                         # modelo Excel, JSON de auditoría y JSON de reforma
 └── assets/                       # figure_*.png
@@ -599,7 +613,7 @@ python main.py
 # Sin generación de gráficos
 python main.py --no-charts
 
-# Batería de tests (68 tests)
+# Batería de tests (73 tests)
 python -m pytest tests/ -q
 ```
 
@@ -627,7 +641,7 @@ Esto es un modelo de portfolio, no un memorando de inversión. Las limitaciones 
 6. **El modelo fiscal es simplificado.** Usa un tipo de sociedades del 25%, sin grupo de IVA, sin deducciones autonómicas y con un schedule de BIN limitado al horizonte de proyección.
 7. **El modelo de personal es a tiempo parcial.** Las tarifas horarias cumplen, pero el riesgo de planificación, cobertura y rotación sigue existiendo.
 8. **La subvención se asume comprometida.** No hay carta de concesión en el repositorio; el timing LEADER se modela en el Mes 14.
-9. **Los dos libros fuente de la reconciliación están en `raw_data/`.** La memoria Word original y el libro vivo de OneDrive no se redistribuyen; el caso promotor está codificado a partir de los valores auditados y se replica en `statements.py`.
+9. **Los dos libros fuente de la reconciliación están en `raw_data/`.** La memoria Word original y el libro vivo de OneDrive no se redistribuyen; el caso promotor está calibrado a las cifras de titular de la presentación y reconstruido desde inductores explícitos en `statements.py`, y la §2 documenta dónde se separa de ambos libros.
 10. **La demanda del restaurante es solo de huéspedes en los casos as-is.** El modelo asume una comida por huésped y día en el caso de gestión (unas 2.163 comidas en el Año 1), sin cubiertos externos, eventos ni ingresos de bebidas. La capa de reforma añade cubiertos externos de forma explícita, pero esa demanda es un supuesto, no evidencia.
 11. **Sin booking curve ni competitive set.** El ADR es plano en el caso de gestión; los casos de mercado y promotor usan un crecimiento nominal del 5% desde el Año 4. Un mandato real modelaría la curva de reservas y el set competitivo local.
 12. **El motor mensual es un stress de liquidez, no un modelo mensual completo de tres estados.** Reconcilia con los estados anuales (diferencia 0,00 €) pero no los sustituye.

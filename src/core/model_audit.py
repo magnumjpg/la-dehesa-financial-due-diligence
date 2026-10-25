@@ -6,8 +6,8 @@ evaluated against the model output and can fail. The audit deliberately reports
 the material exceptions (DSCR covenant breach in Year 2, negative project
 returns, a 49.6% cash-equity requirement, Phase II shortfall, market-case
 insolvency, upside occupancy vs. INE) alongside the genuine strengths
-(balance-sheet equality, payroll hourly compliance, VAT treatment, promoter-case
-replication).
+(balance-sheet equality, payroll hourly compliance, VAT treatment and the
+promoter-case calibration target).
 
 Rules (16):
 1.  Balance-sheet equality (Assets == Liabilities + Equity).
@@ -22,7 +22,7 @@ Rules (16):
 10. Management occupancy vs. INE market occupancy.
 11. Phase II self-funding / phase gate.
 12. Project IRR with exit vs. the 8% WACC.
-13. Promoter-case replication of the original university simulator.
+13. Promoter-case calibration to the presentation's headline figures.
 14. Market-case minimum DSCR (>= 1.25x).
 15. Cash equity requirement vs. the original 30% assumption.
 16. FF&E reserve of 3% of revenue deducted from CFADS.
@@ -247,13 +247,14 @@ class ModelAuditEngine:
                 "Revenue - variable stack - payroll - fixed opex", "Operating P&L", "P&L Operations",
             ),
             AuditMetric(
-                "promoter_revenue_y1", "Promoter-case Year-1 revenue", float(prom_y1["total_revenue"]), "EUR",
-                "491 room-nights * EUR 85 + 72 house-nights * EUR 380 + 859 meals * EUR 20",
-                "Original university simulator", "Replication",
+                "promoter_revenue_y1", "Promoter-case Year-1 revenue (re-modelled)", float(prom_y1["total_revenue"]), "EUR",
+                "491 room-nights * EUR 85 + 72 house-nights * EUR 380 + 859 covers * EUR 20",
+                "Presentation headline (re-modelled)", "Calibration",
             ),
             AuditMetric(
-                "promoter_ebitda_y1", "Promoter-case Year-1 EBITDA", float(prom_y1["ebitda"]), "EUR",
-                "86,275 revenue - 14,903 opex - 60,075 payroll", "Original university simulator", "Replication",
+                "promoter_ebitda_y1", "Promoter-case Year-1 EBITDA (re-modelled)", float(prom_y1["ebitda"]), "EUR",
+                "86,275 revenue - 60,075 realistic payroll - 14,903 other opex",
+                "Presentation headline (re-modelled)", "Calibration",
             ),
             AuditMetric(
                 "management_occupancy", "Management-case mature occupancy", round(mgmt_occ, 4), "percentage",
@@ -415,14 +416,18 @@ class ModelAuditEngine:
                 "Revisit ADR, occupancy or the renovation scope.",
             ),
             self._rule(
-                "RULE_13_PROMOTER_REPLICATION",
-                "Promoter-case replication of the original simulator",
-                "The promoter case must reproduce the original Excel's Year-1 revenue (86,275) and EBITDA (11,297).",
+                "RULE_13_PROMOTER_CALIBRATION",
+                "Promoter-case calibration to the presentation headline",
+                "The promoter case must land on its declared calibration target: the presentation's "
+                "Year-1 revenue (86,275) and EBITDA (11,297). This is not a replication test: the "
+                "source workbooks report 74,851 net (Conclusiones), 99,487.50 gross (Plan de Negocio "
+                "formulas) and 96,628 (deck), and the 11,297 EBITDA has no build-up.",
                 "abs(revenue - 86,275) <= 1 and abs(EBITDA - 11,297) <= 1",
                 prom_rev_ok and prom_ebitda_ok,
                 {"revenue": float(prom_y1["total_revenue"]), "ebitda": float(prom_y1["ebitda"])},
                 {"revenue": 86_275.0, "ebitda": 11_297.0},
-                "Reconcile the original Excel units, prices and opex.",
+                "Re-modelled, not replicated. README section 2 reconciles the four revenue "
+                "figures and the EUR 20 vs EUR 25 restaurant ticket.",
                 severity="INFO",
             ),
             self._rule(
