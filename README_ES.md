@@ -1,25 +1,24 @@
 # La Dehesa del Castrillo S.L.
 
-### Viabilidad hotelera, underwriting de deuda senior y due diligence calculada
+**Viabilidad hotelera, underwriting de deuda senior y due diligence calculada**
 
-**Un modelo financiero de nivel portfolio construido a partir de mi propio trabajo de viabilidad universitario.**
-Python 3.11 · 74 tests automáticos · auditoría calculada de 16 reglas · modelo Excel de 13 pestañas · 8 figuras · pipeline de 15 pasos
-
-[![tests](https://github.com/magnumjpg/la-dehesa-financial-due-diligence/actions/workflows/tests.yml/badge.svg)](https://github.com/magnumjpg/la-dehesa-financial-due-diligence/actions/workflows/tests.yml)
-![Python 3.11](https://img.shields.io/badge/python-3.11-blue)
-![License: MIT](https://img.shields.io/badge/license-MIT-green)
+[![CI](https://github.com/magnumjpg/la-dehesa-financial-due-diligence/actions/workflows/tests.yml/badge.svg)](https://github.com/magnumjpg/la-dehesa-financial-due-diligence/actions/workflows/tests.yml) [![tests](https://img.shields.io/badge/tests-74%20passed-brightgreen)](#) [![Python](https://img.shields.io/badge/python-3.11-blue)](https://www.python.org/) [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE) [![Datos](https://img.shields.io/badge/datos-INE%20%2B%20trabajo%20propio-informational)](#6-calibración-de-la-demanda-ine-promotor-y-gestión)
 
 **Idioma:** [English](README.md) · [Gobierno del modelo](MODEL_GOVERNANCE_ES.md) · [Red team](RED_TEAM_ES.md)
 
+**Una finca de 25 hectáreas en Segovia incumple el covenant de deuda en el Año 2 — y la reforma arregla el crédito, no el valor.**
+
+*Python 3.11 · 74 tests · auditoría calculada de 16 reglas · modelo Excel de 13 pestañas · 8 figuras · pipeline de 15 pasos*
+
 ---
 
-## La versión de 60 segundos
+## De un vistazo
 
-**El activo.** Una finca rural de 25 hectáreas en Segovia: 7 habitaciones dobles, una casa rural completa, un restaurante de 21 cubiertos y una biopiscina natural. Empezó como mi trabajo de viabilidad universitario.
-
-**Qué construí.** Tres casos as-is (promotor, mercado INE, gestión), el stack completo de costes, fuentes y usos, una facilidad amortizable a 20 años, una auditoría calculada de 16 reglas, un Excel con fórmulas vivas, 74 tests y ocho figuras.
-
-**La respuesta es no.** El caso de gestión incumple el covenant de 1,25x en el Año 2 con **1,15x**, necesita un **49,6% de equity en caja** en lugar del 30% previsto y devuelve una TIR de proyecto de **-9,49%** incluso con una salida al 8,5%. La recomendación de crédito es **DECLINE AS STRUCTURED (RESIZE REQUIRED)**.
+- **Pregunta:** ¿puede una finca rural de 25 hectáreas en Segovia sostener una reforma de 550 m², un restaurante de 21 cubiertos y una biopiscina natural, y atender su deuda senior?
+- **Datos:** mi propio trabajo de viabilidad universitario, ocupación de turismo rural del INE para Segovia (2023–2025), datos publicados de construcción, salarios y benchmarks, y las normas fiscales y de subvenciones vigentes.
+- **Método:** tres casos as-is (promotor, mercado INE, gestión), el stack completo de costes, fuentes y usos, una facilidad amortizable a 20 años, una auditoría calculada de 16 reglas y un Excel con fórmulas vivas.
+- **Resultado:** el caso de gestión incumple el covenant de 1,25x en el Año 2 con **1,15x**, necesita un **49,6% de equity en caja** en lugar del 30% previsto y devuelve una TIR de proyecto de **-9,49%** incluso con una salida al 8,5%. La recomendación es **rechazar tal como está estructurado**.
+- **Advertencia:** la demanda se calibra con un segmento pequeño del INE y los supuestos del promotor; los dos casos realistas pierden dinero, la reforma deja un **hueco de valor neto de -324.723 €**, y esto es un análisis de crédito y viabilidad, no una recomendación de inversión.
 
 **La pregunta de la ocupación es justa, y el modelo la responde.** El 31,36% no es un +48% plano sobre el 21,24% del INE. Es una mezcla ponderada al fin de semana: **72% fines de semana, 65% puentes y 10,1% entre semana**. El 68% de los 10,1 pp de gap es captura de fin de semana; el entre semana es fino tanto en el plan como en el mercado. Eso hace el caso defendible para un boutique con restaurante, no seguro.
 
@@ -27,20 +26,16 @@ Python 3.11 · 74 tests automáticos · auditoría calculada de 16 reglas · mod
 
 **Qué me haría cambiar de opinión.** Un test de demanda de Fase 0 (pop-up o restaurante arrendado), un alcance lean de 846k € o menos, y deuda dimensionada al límite del DSCR en lugar del 35% de LTV.
 
----
-
 ## Cómo leer esto
 
 | Tiempo | Lee | Qué obtienes |
 |---|---|---|
-| **5 min** | [La versión de 60 segundos](#la-versión-de-60-segundos) + [Sección 3](#3-los-hallazgos-que-importan) | El veredicto y los once hallazgos que lo sostienen |
+| **5 min** | [De un vistazo](#de-un-vistazo) + [Sección 3](#3-los-hallazgos-que-importan) | El veredicto y los once hallazgos que lo sostienen |
 | **15 min** | Añade [Sección 6](#6-calibración-de-la-demanda-ine-promotor-y-gestión) y [Sección 13](#13-reforma--resize-qué-tendría-que-ser-cierto) | Por qué el 31,36% es defendible y por qué la reforma falla igualmente |
 | **30 min** | Añade [Sección 9](#9-retornos-la-salida-no-rescata-los-casos-realistas) y [Sección 14](#14-red-team-diecisiete-ataques-a-mi-propio-modelo) | Los retornos, el test neto de salida y mis propios diecisiete ataques al modelo |
 | **Completo** | Las 20 secciones + el Excel | El rastro de auditoría completo, fórmulas y limitaciones |
 
 > **La versión de un párrafo.** El modelo realista llega a una conclusión más dura que el trabajo universitario original. Una vez modelados el coste completo, los intereses de construcción, la amortización de la deuda, el OPEX, la reserva de FF&E y el equity plug, el caso de gestión incumple el covenant, el caso de mercado nunca cubre su servicio de deuda y ninguno gana su coste de capital. La auditoría se deja fallar a propósito: **pasan 9 de 16 reglas, 1 no aplicable, quedan 5 excepciones materiales y 1 warning**, veredicto `CONDITIONAL - 5 MATERIAL EXCEPTION(S)`. Una capa separada de reforma también puede decir que no, y lo dice: arregla el covenant pero no el gap de valor. La última capa (R7) cambia el producto a seis cabañas premium y es la única configuración que supera el WACC y el test neto de inversión total —por un 3,2%, y solo a 110 k€ por cabaña.
-
----
 
 ## 1. Qué es este proyecto
 
@@ -58,8 +53,6 @@ Después reconstruí el análisis en Python para responder a las preguntas que e
 - ¿Cómo son los **retornos** con y sin salida?
 
 La capa Python no es un lavado de cara. Añade una arquitectura de tres casos, un motor de fuentes y usos, una auditoría calculada, un libro Excel vivo con fórmulas y una batería de tests que fija las cifras honestas.
-
----
 
 ## 2. Tres casos, lado a lado
 
@@ -91,8 +84,6 @@ La ocupación tiene el mismo problema de procedencia. El 19,2% del caso está **
 
 Los tres casos comparten el mismo CapEx (salvo la base original de 725.000 € del promotor), el mismo tipo impositivo y la misma mecánica de balance. La diferencia es la demanda, la economía unitaria y la financiación, que es exactamente donde está el riesgo.
 
----
-
 ## 3. Los hallazgos que importan
 
 1. **El coste real es de 1.050.100 €, no de 725.000 €.** Terreno 250.000 €, 550 m² de obra estructural a 1.000 €/m² (550.000 €), cocina comercial 55.000 €, FF&E 65.000 €, biopiscina y paisajismo 40.000 €, digital 12.000 €, honorarios 42.600 € y contingencia del 5% 35.500 €. El presupuesto original omitía la cocina, el FF&E, los honorarios y la contingencia, y cubría solo 475.000 € de los 800.100 € de presupuesto no terrenal.
@@ -106,8 +97,6 @@ Los tres casos comparten el mismo CapEx (salvo la base original de 725.000 € d
 9. **La Fase II no se autofinancia.** La Fase II necesita 435.564 € (359.970 € de CapEx neto + 75.593,70 € de IVA). La caja de la Fase I al final del Año 2 es de 183.322,64 €, así que el gap del phase gate es **-252.241,06 €** y el gate devuelve `DO NOT PROCEED`. Tampoco cumple la condición de DSCR (1,15x < 1,25x).
 10. **La auditoría se calcula y falla.** Pasan 9 de 16 reglas y 1 no aplicable. Las cinco excepciones materiales son el DSCR de gestión, la autofinanciación de la Fase II, los retornos frente al WACC, el DSCR de mercado y el requisito de equity. El warning es la ocupación de gestión frente al INE. Ese es el sentido de la capa de auditoría: informa de lo que el modelo hace realmente, no de lo que la narrativa quiere.
 11. **La reforma arregla el covenant, no el gap de valor.** Una reforma realista de ingresos (R2: seis cubiertos externos al día, +5% de ADR, experiencias y 5.000 € de ahorros, un FTE adicional) eleva el EBITDA maduro de 37.042 € a 71.321 € y el DSCR mínimo de 1,15x a 2,13x. El activo vale entonces 839.075 € brutos, **813.903 € después de un 3% de costes de salida**, todavía **236.197 € por debajo del CapEx** y **324.723 € por debajo de la inversión total** en términos netos. El value engineering a 900k (R3) y el alcance lean de 846k (R5) reducen el gap pero siguen por debajo de un WACC del 8%. Solo el caso agresivo de ocho cubiertos y +10% de ADR (R4) produce un VAN positivo (+3.722 €), y aun así falla el test neto de inversión total con **-84.147 €**. La conclusión de la reforma es también un no, con un test de demanda condicional de Fase 0.
-
----
 
 ## 4. Stack de CapEx y depreciación
 
@@ -126,8 +115,6 @@ Los tres casos comparten el mismo CapEx (salvo la base original de 725.000 € d
 Los costes de preapertura de 35.000 € se capitalizan y se amortizan en cinco años (7.000 €/año), así que la D&A total es de **45.943 €/año**. El IVA soportado es de **168.021 €** (21% sobre la base no terrenal de 800.100 €). El caso promotor conserva la base original de 725.000 €, 99.750 € de IVA soportado y ninguna capitalización de preapertura.
 
 La partida digital es de 12.000 € y no de 4.000 €: una propiedad de 550 m² con 8 llaves, restaurante y biopiscina necesita PMS, TPV, Wi-Fi, control de accesos y CCTV, no un único Kit Digital.
-
----
 
 ## 5. Financiación: fuentes y usos, equity plug y dimensionamiento de deuda
 
@@ -172,13 +159,15 @@ La facilidad al 35% LTV cumple el límite de loan-to-value pero incumple el cove
 
 La deuda es una amortización francesa a 20 años al 4,0% fijo, con 12 meses de construcción (intereses capitalizados como IDC) y 12 meses de carencia de solo intereses. La anualidad se calcula sobre los 228 meses restantes: **2.303,97 €/mes**, o **27.647,64 €/año** desde el Año 2. El Año 1 solo paga intereses (14.701,44 €). El préstamo amortiza por completo en el Mes 240.
 
+![Figura 2 — Sensibilidad del DSCR del Año 2](assets/figure_2_dscr_sensitivity_heatmap.png)
+
+*Figura 2. DSCR del Año 2 para cada multiplicador de ocupación y tipo senior fijo, con 12 meses de gracia. La celda recuadrada es el caso base, **1,15x**, por debajo del covenant de 1,25x. Fuente: `assets/figure_2_dscr_sensitivity_heatmap.png`.*
+
 ### DSRA y liquidez mensual
 
 La DSRA contractual es de seis meses del servicio anual máximo: **13.823,82 €**. El déficit CVaR 99% de la cópula Clayton es de **62.786,01 €**, así que la reserva testeada contra la cola equivaldría a 2,27 años de servicio de deuda. No es una diferencia de redondeo: es otra señal de que la facilidad está sobreapalancada.
 
 El motor mensual (24 meses, ingresos estacionales, servicio de deuda mensual, revólver) sitúa el valle en **abril (Mes 4)**: la caja baja a **12.004,01 €** antes de un draw de **2.995,99 €** sobre el revólver de 175.000 €, repagado en el Mes 7. El Año 1 cierra en **20.700,88 €** y el Año 2 en **183.322,64 €**. El mínimo de 15.000 € nunca se incumple y la diferencia de reconciliación mensual-anual es de **0,00 €**. La subvención LEADER llega en el Mes 14 (163.000 €) y la devolución de IVA de la AEAT en el Mes 18 (168.021 €), que repaga el puente.
-
----
 
 ## 6. Calibración de la demanda: INE, promotor y gestión
 
@@ -209,7 +198,9 @@ La objeción justa es esta: si la media del INE es 21,24%, ¿cómo puede el caso
 
 Las ocupaciones de fin de semana y puentes son anclajes de juicio. El entre semana es el residuo que hace que los tres segmentos cuadren con el 31,36% que el modelo ya usa, así que el puente no puede cambiar la P&L a escondidas. La misma aritmética se aplica a la media del INE, que también está ponderada al fin de semana: el 21,24% oficial es aproximadamente 48% fines de semana, 45% puentes y 7,1% entre semana, no un 21% plano todas las noches.
 
-![Figura 8: puente de ocupación](assets/figure_8_occupancy_bridge.png)
+![Figura 8 — Puente de ocupación](assets/figure_8_occupancy_bridge.png)
+
+*Figura 8. Puente de ocupación: el 31,36% es una mezcla ponderada de 72% fines de semana, 65% puentes y 10,1% entre semana, no un +48% plano sobre el 21,24% del INE. Fuente: `assets/figure_8_occupancy_bridge.png`.*
 
 **Qué prueba y qué no prueba:**
 
@@ -219,8 +210,6 @@ Las ocupaciones de fin de semana y puentes son anclajes de juicio. El entre sema
 - **No hace el caso seguro.** El 72% de fin de semana sigue siendo 1,5x el 48% del mercado. Los anclajes son juicio, no una curva de reservas, y el primer año es deliberadamente más débil: al 0,90x de la curva madura la mezcla es 64,8% / 58,5% / 9,1%, que da 28,23%. Ese es el "los primeros años son duros" y ya está en el modelo.
 
 El puente se calcula en `src/core/demand_bridge.py` y queda fijado por `tests/test_demand_bridge.py`. Es una reconciliación anual, no un modelo mensual; la estacionalidad mensual vive en `src/config/ine_weights.py` y en la Figura 1.
-
----
 
 ## 7. Economía unitaria y break-evens
 
@@ -252,8 +241,6 @@ El caso de gestión está por encima de sus break-evens operativo y de servicio 
 
 Los "días" de la economía unitaria son días ocupados de toda la propiedad (un día con las 8 llaves vendidas), por eso una ocupación del 22,26% equivale a 81,2 días.
 
----
-
 ## 8. Personal: tiempo parcial, no 3 FTE
 
 La memoria Word original documenta contratos a tiempo parcial: unas 1.900 horas entre dos cocineros y 1.792 horas de limpieza. El modelo refinado utiliza por tanto:
@@ -269,8 +256,6 @@ El SMI 2026 es de 17.094 € brutos anuales (14 pagas de 1.221 €, Real Decreto
 
 Los 58.740 € del Excel original son nómina bruta (35.640 € de cocineros + 23.100 € de limpieza). Los 60.075 € del modelo refinado incluyen la Seguridad Social a cargo de la empresa y la estructura de horas a tiempo parcial. La diferencia no es un error de nómina; es una base de coste distinta.
 
----
-
 ## 9. Retornos: la salida no rescata los casos realistas
 
 | Caso | TIR proyecto (sin salida) | TIR proyecto (salida 8,5%) | TIR equity (salida 8,5%) | Valor terminal | MOIC proyecto | MOIC equity |
@@ -285,8 +270,6 @@ La razón es estructural: con un ADR de 85 € y una ocupación del 31,36%, el a
 
 **Una advertencia sobre esta tabla:** estas TIR son brutas de costes de venta. Una salida por cap rate asume que el activo cambia de manos gratis, lo que favorece a todos los casos. La capa de reforma incorpora el test neto explícito (3% del valor, 4% en el downside combinado) y la misma lógica es la forma honesta de leer las cifras as-is: son un límite superior, no un importe neto de venta.
 
----
-
 ## 10. Stress-testing de escenarios
 
 | Métrica | Conservador A1 | Conservador A3 | Base A1 | Base A3 | Optimista A1 | Optimista A3 |
@@ -299,8 +282,6 @@ La razón es estructural: con un ADR de 85 € y una ocupación del 31,36%, el a
 | ICR | -0,37x | 0,14x | 1,65x | 2,66x | 5,02x | 6,72x |
 
 El caso conservador (85% de ocupación, 95% de ADR, 110% de OPEX, +150 pb) rompe el covenant desde el Año 1 y no se recupera. El caso base es el upside de gestión. El caso optimista es una sensibilidad, no una previsión.
-
----
 
 ## 11. Monte Carlo y riesgo de cola con cópulas
 
@@ -326,7 +307,9 @@ El caso conservador (85% de ocupación, 95% de ADR, 110% de OPEX, +150 pb) rompe
 
 El test de crédito se ejecuta sobre el CFADS después de la reserva de FF&E y del impuesto, con la deuda contractual a 20 años y 4,0%, la carencia de 12 meses y el stack de costes completo. La cópula Clayton captura la dependencia asimétrica de la cola inferior: en un mal año, la ocupación, el ADR y el gasto en restaurante se deterioran a la vez. La DSRA recomendada es de **62.786,01 €**, que cubre el déficit CVaR 99% de Clayton y equivale a 4,54x la reserva contractual de seis meses.
 
----
+![Figura 3 — Distribución Monte Carlo del DSCR mínimo](assets/figure_3_monte_carlo_distribution.png)
+
+*Figura 3. Simulación Monte Carlo (N = 1.000) del DSCR mínimo de los Años 1–3: mediana **1,08x**, probabilidad de incumplir el covenant **60,9%**, probabilidad de insolvencia **44,2%** y VaR al 95% de **-0,29x**. Fuente: `assets/figure_3_monte_carlo_distribution.png`.*
 
 ## 12. Fase II: suites paisajísticas y estanque biológico
 
@@ -364,8 +347,6 @@ Incluso el caso base es exigente: un 35% de ocupación para dos suites es 1,65x 
 | Recomendación del gate | **DO NOT PROCEED** |
 
 Si la Fase II se financiara (cosa que el gate dice que no), los ingresos consolidados del Año 3 serían **253.188 €**, el EBITDA **57.198 €**, el CFADS **49.428 €** y el DSCR **1,79x** sobre la deuda senior existente, con una valoración consolidada de **672.922 €**. Es un upside real, pero condicionado a financiación nueva, no automático.
-
----
 
 ## 13. Reforma / resize: ¿qué tendría que ser cierto?
 
@@ -405,6 +386,10 @@ La pregunta se deja responder con un "no": una reforma que arregla el covenant p
 El bridge se calcula con el propio motor, palanca a palanca, así que cuadra con la P&L de la reforma con residuo cero. No es un waterfall escrito a mano.
 
 La Figura 7 representa el bridge y la frontera de valor: el heat map muestra EV menos inversión total según CapEx y cubiertos externos. Casi todo el presupuesto actual destruye valor. El único rincón positivo está en torno a 700k € de CapEx (450k € de gasto no terrenal) con seis o más cubiertos. Eso no es la reforma de ocho habitaciones que se especifica hoy; es un proyecto más pequeño con otro alcance.
+
+![Figura 7 — Puente de valor de la reforma y frontera de capital](assets/figure_7_reform_value_bridge.png)
+
+*Figura 7. Puente de EBITDA de la reforma R2 y frontera de valor: EV menos inversión total para cada combinación de CapEx y cubiertos externos de F&B. Casi todo el presupuesto actual destruye valor. Fuente: `assets/figure_7_reform_value_bridge.png`.*
 
 ### 13.1 Costes de salida: el cap rate bruto favorece a todos los casos
 
@@ -457,8 +442,6 @@ La continuación honesta es un **test de demanda de Fase 0** de bajo coste: prob
 
 **Tres tests de robustez bajo ese margen.** El contraste de valoración muestra que los +49 k€ son un diferencial de desarrollo: un yield on cost del 10,11% frente a un cap de salida del 9,50%. El cap de equilibrio es 9,80%, solo 30 pb más, y sin compresión de cap el gap neto es -46.223 €, exactamente la factura de costes de salida. El stress de inflación de costes muestra que un 2% de crecimiento real de costes con precios planos convierte +49.147 € en -142.819 €; al 2,5% es -192.609 €. Y el playbook de distress sobre el downside muestra que el prestamista cobra en una venta (143% de recuperación) mientras el equity recupera solo el 17,7% de 1,11 M€: un fallo de demanda al que no se le debe echar un cure de caja. El detalle completo está en la pestaña `Reform Case` y en `data/reform_analysis.json`.
 
----
-
 ## 14. Red team: diecisiete ataques a mi propio modelo
 
 Un modelo que solo sobrevive a preguntas amables no es un modelo. Estos son los diez ataques con los que empezaría si me pagaran por romper este, y lo que el libro dice realmente. El memo largo lista los diecisiete en [RED_TEAM_ES.md](RED_TEAM_ES.md).
@@ -495,8 +478,6 @@ Es un test, no un rescate: sin salida la TIR de proyecto de gestión es -35,43%,
 
 **Marcador:** seis ataques refuerzan el decline, tres exponen debilidades reales (cubiertos, FTE, cap rate de salida) que están todas condicionadas al test de Fase 0, y uno es un problema de presentación. Ninguno convierte el proyecto en una inversión viable.
 
----
-
 ## 15. Auditoría calculada: 16 reglas, 9 pasan, 1 N/A, 5 materiales, 1 warning
 
 La auditoría se calcula desde el modelo, no se escribe a mano. Se deja fallar.
@@ -524,8 +505,6 @@ La auditoría se calcula desde el modelo, no se escribe a mano. Se deja fallar.
 
 Las cinco excepciones materiales son el DSCR de gestión, la autofinanciación de la Fase II, los retornos frente al WACC, el DSCR de mercado y el requisito de equity. El warning es el supuesto de ocupación de gestión (1,48x la media del INE). Las seis son hallazgos del deal, no errores de fórmula; la disposición de cada una está en [MODEL_GOVERNANCE_ES.md](MODEL_GOVERNANCE_ES.md). RULE_13 no es un pase ni un fallo: los libros fuente contienen cuatro ingresos distintos del Año 1, así que no hay una cifra única contra la que conciliar y la regla se marca N/A. El JSON de auditoría se exporta a `data/model_audit_summary.json` (schema 4.0.0) y las mismas reglas se reproducen en la pestaña `Funding & Audit` del Excel.
 
----
-
 ## 16. El modelo Excel
 
 El libro tiene **13 pestañas** y **2.060 fórmulas vivas**:
@@ -551,8 +530,6 @@ El `Live Model` es intencionadamente simple y transparente: los ingresos son una
 Las fórmulas se han validado con un motor de cálculo independiente en Python: ingresos 154.548 €, EBITDA 24.280 €, DSCR del Año 2 1,1534x, caja del Año 1 20.700,88 €, caja del Año 2 183.322,64 € y descuadre de balance 0,00 € coinciden dentro de las tolerancias de 1 € / 0,01x. La pestaña `Read Me & Checks` muestra correctamente el check del covenant como `FAIL`; la pestaña `Funding & Audit` puede mostrar `FAIL`. Eso es la auditoría funcionando como debe.
 
 Diez pestañas son artefactos generados y así se declaran en `Inputs!A2`: `Read Me & Checks`, `Executive Scorecard`, `3-Statement Model`, `Debt Schedule` (con fórmulas), `Scenario Stress-Testing`, `Monte Carlo Risk`, `Credit Risk & Copula`, `Unit Economics & Runway`, `Phase II Expansion` y `Reform Case`. `Inputs`, `Live Model` y `Funding & Audit` son las pestañas vivas. Abre el libro en Excel o LibreOffice para ver evaluar las fórmulas vivas.
-
----
 
 ## 17. Arquitectura del repositorio
 
@@ -600,8 +577,6 @@ proyecto-dehesa-del-castrillo/
 └── assets/                       # figure_*.png
 ```
 
----
-
 ## 18. Instalación y ejecución
 
 ```bash
@@ -628,8 +603,6 @@ python -m pytest tests/ -q
 - `assets/figure_*.png`: ocho figuras institucionales.
 
 El pipeline es determinista por defecto; las simulaciones de Monte Carlo y cópulas usan semilla fija (42).
-
----
 
 ## 19. Limitaciones y próximos pasos
 
@@ -666,8 +639,6 @@ Esto es un modelo de portfolio, no un memorando de inversión. Las limitaciones 
 - Probar un sobrecoste del 20% y un retraso de 12 meses en la subvención LEADER.
 - Ejecutar un test de demanda de Fase 0 de bajo coste (pop-up o restaurante arrendado) antes de comprometer capital de construcción.
 - Si la familia avanza, encargar un diseño lean con QS dentro del envelope de 846k € o menos y valorar la segunda fase como una opción separada.
-
----
 
 ## 20. Referencias
 

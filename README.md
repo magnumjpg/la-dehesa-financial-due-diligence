@@ -1,25 +1,24 @@
 # La Dehesa del Castrillo S.L.
 
-### Hospitality Feasibility, Senior Debt Underwriting & Computed Due Diligence
+**Hospitality feasibility, senior debt underwriting and computed due diligence**
 
-**A portfolio-grade financial model built from my own university feasibility study.**
-Python 3.11 · 74 automated tests · 16-rule computed audit · 13-tab Excel model · 8 figures · 15-step pipeline
-
-[![tests](https://github.com/magnumjpg/la-dehesa-financial-due-diligence/actions/workflows/tests.yml/badge.svg)](https://github.com/magnumjpg/la-dehesa-financial-due-diligence/actions/workflows/tests.yml)
-![Python 3.11](https://img.shields.io/badge/python-3.11-blue)
-![License: MIT](https://img.shields.io/badge/license-MIT-green)
+[![CI](https://github.com/magnumjpg/la-dehesa-financial-due-diligence/actions/workflows/tests.yml/badge.svg)](https://github.com/magnumjpg/la-dehesa-financial-due-diligence/actions/workflows/tests.yml) [![tests](https://img.shields.io/badge/tests-74%20passed-brightgreen)](#) [![Python](https://img.shields.io/badge/python-3.11-blue)](https://www.python.org/) [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE) [![Data](https://img.shields.io/badge/data-INE%20%2B%20own%20study-informational)](#6-demand-calibration-ine-promoter-and-management)
 
 **Language:** [Español](README_ES.md) · [Governance](MODEL_GOVERNANCE.md) · [Red team](RED_TEAM.md)
 
+**A 25-hectare Segovia estate fails its debt covenant in Year 2 — and the reform fixes the credit, not the value.**
+
+*Python 3.11 · 74 tests · 16-rule computed audit · 13-tab Excel model · 8 figures · 15-step pipeline*
+
 ---
 
-## The 60-second version
+## At a glance
 
-**The asset.** A 25-hectare rural estate in Segovia: 7 double rooms, one full country house, a 21-cover restaurant and a natural swimming biopool. It started as my university feasibility study.
-
-**What I built.** Three as-is cases (promoter, INE market, management), a full cost stack, sources and uses, a 20-year amortising facility, a computed 16-rule audit, a live-formula Excel workbook, 74 tests and eight figures.
-
-**The answer is no.** The management case fails the 1.25x DSCR covenant in Year 2 at **1.15x**, needs **49.6% cash equity** instead of the planned 30%, and returns a project IRR of **-9.49%** even with an 8.5% exit. The credit recommendation is **DECLINE AS STRUCTURED (RESIZE REQUIRED)**.
+- **Question:** can a 25-hectare rural estate in Segovia support a 550 m² refurbishment, a 21-cover restaurant and a natural swimming biopool, and does it service senior debt?
+- **Data:** my own university feasibility study, INE rural-tourism occupancy for Segovia (2023–2025), published construction, salary and benchmark data, and the tax and grant rules in force.
+- **Method:** three as-is cases (promoter, INE market, management), a full cost stack, sources and uses, a 20-year amortising facility, a computed 16-rule audit and a live-formula Excel workbook.
+- **Headline:** the management case fails the 1.25x DSCR covenant in Year 2 at **1.15x**, needs **49.6% cash equity** instead of the planned 30%, and returns a project IRR of **-9.49%** even with an 8.5% exit. The recommendation is **decline as structured (resize required)**.
+- **Caveat:** demand is calibrated from a small INE segment and the promoter's assumptions; both realistic cases lose money, the reform still leaves a **-€324,723 net value gap**, and this is a credit and feasibility analysis, not an investment recommendation.
 
 **The occupancy question is fair, and the model answers it.** 31.36% is not a flat 48% uplift on the INE's 21.24%. It is a weekend-weighted mix: **72% weekends, 65% holiday bridges and 10.1% midweek**. 68% of the 10.1 pp gap is weekend capture; the midweek is thin in both the plan and the market. That makes the case defensible for a boutique with a restaurant, not certain.
 
@@ -27,20 +26,16 @@ Python 3.11 · 74 automated tests · 16-rule computed audit · 13-tab Excel mode
 
 **What would change my mind.** A Phase 0 demand test (pop-up or leased restaurant), a lean scope at or below €846k, and debt sized to the DSCR cap rather than to 35% LTV.
 
----
-
 ## How to read this
 
 | Time | Read | What you get |
 |---|---|---|
-| **5 min** | [The 60-second version](#the-60-second-version) + [Section 3](#3-the-findings-that-matter) | The verdict and the eleven findings that drive it |
+| **5 min** | [At a glance](#at-a-glance) + [Section 3](#3-the-findings-that-matter) | The verdict and the eleven findings that drive it |
 | **15 min** | Add [Section 6](#6-demand-calibration-ine-promoter-and-management) and [Section 13](#13-reform--resize-what-would-have-to-be-true) | Why 31.36% occupancy is defensible, and why the reform still fails |
 | **30 min** | Add [Section 9](#9-returns-the-exit-does-not-rescue-the-realistic-cases) and [Section 14](#14-red-team-seventeen-attacks-on-my-own-model) | The returns, the net exit test and my own seventeen attacks on the model |
 | **Full** | All 20 sections + the Excel workbook | The complete audit trail, formulas and limitations |
 
 > **The one-paragraph version.** The realistic model reaches a harsher conclusion than the original university work. Once the full cost stack, construction interest, debt amortisation, OPEX, FF&E reserve and the equity plug are modelled, the management case fails the covenant, the market case never covers its debt service, and neither earns its cost of capital. The audit is deliberately allowed to fail: **9 of 16 rules pass, 1 is not applicable, 5 material exceptions and 1 warning remain open**, verdict `CONDITIONAL - 5 MATERIAL EXCEPTION(S)`. A separate reform layer is allowed to say no as well, and it does: it fixes the covenant but not the value gap. The last layer (R7) changes the product to six premium cabins and is the only configuration that clears both the WACC and the net total-investment test — by 3.2%, and only at €110k per cabin.
-
----
 
 ## 1. What this project is
 
@@ -58,8 +53,6 @@ I then rebuilt the analysis in Python to answer the questions the original work 
 - What do the **returns** look like with and without an exit?
 
 The Python layer is not a cosmetic rewrite. It adds a three-case architecture, a sources-and-uses engine, a computed audit, a live formula-driven Excel workbook, and a test suite that locks in the honest numbers.
-
----
 
 ## 2. Three cases, side by side
 
@@ -91,8 +84,6 @@ The occupancy has the same provenance problem. The 19.2% in the case is **implie
 
 The three cases share the same CapEx (except the promoter's original €725k base), tax rate and balance-sheet mechanics. The difference is demand, unit economics and financing, which is exactly where the risk sits.
 
----
-
 ## 3. The findings that matter
 
 1. **The real cost stack is €1,050,100, not €725,000.** Land €250,000, 550 m² of structural works at €1,000/m² (€550,000), commercial kitchen €55,000, FF&E €65,000, biopool and landscaping €40,000, digital €12,000, professional fees €42,600 and a 5% contingency €35,500. The original budget omitted the kitchen, FF&E, fees and contingency, and covered only €475,000 of the €800,100 non-land budget.
@@ -106,8 +97,6 @@ The three cases share the same CapEx (except the promoter's original €725k bas
 9. **Phase II is not self-funded.** Phase II needs €435,564 (€359,970 net CapEx + €75,593.70 VAT). Phase I cash at the end of Year 2 is €183,322.64, so the phase-gate gap is **-€252,241.06** and the gate returns `DO NOT PROCEED`. It also fails the DSCR condition (1.15x < 1.25x).
 10. **The audit is computed and it fails.** 9 of 16 rules pass and 1 is not applicable. The five material exceptions are management DSCR, Phase II self-funding, returns versus WACC, market DSCR and the equity requirement. The warning is management occupancy versus INE. This is the point of the audit layer: it reports what the model actually does, not what the narrative wants.
 11. **The reform fixes the covenant, not the value gap.** A realistic revenue reform (R2: six external covers/day, +5% ADR, experiences and €5k of savings, one extra FTE) lifts mature EBITDA from €37,042 to €71,321 and the minimum DSCR from 1.15x to 2.13x. The asset is then worth €839,075 gross, **€813,903 after 3% exit costs**, still **€236,197 below CapEx** and **€324,723 below total project investment** on a net basis. Value engineering to €900k (R3) and a lean €846k scope (R5) soften the gap but remain below an 8% WACC. Only the aggressive eight-cover / +10% ADR case (R4) produces a positive NPV (+€3,722), and even it fails the net total-investment test at **-€84,147**. The reform conclusion is therefore also a decline, with a conditional Phase 0 demand test.
-
----
 
 ## 4. Cost stack and depreciation
 
@@ -126,8 +115,6 @@ The three cases share the same CapEx (except the promoter's original €725k bas
 Pre-opening costs of €35,000 are capitalised and amortised over five years (€7,000/year), so total D&A is **€45,943/year**. Input VAT is **€168,021** (21% on the €800,100 non-land base). The promoter case keeps the original €725,000 base, €99,750 of input VAT and no pre-opening capitalisation.
 
 The digital line is €12,000 rather than €4,000: a 550 m² property with 8 keys, a restaurant and a biopool needs property-management, POS, Wi-Fi, access control and CCTV, not a single Kit Digital grant.
-
----
 
 ## 5. Funding: sources and uses, equity plug and debt sizing
 
@@ -172,13 +159,15 @@ The 35% LTV facility complies with the loan-to-value limit but fails the covenan
 
 The debt is a 20-year French amortisation at 4.0% fixed, with 12 months of construction (interest capitalised as IDC) and a 12-month interest-only grace. The annuity is computed over the remaining 228 months: **€2,303.97 per month**, or **€27,647.64 per year** from Year 2. Year 1 pays only interest (€14,701.44). The loan fully amortises in Month 240.
 
+![Figure 2 — Year-2 DSCR sensitivity](assets/figure_2_dscr_sensitivity_heatmap.png)
+
+*Figure 2. Year-2 DSCR across occupancy multipliers and fixed senior rates, with 12 months of grace. The boxed cell is the base case at **1.15x**, below the 1.25x covenant. Source: `assets/figure_2_dscr_sensitivity_heatmap.png`.*
+
 ### DSRA and monthly liquidity
 
 The contractual DSRA is six months of the maximum annual service: **€13,823.82**. The copula's Clayton CVaR 99% shortfall is **€62,786.01**, so the tail-tested reserve would be 2.27 years of debt service. That is not a rounding difference: it is a further sign that the facility is over-levered.
 
 The monthly engine (24 months, seasonal revenue, monthly debt service, revolver) finds the trough in **April (Month 4)**: cash falls to **€12,004.01** before a **€2,995.99** draw on the €175,000 revolver, repaid by Month 7. Year 1 closes at **€20,700.88** and Year 2 at **€183,322.64**. The €15,000 minimum balance is never breached, and the monthly-to-annual reconciliation difference is **€0.00**. The LEADER grant arrives in Month 14 (€163,000) and the AEAT VAT refund in Month 18 (€168,021), which repays the bridge.
-
----
 
 ## 6. Demand calibration: INE, promoter and management
 
@@ -209,7 +198,9 @@ The fair challenge is this: if the INE average is 21.24%, how can the management
 
 The weekend and holiday occupancies are judgement anchors. The midweek is the residual that makes the three segments reconcile to the 31.36% the model already uses, so the bridge cannot quietly change the P&L. The same arithmetic is applied to the INE average, which is itself weekend-weighted: the official 21.24% is roughly 48% weekends, 45% bridges and 7.1% midweek, not a flat 21% every night.
 
-![Figure 8: occupancy bridge](assets/figure_8_occupancy_bridge.png)
+![Figure 8 — Occupancy bridge](assets/figure_8_occupancy_bridge.png)
+
+*Figure 8. Occupancy bridge: 31.36% is a weekend-weighted mix of 72% weekends, 65% holiday bridges and 10.1% midweek, not a flat 48% uplift on the INE's 21.24%. Source: `assets/figure_8_occupancy_bridge.png`.*
 
 **What this does and does not prove:**
 
@@ -219,8 +210,6 @@ The weekend and holiday occupancies are judgement anchors. The midweek is the re
 - **It does not make the case certain.** 72% weekend occupancy is still 1.5x the market's 48%. The anchors are judgement, not a booking curve, and the first year is deliberately weaker: at 0.90x the mature curve the mix is 64.8% / 58.5% / 9.1%, which is 28.23%. That is the "the first years are hard" ramp, and it is already in the model.
 
 The bridge is computed in `src/core/demand_bridge.py` and locked by `tests/test_demand_bridge.py`. It is an annual reconciliation, not a monthly model; monthly seasonality lives in `src/config/ine_weights.py` and Figure 1.
-
----
 
 ## 7. Unit economics and break-evens
 
@@ -252,8 +241,6 @@ The management case is above its operating and debt-service break-evens but **be
 
 The unit-economics "days" are whole-property occupied days (one day with all 8 keys sold), which is why 22.26% occupancy equals 81.2 days.
 
----
-
 ## 8. Payroll: part-time, not 3 FTE
 
 The original Word report documents part-time contracts: about 1,900 hours across two cooks and 1,792 hours for cleaning. The refined model therefore uses:
@@ -269,8 +256,6 @@ The 2026 SMI is €17,094 gross per year (14 payments of €1,221, Real Decreto 
 
 The original Excel's €58,740 is gross payroll (€35,640 cooks + €23,100 cleaning). The refined model's €60,075 includes employer social security and the part-time hour structure. The difference is not a payroll error; it is a different cost basis.
 
----
-
 ## 9. Returns: the exit does not rescue the realistic cases
 
 | Case | Project IRR (no exit) | Project IRR (8.5% exit) | Equity IRR (8.5% exit) | Terminal value | Project MOIC | Equity MOIC |
@@ -285,8 +270,6 @@ The reason is structural: at €85 ADR and 31.36% occupancy the asset generates 
 
 **One caveat on this table:** these IRRs are gross of selling costs. A cap-rate exit assumes the asset changes hands for free, which flatters every case. The reform layer below carries the explicit net-of-cost test (3% of value, 4% in the combined downside) and the same logic is the honest way to read the as-is numbers: they are an upper bound, not a net proceeds figure.
 
----
-
 ## 10. Scenario stress-testing
 
 | Metric | Conservative Y1 | Conservative Y3 | Base Y1 | Base Y3 | Optimistic Y1 | Optimistic Y3 |
@@ -299,8 +282,6 @@ The reason is structural: at €85 ADR and 31.36% occupancy the asset generates 
 | ICR | -0.37x | 0.14x | 1.65x | 2.66x | 5.02x | 6.72x |
 
 The conservative case (85% occupancy, 95% ADR, 110% OPEX, +150 bp) breaches the covenant from Year 1 and never recovers. The base case is the management upside. The optimistic case is a sensitivity, not a forecast.
-
----
 
 ## 11. Monte Carlo and copula tail risk
 
@@ -326,7 +307,9 @@ The conservative case (85% occupancy, 95% ADR, 110% OPEX, +150 bp) breaches the 
 
 The credit test is run on CFADS after the FF&E reserve and cash tax, with the contractual 20-year / 4.0% debt, the 12-month grace and the full cost stack. The Clayton copula captures asymmetric lower-tail dependence: in a bad year, occupancy, ADR and restaurant spend deteriorate together. The recommended DSRA is **€62,786.01**, which covers the Clayton CVaR 99% shortfall and is 4.54x the contractual six-month reserve.
 
----
+![Figure 3 — Monte Carlo distribution of the minimum DSCR](assets/figure_3_monte_carlo_distribution.png)
+
+*Figure 3. Monte Carlo simulation (N = 1,000) of the minimum DSCR over Years 1–3: median **1.08x**, probability of a covenant breach **60.9%**, probability of insolvency **44.2%** and a 95% value-at-risk of **-0.29x**. Source: `assets/figure_3_monte_carlo_distribution.png`.*
 
 ## 12. Phase II: landscape suites and biological pond
 
@@ -364,8 +347,6 @@ Even the base case is demanding: 35% occupancy for two suites is 1.65x the INE p
 | Gate recommendation | **DO NOT PROCEED** |
 
 If Phase II were funded (which the gate says it is not), consolidated Year 3 revenue would be **€253,188**, EBITDA **€57,198**, CFADS **€49,428** and DSCR **1.79x** on the existing senior debt, with a consolidated valuation of **€672,922**. That is a real upside, but it is conditional on new funding, not automatic.
-
----
 
 ## 13. Reform / resize: what would have to be true?
 
@@ -405,6 +386,10 @@ The question is deliberately answerable with "no": a reform that fixes the coven
 The bridge is computed with the engine itself, lever by lever, so it ties to the reform P&L with a zero residual. It is not a hand-written waterfall.
 
 Figure 7 plots the bridge and the value frontier: the heat map shows EV minus total investment across CapEx and external covers. Almost the entire current budget is value-destroying. The only positive corner is around €700k of CapEx (€450k of non-land spend) with six or more covers. That is not the eight-room refurbishment currently specified; it is a smaller project with a different scope.
+
+![Figure 7 — Reform value bridge and capital frontier](assets/figure_7_reform_value_bridge.png)
+
+*Figure 7. Reform R2 EBITDA bridge and the value frontier: EV minus total investment across CapEx and external F&B covers. Almost the entire current budget is value-destroying. Source: `assets/figure_7_reform_value_bridge.png`.*
 
 ### 13.1 Exit costs: the gross cap rate flatters every case
 
@@ -457,8 +442,6 @@ The honest continuation is a low-cost **Phase 0 demand test**: prove the externa
 
 **Three robustness tests now sit under that margin.** The valuation cross-check shows that the +€49k is a development spread: a 10.11% yield on cost against a 9.50% exit cap. The break-even exit cap is 9.80%, only 30bp higher, and with no cap compression the net gap is -€46,223, which is exactly the exit-cost bill. The cost-inflation stress shows that 2% real cost growth with flat prices turns +€49,147 into -€142,819; at 2.5% it is -€192,609. And the distress playbook on the downside shows the lender is repaid on a sale (143% recovery) while the equity recovers only 17.7% of €1.11M — a demand failure that a cash cure should not be thrown at. The full detail is in the `Reform Case` tab and `data/reform_analysis.json`.
 
----
-
 ## 14. Red team: seventeen attacks on my own model
 
 A model that only survives friendly questions is not a model. These are the ten attacks I would make first if I were paid to break this one, and what the workbook actually says. The long-form memo lists all seventeen in [RED_TEAM.md](RED_TEAM.md).
@@ -495,8 +478,6 @@ It is a test, not a rescue: without an exit the management project IRR is -35.43
 
 **Scorecard:** six attacks strengthen the decline, three expose genuine weaknesses (covers, FTE, exit cap) that are all gated by the Phase 0 test, and one is a presentation issue. None of them turns the project into a viable investment.
 
----
-
 ## 15. Computed audit: 16 rules, 9 pass, 1 N/A, 5 material, 1 warning
 
 The audit is computed from the model, not hand-written. It is allowed to fail.
@@ -524,8 +505,6 @@ The audit is computed from the model, not hand-written. It is allowed to fail.
 
 The five material exceptions are management DSCR, Phase II self-funding, returns versus WACC, market DSCR and the equity requirement. The warning is the management occupancy assumption (1.48x the INE average). All six are deal findings, not formula errors; the disposition of each is in [MODEL_GOVERNANCE.md](MODEL_GOVERNANCE.md). RULE_13 is not a pass or a failure: the source books contain four different Year-1 revenues, so there is nothing single to reconcile against and the rule is marked N/A. The audit JSON is exported to `data/model_audit_summary.json` (schema 4.0.0) and the same rules are reproduced in the Excel `Funding & Audit` tab.
 
----
-
 ## 16. The Excel model
 
 The workbook has **13 tabs** and **2,060 live formulas**:
@@ -551,8 +530,6 @@ The `Live Model` is intentionally simple and transparent: revenue is a formula l
 The formulas have been validated with an independent Python calculation engine: revenue €154,548, EBITDA €24,280, Year-2 DSCR 1.1534x, Year-1 cash €20,700.88, Year-2 cash €183,322.64 and balance-sheet discrepancy €0.00 all match within the €1 / 0.01x checks. The `Read Me & Checks` tab correctly shows the covenant check as `FAIL`; the `Funding & Audit` tab is allowed to show `FAIL`. That is the audit working as intended.
 
 Ten tabs are generated artefacts and are declared as such in `Inputs!A2`: `Read Me & Checks`, `Executive Scorecard`, `3-Statement Model`, `Debt Schedule` (formula-driven), `Scenario Stress-Testing`, `Monte Carlo Risk`, `Credit Risk & Copula`, `Unit Economics & Runway`, `Phase II Expansion` and `Reform Case`. `Inputs`, `Live Model` and `Funding & Audit` are the live tabs. Open the workbook in Excel or LibreOffice to see the live formulas evaluate.
-
----
 
 ## 17. Repository architecture
 
@@ -600,8 +577,6 @@ proyecto-dehesa-del-castrillo/
 └── assets/                       # figure_*.png
 ```
 
----
-
 ## 18. Installation and execution
 
 ```bash
@@ -628,8 +603,6 @@ python -m pytest tests/ -q
 - `assets/figure_*.png`: eight institutional charts.
 
 The pipeline is deterministic by default; the Monte Carlo and copula simulations use a fixed seed (42).
-
----
 
 ## 19. Limitations and next steps
 
@@ -666,8 +639,6 @@ This is a portfolio model, not an investment memorandum. The main limitations ar
 - Test a 20% cost overrun and a 12-month delay in the LEADER grant.
 - Run a low-cost Phase 0 pop-up or leased-restaurant demand test before committing construction capital.
 - If the family proceeds, commission a QS-led lean-scope design at or below the €846k envelope and price the second phase as a separate option.
-
----
 
 ## 20. References
 
