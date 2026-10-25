@@ -228,6 +228,7 @@ class FinancingStructure:
     initial_credit_line_draw: float = 0.0
     leader_subsidy_amount: float = 163_000.0
     leader_disbursement_month: int = 14
+    leader_disbursement_year: int = 2
 
     # Close-day funding requirements.
     pre_opening_costs: float = 35_000.0

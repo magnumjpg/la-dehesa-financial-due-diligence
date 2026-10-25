@@ -18,6 +18,8 @@ Generates:
    €521k cash-equity plug (49.6% of CapEx) - the net position is exactly zero.
 5. figure_5_copula_tail_risk.png: Gaussian vs. Clayton tail dependence on the Year-2 DSCR.
 6. figure_6_monthly_cash_runway.png: 24-month cash runway, revolver draw and solvency bridge.
+7. figure_7_reform_value_bridge.png: R2 mature-EBITDA value bridge and the CapEx x
+   external-cover value frontier for the separate reform / resize case.
 """
 
 from pathlib import Path
@@ -554,15 +556,189 @@ def generate_monthly_cash_runway_chart(save_path: Optional[Path] = None) -> Path
     return save_path
 
 
+def generate_reform_value_bridge(save_path: Optional[Path] = None) -> Path:
+    """Figure 7: R2 value bridge and the CapEx / external-cover value frontier."""
+    from src.config.reform import get_reform_preset
+    from src.core.reform import ReformAnalysisEngine
+
+    set_institutional_style()
+    save_path = save_path or (get_assets_dir() / "figure_7_reform_value_bridge.png")
+
+    engine = ReformAnalysisEngine()
+    bridge = engine.value_bridge(get_reform_preset("revenue_reform"))
+    frontier = engine.frontier(
+        capex_levels=[1_050_100, 950_000, 850_000, 770_000, 700_000],
+        cover_levels=[0, 3, 6, 8, 10],
+        base_config=get_reform_preset("revenue_reform"),
+    )
+
+    fig, (ax1, ax2) = plt.subplots(
+        1, 2, figsize=(15.5, 6.4), gridspec_kw={"width_ratios": [1.0, 1.05]}
+    )
+
+    # --- (A) Mature-EBITDA value bridge ---------------------------------
+    base = bridge["base_ebitda"]
+    components = bridge["components_ebitda"]
+    labels = ["Base\nEBITDA", "+5% ADR", "External\nF&B", "Experiences", "Cost\nsavings", "Reform\nEBITDA"]
+    values = [
+        base,
+        components["adr_uplift"],
+        components["external_fnb"],
+        components["experiences"],
+        components["cost_savings"],
+        bridge["reform_ebitda"],
+    ]
+
+    bottoms = [0.0]
+    tops = [base]
+    cumulative = base
+    for value in values[1:-1]:
+        bottoms.append(cumulative)
+        cumulative += value
+        tops.append(cumulative)
+    bottoms.append(0.0)
+    tops.append(bridge["reform_ebitda"])
+
+    colors = [
+        PALETTE["navy_primary"],
+        PALETTE["teal_positive"],
+        PALETTE["teal_positive"],
+        PALETTE["teal_positive"],
+        PALETTE["teal_positive"],
+        PALETTE["navy_light"],
+    ]
+    heights = [tops[i] - bottoms[i] for i in range(len(values))]
+    x = np.arange(len(values))
+    ax1.bar(x, heights, bottom=bottoms, color=colors, width=0.62, edgecolor="white", linewidth=0.8)
+
+    for xi, (top, value) in enumerate(zip(tops, values)):
+        ax1.annotate(
+            f"{value:,.0f}",
+            xy=(xi, top),
+            xytext=(0, 5),
+            textcoords="offset points",
+            ha="center",
+            fontsize=8.5,
+            fontweight="bold",
+            color=PALETTE["slate_dark"],
+        )
+
+    # Connector lines between the cumulative steps.
+    for xi in range(len(values) - 1):
+        ax1.plot(
+            [xi + 0.31, xi + 1 - 0.31],
+            [tops[xi], tops[xi]],
+            color=PALETTE["slate_benchmark"],
+            linewidth=0.8,
+            linestyle=":",
+        )
+
+    ax1.set_xticks(x)
+    ax1.set_xticklabels(labels, fontsize=8.5)
+    ax1.set_ylabel("Mature annual EBITDA (EUR)", color=PALETTE["slate_dark"])
+    ax1.set_title(
+        "(A) R2 Value Bridge: Where the EBITDA Comes From",
+        pad=10,
+        fontweight="bold",
+        color=PALETTE["slate_dark"],
+    )
+
+    gap_capex = bridge["value_gap_capex"]
+    gap_invest = bridge["value_gap_total_investment"]
+    ax1.text(
+        0.02,
+        0.96,
+        (
+            f"Cap-rate EV @ 8.5%: EUR {bridge['reform_ev']:,.0f}\n"
+            f"CapEx: EUR {bridge['capex']:,.0f}  ->  gap {gap_capex:,.0f}\n"
+            f"Total investment: EUR {bridge['total_project_investment']:,.0f}\n"
+            f"-> gap {gap_invest:,.0f} (bank test)"
+        ),
+        transform=ax1.transAxes,
+        va="top",
+        ha="left",
+        fontsize=8.3,
+        color=PALETTE["slate_dark"],
+        bbox=dict(
+            boxstyle="round,pad=0.5",
+            facecolor="#F8FAFC",
+            edgecolor=PALETTE["slate_border"],
+            alpha=0.95,
+        ),
+    )
+    ax1.set_ylim(0, bridge["reform_ebitda"] * 1.18)
+
+    # --- (B) Value frontier: CapEx x external covers ---------------------
+    grid = frontier.to_numpy(dtype=float) / 1000.0
+    cmap = LinearSegmentedColormap.from_list(
+        "reform_gap",
+        [PALETTE["rose_negative"], "#F8FAFC", PALETTE["teal_positive"]],
+    )
+    vmax = max(abs(float(np.nanmin(grid))), abs(float(np.nanmax(grid))), 1.0)
+    im = ax2.imshow(
+        grid,
+        cmap=cmap,
+        aspect="auto",
+        vmin=-vmax,
+        vmax=vmax,
+        interpolation="nearest",
+    )
+
+    ax2.set_xticks(np.arange(len(frontier.columns)))
+    ax2.set_xticklabels([f"{c:.0f}" for c in frontier.columns], fontsize=9)
+    ax2.set_yticks(np.arange(len(frontier.index)))
+    ax2.set_yticklabels([f"{c/1000:,.0f}k" for c in frontier.index], fontsize=9)
+    ax2.set_xlabel("External F&B covers per day", color=PALETTE["slate_dark"])
+    ax2.set_ylabel("Reform CapEx (EUR)", color=PALETTE["slate_dark"])
+
+    for i in range(grid.shape[0]):
+        for j in range(grid.shape[1]):
+            value = grid[i, j]
+            ax2.text(
+                j,
+                i,
+                f"{value:,.0f}",
+                ha="center",
+                va="center",
+                fontsize=8.2,
+                fontweight="bold",
+                color="white" if abs(value) > vmax * 0.55 else PALETTE["slate_dark"],
+            )
+
+    cbar = fig.colorbar(im, ax=ax2, fraction=0.046, pad=0.03)
+    cbar.set_label("EV - total investment (EURk); >0 is value-creating", fontsize=8.5)
+    cbar.ax.tick_params(labelsize=8)
+
+    ax2.set_title(
+        "(B) Value Frontier: Negative Cells Destroy Value",
+        pad=10,
+        fontweight="bold",
+        color=PALETTE["slate_dark"],
+    )
+
+    fig.suptitle(
+        "Figure 7: Reform / Resize Case - Revenue Bridge and Capital Frontier",
+        fontsize=13,
+        fontweight="bold",
+        color=PALETTE["slate_dark"],
+        y=1.01,
+    )
+    plt.tight_layout()
+    fig.savefig(save_path, bbox_inches="tight")
+    plt.close(fig)
+    return save_path
+
+
 def generate_all_figures():
-    """Generates all 6 institutional figures using the unified palette."""
+    """Generates all 7 institutional figures using the unified palette."""
     p1 = generate_seasonality_chart()
     p2 = generate_dscr_sensitivity_heatmap()
     p3 = generate_monte_carlo_distribution()
     p4 = generate_cash_flow_waterfall()
     p5 = generate_copula_tail_risk_chart()
     p6 = generate_monthly_cash_runway_chart()
-    return [p1, p2, p3, p4, p5, p6]
+    p7 = generate_reform_value_bridge()
+    return [p1, p2, p3, p4, p5, p6, p7]
 
 
 if __name__ == "__main__":

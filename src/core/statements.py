@@ -42,6 +42,7 @@ from src.config.assumptions import (
     ScenarioDrivers,
     SCENARIOS,
 )
+from src.config.reform import ReformConfig
 from src.config.ine_weights import SEGOVIA_INE_MONTHLY, get_annual_weighted_occupancy
 from src.core.debt import DebtAmortizationEngine
 from src.core.tax import VATEngine, CorporateTaxEngine
@@ -126,6 +127,17 @@ class AnnualStatementRecord:
 
     balance_sheet_discrepancy: float
 
+    # Reform overlay (zero in the three as-is cases). These are memo lines so
+    # the reform tab can show what drives the incremental EBITDA without
+    # polluting the original management/market/promoter statements.
+    revenue_external_fnb: float = 0.0
+    revenue_experiences: float = 0.0
+    cogs_external_fnb: float = 0.0
+    cogs_experiences: float = 0.0
+    external_covers: float = 0.0
+    incremental_payroll: float = 0.0
+    cost_savings: float = 0.0
+
 
 class FinancialModelEngine:
     """Integrated financial modelling engine over a multi-year horizon."""
@@ -140,8 +152,12 @@ class FinancialModelEngine:
         scenario: Optional[ScenarioDrivers] = None,
         case: str = "management",
         cash_equity_override: Optional[float] = None,
+        reform: Optional[ReformConfig] = None,
     ):
+        if reform is not None and case != "reform":
+            raise ValueError("A ReformConfig requires case='reform'")
         self.case = case
+        self.reform = reform if case == "reform" else None
         self.capex = capex or CapExStructure()
         self.financing = financing or FinancingStructure()
         self.labor = labor or LaborStructure()
@@ -202,6 +218,35 @@ class FinancialModelEngine:
             self.financing = replace(
                 self.financing,
                 base_capex=self.capex.total_capex,
+            )
+        elif case == "reform":
+            self.reform = reform or ReformConfig()
+            self.rev_cfg = replace(
+                self.rev_cfg,
+                calibration_mode="ine_market",
+                apply_full_cost_stack=True,
+            )
+            self.capex = self.reform.build_capex()
+            self.financing = replace(
+                self.financing,
+                base_capex=self.capex.total_capex,
+                debt_share=self.reform.debt_share,
+                loan_interest_rate=self.reform.loan_interest_rate,
+                loan_tenure_years=self.reform.loan_tenure_years,
+                construction_months=self.reform.construction_months,
+                grace_months=self.reform.grace_months,
+                leader_subsidy_amount=self.reform.leader_subsidy,
+                leader_disbursement_year=self.reform.leader_disbursement_year,
+                pre_opening_costs=self.reform.pre_opening_costs,
+                initial_working_capital=self.reform.initial_working_capital,
+                dsra_months=self.reform.dsra_months,
+            )
+            # The reform's ADR/price uplift is layered on top of the chosen
+            # scenario multiplier, so a downside scenario can still cut prices.
+            self.scenario = replace(
+                self.scenario,
+                adr_multiplier=self.scenario.adr_multiplier
+                * (1.0 + self.reform.adr_uplift),
             )
         else:
             self.rev_cfg = replace(
@@ -400,6 +445,56 @@ class FinancialModelEngine:
     # ------------------------------------------------------------------
     # Revenue and variable costs
     # ------------------------------------------------------------------
+    def _apply_reform_overlay(
+        self, rev: Dict[str, float], year: int
+    ) -> Dict[str, float]:
+        """
+        Adds the external F&B and experience revenue lines to the management
+        revenue base. In the three as-is cases the overlay is zero, so the
+        original statements are unchanged.
+        """
+        if self.reform is None:
+            rev.update(
+                {
+                    "rev_external_fnb": 0.0,
+                    "rev_experiences": 0.0,
+                    "cogs_external_fnb": 0.0,
+                    "cogs_experiences": 0.0,
+                    "external_covers": 0.0,
+                }
+            )
+            return rev
+
+        r = self.reform
+        external_ramp = (
+            r.external_ramp_year1 if year == 1
+            else r.external_ramp_year2 if year == 2
+            else 1.0
+        )
+        experience_ramp = (
+            r.experiences_ramp_year1 if year == 1
+            else r.experiences_ramp_year2 if year == 2
+            else 1.0
+        )
+
+        external_covers = r.external_covers_per_day * 365.0 * external_ramp
+        external_revenue = round(external_covers * r.external_ticket, 2)
+        experience_revenue = round(r.experiences_revenue * experience_ramp, 2)
+
+        rev["rev_external_fnb"] = external_revenue
+        rev["rev_experiences"] = experience_revenue
+        rev["cogs_external_fnb"] = round(
+            external_revenue * r.external_cogs_ratio, 2
+        )
+        rev["cogs_experiences"] = round(
+            experience_revenue * (1.0 - r.experiences_ebitda_margin), 2
+        )
+        rev["external_covers"] = round(external_covers, 2)
+        rev["total_revenue"] = round(
+            rev["total_revenue"] + external_revenue + experience_revenue, 2
+        )
+        return rev
+
     def calculate_revenue_for_year(self, year: int) -> Dict[str, float]:
         """Calculates annual revenue, key-nights, guests and the variable-cost stack."""
         occ_mult = self.scenario.occupancy_multiplier
@@ -453,17 +548,20 @@ class FinancialModelEngine:
                 room_nights * self.rev_cfg.guests_per_double_room
                 + house_nights * self.rev_cfg.guests_per_full_house
             )
-            return {
-                "rev_rooms": round(rev_rooms, 2),
-                "rev_house": round(rev_house, 2),
-                "rev_restaurant": round(rev_restaurant, 2),
-                "total_revenue": round(rev_rooms + rev_house + rev_restaurant, 2),
-                "cogs_restaurant": round(cogs_restaurant, 2),
-                "occupied_days": occupied_days,
-                "room_nights": room_nights,
-                "house_nights": house_nights,
-                "guests": guests,
-            }
+            return self._apply_reform_overlay(
+                {
+                    "rev_rooms": round(rev_rooms, 2),
+                    "rev_house": round(rev_house, 2),
+                    "rev_restaurant": round(rev_restaurant, 2),
+                    "total_revenue": round(rev_rooms + rev_house + rev_restaurant, 2),
+                    "cogs_restaurant": round(cogs_restaurant, 2),
+                    "occupied_days": occupied_days,
+                    "room_nights": room_nights,
+                    "house_nights": house_nights,
+                    "guests": guests,
+                },
+                year,
+            )
 
         if self.rev_cfg.calibration_mode == "leader_excel":
             excel_rev_base = {1: 96_628.0, 2: 126_855.0, 3: 159_863.0, 4: 167_856.0, 5: 176_249.0}
@@ -475,17 +573,20 @@ class FinancialModelEngine:
             cogs_restaurant = round(rev_restaurant * self.rev_cfg.restaurant_cogs_ratio, 2)
             occupied_days = tot_rev / 1_500.0
             guests = occupied_days * 21.0
-            return {
-                "rev_rooms": rev_rooms,
-                "rev_house": rev_house,
-                "rev_restaurant": rev_restaurant,
-                "total_revenue": tot_rev,
-                "cogs_restaurant": cogs_restaurant,
-                "occupied_days": occupied_days,
-                "room_nights": occupied_days * 7,
-                "house_nights": occupied_days,
-                "guests": guests,
-            }
+            return self._apply_reform_overlay(
+                {
+                    "rev_rooms": rev_rooms,
+                    "rev_house": rev_house,
+                    "rev_restaurant": rev_restaurant,
+                    "total_revenue": tot_rev,
+                    "cogs_restaurant": cogs_restaurant,
+                    "occupied_days": occupied_days,
+                    "room_nights": occupied_days * 7,
+                    "house_nights": occupied_days,
+                    "guests": guests,
+                },
+                year,
+            )
 
         # Management case: INE monthly seasonality with the management target
         # occupancy (31.36% at stabilisation) and an explicit two-year ramp-up.
@@ -507,17 +608,20 @@ class FinancialModelEngine:
         rev_restaurant = guests * self.rev_cfg.restaurant_average_ticket * adr_mult
         cogs_restaurant = rev_restaurant * self.rev_cfg.restaurant_cogs_ratio
 
-        return {
-            "rev_rooms": round(rev_rooms, 2),
-            "rev_house": round(rev_house, 2),
-            "rev_restaurant": round(rev_restaurant, 2),
-            "total_revenue": round(rev_rooms + rev_house + rev_restaurant, 2),
-            "cogs_restaurant": round(cogs_restaurant, 2),
-            "occupied_days": occupied_days,
-            "room_nights": room_nights,
-            "house_nights": house_nights,
-            "guests": guests,
-        }
+        return self._apply_reform_overlay(
+            {
+                "rev_rooms": round(rev_rooms, 2),
+                "rev_house": round(rev_house, 2),
+                "rev_restaurant": round(rev_restaurant, 2),
+                "total_revenue": round(rev_rooms + rev_house + rev_restaurant, 2),
+                "cogs_restaurant": round(cogs_restaurant, 2),
+                "occupied_days": occupied_days,
+                "room_nights": room_nights,
+                "house_nights": house_nights,
+                "guests": guests,
+            },
+            year,
+        )
 
     def _variable_costs(self, rev: Dict[str, float]) -> Dict[str, float]:
         """Full USALI-style variable-cost stack."""
@@ -538,7 +642,12 @@ class FinancialModelEngine:
         amenities = rev["occupied_days"] * self.rev_cfg.amenities_per_occupied_day
         breakfast = rev["guests"] * self.rev_cfg.breakfast_cost_per_guest_day
         total_variable = (
-            rev["cogs_restaurant"] + ota_commission + amenities + breakfast
+            rev["cogs_restaurant"]
+            + float(rev.get("cogs_external_fnb", 0.0))
+            + float(rev.get("cogs_experiences", 0.0))
+            + ota_commission
+            + amenities
+            + breakfast
         )
         return {
             "ota_commission": round(ota_commission, 2),
@@ -591,11 +700,32 @@ class FinancialModelEngine:
             total_variable = float(variable["total_variable_costs"])
             gross_margin = round(rev["total_revenue"] - total_variable, 2)
 
+            incremental_payroll = (
+                round(
+                    self.reform.incremental_fte
+                    * self.reform.loaded_cost_per_fte,
+                    2,
+                )
+                if self.reform is not None
+                else 0.0
+            )
+            reform_cost_savings = (
+                float(self.reform.cost_savings)
+                if self.reform is not None
+                else 0.0
+            )
             labor_cost = round(
-                self.labor.total_annual_payroll * self.scenario.opex_multiplier, 2
+                (self.labor.total_annual_payroll + incremental_payroll)
+                * self.scenario.opex_multiplier,
+                2,
             )
             fixed_opex_cost = round(
-                self.opex.total_fixed_opex * self.scenario.opex_multiplier, 2
+                max(
+                    0.0,
+                    self.opex.total_fixed_opex - reform_cost_savings,
+                )
+                * self.scenario.opex_multiplier,
+                2,
             )
             total_opex = round(labor_cost + fixed_opex_cost, 2)
 
@@ -645,7 +775,8 @@ class FinancialModelEngine:
             vat_settle = self.vat_engine.calculate_annual_vat_settlement(
                 year=y,
                 revenue_lodging=rev["rev_rooms"] + rev["rev_house"],
-                revenue_restaurant=rev["rev_restaurant"],
+                revenue_restaurant=rev["rev_restaurant"]
+                + float(rev.get("rev_external_fnb", 0.0)),
                 capex_expenditure=0.0,
                 taxable_opex=fixed_opex_cost + total_variable,
                 request_annual_refund=False,
@@ -679,16 +810,19 @@ class FinancialModelEngine:
                     - principal_repayment,
                     2,
                 )
-            elif y == 2:
-                leader_inflow = self.financing.leader_subsidy_amount
-                capital_subsidies += leader_inflow
-                repay_bridge = vat_bridge
-                vat_bridge = 0.0
+            else:
+                if (
+                    self.financing.leader_subsidy_amount > 0
+                    and y == self.financing.leader_disbursement_year
+                ):
+                    leader_inflow = self.financing.leader_subsidy_amount
+                    capital_subsidies += leader_inflow
+                repay_bridge = vat_bridge if y == 2 else 0.0
+                if y == 2:
+                    vat_bridge = 0.0
                 cff = round(
                     leader_inflow - repay_bridge - principal_repayment, 2
                 )
-            else:
-                cff = round(-principal_repayment, 2)
 
             net_cash_flow = round(cfo + cfi + cff, 2)
             ending_cash = round(ending_cash + net_cash_flow, 2)
@@ -812,6 +946,13 @@ class FinancialModelEngine:
                 capital_subsidies=capital_subsidies,
                 total_equity=total_equity,
                 balance_sheet_discrepancy=bs_discrepancy,
+                revenue_external_fnb=float(rev.get("rev_external_fnb", 0.0)),
+                revenue_experiences=float(rev.get("rev_experiences", 0.0)),
+                cogs_external_fnb=float(rev.get("cogs_external_fnb", 0.0)),
+                cogs_experiences=float(rev.get("cogs_experiences", 0.0)),
+                external_covers=float(rev.get("external_covers", 0.0)),
+                incremental_payroll=incremental_payroll,
+                cost_savings=reform_cost_savings,
             )
             records.append(record)
 

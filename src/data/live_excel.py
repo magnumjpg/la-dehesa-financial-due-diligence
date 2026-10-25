@@ -365,14 +365,15 @@ def build_readme(wb, st: Dict[str, Any], case_facts: Dict[str, Dict[str, Any]], 
         ("Credit Risk & Copula", "Gaussian / Student-t / Clayton tail risk on the Year-2 DSCR."),
         ("Unit Economics & Runway", "RevPAR, TRevPAR, contribution margin and the 24-month cash runway."),
         ("Phase II Expansion", "Landscape suites and biopool: CapEx, P&L, phase gate and consolidated impact."),
+        ("Reform Case", "Separate post-decline layer: R1-R6 presets, value bridge, CapEx/cover frontier, stress tests and recommendation."),
     ]
     for r, (tab, purpose) in enumerate(model_map, start=6):
         _write_row(ws, r, [tab, purpose], st, number_format="@")
         ws.cell(row=r, column=1).font = st["bold"]
 
-    ws["A19"] = "2. THREE CASES (DO NOT CONFUSE THEM)"
-    ws["A19"].font = st["bold"]
-    _header_row(ws, 20, ["Case", "Occupancy", "Revenue Y1", "EBITDA Y1", "DSCR Y1", "Use"], st)
+    ws["A20"] = "2. THREE CASES (DO NOT CONFUSE THEM)"
+    ws["A20"].font = st["bold"]
+    _header_row(ws, 21, ["Case", "Occupancy", "Revenue Y1", "EBITDA Y1", "DSCR Y1", "Use"], st)
     cases = [
         (
             "Management (upside)",
@@ -399,15 +400,15 @@ def build_readme(wb, st: Dict[str, Any], case_facts: Dict[str, Dict[str, Any]], 
             "Faithful replication of the author's original university simulator.",
         ),
     ]
-    for r, row in enumerate(cases, start=21):
+    for r, row in enumerate(cases, start=22):
         _write_row(ws, r, list(row), st, number_format="#,##0.00")
         ws.cell(row=r, column=1).font = st["bold"]
         ws.cell(row=r, column=2).number_format = "0.00%"
         ws.cell(row=r, column=5).number_format = "0.00"
 
-    ws["A25"] = "3. KEY INTEGRITY CHECKS (LIVE FORMULAS)"
-    ws["A25"].font = st["bold"]
-    _header_row(ws, 26, ["Check", "Where", "Result"], st)
+    ws["A26"] = "3. KEY INTEGRITY CHECKS (LIVE FORMULAS)"
+    ws["A26"].font = st["bold"]
+    _header_row(ws, 27, ["Check", "Where", "Result"], st)
     bs = LIVE["bs_check"]
     checks = [
         (
@@ -436,12 +437,12 @@ def build_readme(wb, st: Dict[str, Any], case_facts: Dict[str, Dict[str, Any]], 
         ("VAT bridge within the EUR 175k limit", "Funding & Audit!B23", '=IF(\'Funding & Audit\'!B23<=175000,"PASS","FAIL")'),
         ("Phase II phase gate", f"Funding & Audit!B{38}", "='Funding & Audit'!B38"),
     ]
-    for r, (check, where, formula) in enumerate(checks, start=27):
+    for r, (check, where, formula) in enumerate(checks, start=28):
         _write_row(ws, r, [check, where, formula], st, number_format="@")
         ws.cell(row=r, column=3).font = st["bold"]
         ws.cell(row=r, column=3).alignment = Alignment(horizontal="center")
 
-    ws["A40"] = "4. HEADLINE FINDINGS"
+    ws["A41"] = "4. HEADLINE FINDINGS"
     ws["A40"].font = st["bold"]
     mgmt = case_facts["management"]["result"]
     findings = [
@@ -477,28 +478,34 @@ def build_readme(wb, st: Dict[str, Any], case_facts: Dict[str, Dict[str, Any]], 
             "shortfall at EUR 62,786 against a EUR 13,824 contractual DSRA."
         ),
         (
+            "The separate reform / resize layer is also negative: six external F&B covers, +5% ADR "
+            "and one extra FTE lift mature EBITDA to EUR 71,321 and asset value to EUR 839,075, still "
+            "EUR 211,025 below the 1.05M CapEx and EUR 299,550 below total project investment. Only the "
+            "aggressive eight-cover / +10% ADR corner clears 8%, and it still fails the bank test."
+        ),
+        (
             "The model is deliberately honest: the business does not earn its 8.5% cost of capital "
             "at the planned occupancy and ADR, and the workbook says so rather than hiding it."
         ),
     ]
-    for r, text in enumerate(findings, start=41):
+    for r, text in enumerate(findings, start=42):
         cell = ws.cell(row=r, column=1, value=f"- {text}")
         cell.font = st["regular"]
         cell.alignment = Alignment(wrap_text=True, vertical="top")
         ws.merge_cells(start_row=r, start_column=1, end_row=r, end_column=6)
         ws.row_dimensions[r].height = 30
 
-    ws["A50"] = "5. DISCLAIMER"
-    ws["A50"].font = st["bold"]
-    ws["A51"] = (
+    ws["A51"] = "5. DISCLAIMER"
+    ws["A51"].font = st["bold"]
+    ws["A52"] = (
         "This is a portfolio model built from the author's own university work, public INE data and "
         "public convenio tables. It is not investment advice. The management case is an upside case; "
         "the market and promoter cases are the honest downside anchors."
     )
-    ws["A51"].font = st["note"]
-    ws["A51"].alignment = Alignment(wrap_text=True, vertical="top")
-    ws.merge_cells("A51:F51")
-    ws.row_dimensions[51].height = 44
+    ws["A52"].font = st["note"]
+    ws["A52"].alignment = Alignment(wrap_text=True, vertical="top")
+    ws.merge_cells("A52:F52")
+    ws.row_dimensions[52].height = 44
 
     ws.column_dimensions["A"].width = 58
     ws.column_dimensions["B"].width = 34
@@ -1192,7 +1199,7 @@ def add_live_model_tabs(wb, engine: FinancialModelEngine, df_proj, df_kpi, debt_
         "Read Me & Checks", "Inputs", "Live Model", "Funding & Audit",
         "Executive Scorecard", "3-Statement Model", "Debt Schedule",
         "Scenario Stress-Testing", "Monte Carlo Risk", "Credit Risk & Copula",
-        "Unit Economics & Runway", "Phase II Expansion",
+        "Unit Economics & Runway", "Phase II Expansion", "Reform Case",
     ]
     existing = [name for name in preferred if name in wb.sheetnames]
     remaining = [name for name in wb.sheetnames if name not in existing]

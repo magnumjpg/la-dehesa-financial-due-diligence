@@ -3,13 +3,13 @@
 ### Viabilidad hotelera, underwriting de deuda senior y due diligence calculada
 
 **Un modelo financiero de nivel portfolio construido a partir de mi propio trabajo de viabilidad universitario.**
-Python 3.11 · 42 tests automáticos · auditoría calculada de 16 reglas · modelo Excel de 12 pestañas · pipeline de 14 pasos
+Python 3.11 · 50 tests automáticos · auditoría calculada de 16 reglas · modelo Excel de 13 pestañas · pipeline de 15 pasos
 
 [![tests](https://github.com/magnumjpg/la-dehesa-financial-due-diligence/actions/workflows/tests.yml/badge.svg)](https://github.com/magnumjpg/la-dehesa-financial-due-diligence/actions/workflows/tests.yml)
 ![Python 3.11](https://img.shields.io/badge/python-3.11-blue)
 ![License: MIT](https://img.shields.io/badge/license-MIT-green)
 
-> **Léelo primero.** El modelo realista llega a una conclusión más dura que el trabajo universitario original. Una vez modelados el coste completo, los intereses de construcción, la amortización de la deuda, el OPEX, la reserva de FF&E y el equity plug, el caso de gestión incumple el covenant de 1,25x en el Año 2 con **1,15x**, exige un **49,6% de equity en caja** en lugar del 30% asumido y produce una TIR de proyecto de **-9,49%** incluso con una salida al 8,5%. La auditoría se deja fallar a propósito: **pasan 10 de 16 reglas, quedan 5 excepciones materiales y 1 warning**, y el veredicto es `CONDITIONAL - 5 MATERIAL EXCEPTION(S)`. La recomendación del comité de crédito es **DECLINE AS STRUCTURED (RESIZE REQUIRED)**.
+> **Léelo primero.** El modelo realista llega a una conclusión más dura que el trabajo universitario original. Una vez modelados el coste completo, los intereses de construcción, la amortización de la deuda, el OPEX, la reserva de FF&E y el equity plug, el caso de gestión incumple el covenant de 1,25x en el Año 2 con **1,15x**, exige un **49,6% de equity en caja** en lugar del 30% asumido y produce una TIR de proyecto de **-9,49%** incluso con una salida al 8,5%. La auditoría se deja fallar a propósito: **pasan 10 de 16 reglas, quedan 5 excepciones materiales y 1 warning**, y el veredicto es `CONDITIONAL - 5 MATERIAL EXCEPTION(S)`. La recomendación del comité de crédito es **DECLINE AS STRUCTURED (RESIZE REQUIRED)**. Una capa separada de reforma / resize pregunta después si el proyecto puede hacerse viable: seis cubiertos externos de F&B al día, un +5% de ADR y un FTE adicional arreglan el covenant (DSCR mínimo 2,13x), pero dejan igualmente un **gap de valor de 299.550 € frente a la inversión total**; solo el rincón agresivo y no probado de demanda supera el 8%, y aun así falla el test bancario.
 
 ---
 
@@ -62,6 +62,7 @@ Los tres casos comparten el mismo CapEx (salvo la base original de 725.000 € d
 8. **El puente de IVA es una fuente de financiación, no creación de valor.** El IVA soportado del CapEx es de 168.021 € (21% sobre la base no terrenal de 800.100 €). Se dispone bajo un puente separado de 175.000 €, se repaga con la devolución de la AEAT en el Mes 18 y devenga intereses. El IVA operativo es pass-through.
 9. **La Fase II no se autofinancia.** La Fase II necesita 435.564 € (359.970 € de CapEx neto + 75.593,70 € de IVA). La caja de la Fase I al final del Año 2 es de 183.322,64 €, así que el gap del phase gate es **-252.241,06 €** y el gate devuelve `DO NOT PROCEED`. Tampoco cumple la condición de DSCR (1,15x < 1,25x).
 10. **La auditoría se calcula y falla.** Pasan 10 de 16 reglas. Las cinco excepciones materiales son el DSCR de gestión, la autofinanciación de la Fase II, los retornos frente al WACC, el DSCR de mercado y el requisito de equity. El warning es la ocupación de gestión frente al INE. Ese es el sentido de la capa de auditoría: informa de lo que el modelo hace realmente, no de lo que la narrativa quiere.
+11. **La reforma arregla el covenant, no el gap de valor.** Una reforma realista de ingresos (R2: seis cubiertos externos al día, +5% de ADR, experiencias y 5.000 € de ahorros, un FTE adicional) eleva el EBITDA maduro de 37.042 € a 71.321 € y el DSCR mínimo de 1,15x a 2,13x. El activo vale entonces 839.075 € a un cap rate del 8,5%, todavía **211.025 € por debajo del CapEx** y **299.550 € por debajo de la inversión total**. El value engineering a 900k (R3) y un alcance lean de 846k (R5) reducen el gap pero siguen por debajo de un WACC del 8%. Solo el caso agresivo de ocho cubiertos y +10% de ADR (R4) produce un VAN positivo (+3.722 €), y aun así tiene un gap negativo frente a la inversión total. La conclusión de la reforma es también un no, con un test de demanda condicional de Fase 0.
 
 ---
 
@@ -297,7 +298,52 @@ Si la Fase II se financiara (cosa que el gate dice que no), los ingresos consoli
 
 ---
 
-## 13. Auditoría calculada: 16 reglas, 10 pasan, 5 materiales, 1 warning
+## 13. Reforma / resize: ¿qué tendría que ser cierto?
+
+Es una capa separada, no un cuarto caso as-is. Las tres proyecciones originales quedan intactas. La reforma vuelve a ejecutar el mismo motor de tres estados con `case="reform"`, un presupuesto de CapEx especificado aparte, un overlay de ingresos de F&B externo y experiencias, un FTE incremental explícito y una subvención LEADER que puede retrasarse.
+
+La pregunta se deja responder con un "no": una reforma que arregla el covenant pero no el gap de valor sigue siendo un decline.
+
+| Ref | Caso de reforma | CapEx | Inversión total | EBITDA A5 | DSCR mínimo | EV @ 8,5% | Gap vs CapEx | Gap vs inv. total | VAN proyecto | TIR proyecto |
+|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| R1 | Solo capital (900k €) | 901.800 € | 986.297 € | 37.042 € | 1,34x | 435.783 € | -466.017 € | -550.514 € | -450.359 € | -7,18% |
+| R2 | Reforma de ingresos (1,05M €) | 1.050.100 € | 1.138.625 € | 71.321 € | 2,13x | 839.075 € | -211.025 € | -299.550 € | -220.685 € | 2,53% |
+| R3 | Ingresos + value engineering (900k €) | 901.800 € | 986.297 € | 71.321 € | 2,44x | 839.075 € | -62.725 € | -147.222 € | -96.378 € | 5,37% |
+| R4 | Demanda agresiva (1,05M €) | 1.050.100 € | 1.138.625 € | 92.403 € | 2,72x | 1.087.091 € | +36.991 € | -51.534 € | +3.722 € | 8,08% |
+| R5 | Alcance lean (846k €) | 846.300 € | 929.289 € | 71.321 € | 2,57x | 839.075 € | -7.225 € | -90.214 € | -49.106 € | 6,61% |
+| R6 | Downside combinado | 965.560 € | 1.051.789 € | 2.671 € | -1,49x | 26.710 € | -938.850 € | -1.025.080 € | -906.166 € | -37,76% |
+
+**Qué dice la tabla:**
+
+- **R1 demuestra que el capital solo no funciona.** Bajar el presupuesto a 900k sin palanca de demanda deja el EBITDA en los 37.042 € as-is y destruye 550.514 € de valor frente a la inversión total.
+- **R2 arregla el problema de crédito.** Seis cubiertos externos al día a un ticket de 28 € (61.320 € de ingresos externos de F&B en madurez), 12.000 € de experiencias, un +5% de ADR y 5.000 € de ahorros elevan el EBITDA a 71.321 €. El DSCR mínimo sube de 1,15x a 2,13x, así que el covenant deja de ser la restricción vinculante.
+- **Pero R2 no arregla el problema de valor.** A un cap rate del 8,5% el activo vale 839.075 €. Eso es 211.025 € por debajo del CapEx de 1.050.100 € y 299.550 € por debajo de la inversión total de 1.138.625 € (CapEx + IDC + preapertura + capital circulante + DSRA). La reforma mueve el proyecto de una ruptura de covenant a un activo con VAN negativo.
+- **El value engineering ayuda pero no cierra el gap.** R3 (900k) y R5 (846k) reducen el gap frente a la inversión total a -147.222 € y -90.214 €, con TIR de proyecto del 5,37% y 6,61%: todavía por debajo del WACC del 8%.
+- **Solo el rincón de demanda agresiva supera el 8%, y no es bankable.** R4 necesita ocho cubiertos externos al día y un +10% de ADR. Produce 3.722 € de VAN y un gap positivo de 36.991 € frente al CapEx, pero el gap frente a la inversión total sigue siendo -51.534 € y el supuesto de demanda está muy por encima de un caso base defendible.
+- **R6 muestra lo rápido que se rompe la reforma.** Ocupación INE, la mitad de los cubiertos externos, un -10% de precio, 1,5 FTE, un sobrecoste de CapEx del 20%, cap rate de salida del 10%, +200 pb de tipos y un año de retraso de la subvención producen 2.671 € de EBITDA y un VAN de -906.166 €.
+
+**Value bridge de R2 (año maduro, cap rate 8,5%):**
+
+| Componente | Impacto en EBITDA | Impacto en EV |
+|---|---:|---:|
+| EBITDA base de gestión | 37.042 € | 435.783 € |
+| + Subida de ADR (5%) | 7.182 € | 84.496 € |
+| + F&B externo (6 cubiertos/día) | 13.698 € | 161.148 € |
+| + Experiencias | 8.400 € | 98.824 € |
+| + Ahorros de coste | 5.000 € | 58.824 € |
+| **EBITDA y EV de la reforma** | **71.321 €** | **839.075 €** |
+
+El bridge se calcula con el propio motor, palanca a palanca, así que cuadra con la P&L de la reforma con residuo cero. No es un waterfall escrito a mano.
+
+La Figura 7 representa el bridge y la frontera de valor: el heat map muestra EV menos inversión total según CapEx y cubiertos externos. Casi todo el presupuesto actual destruye valor. El único rincón positivo está en torno a 700k € de CapEx (450k € de gasto no terrenal) con seis o más cubiertos. Eso no es la reforma de ocho habitaciones que se especifica hoy; es un proyecto más pequeño con otro alcance.
+
+**Recomendación de la reforma:** `DECLINE AS STRUCTURED - ONLY THE AGGRESSIVE, UNPROVEN DEMAND CASE CLEARS THE WACC`.
+
+La continuación honesta es un **test de demanda de Fase 0** de bajo coste: probar la demanda de F&B externo y experiencias con un pop-up o un restaurante arrendado antes de comprometer capital de construcción. Si la familia quiere avanzar, la primera fase debería limitarse al alcance lean y la segunda debería quedar detrás de un gate de demanda. El terreno debe cargarse a su valor de oportunidad en todo momento; el proyecto no se vuelve viable porque la finca ya sea propiedad de la familia.
+
+---
+
+## 14. Auditoría calculada: 16 reglas, 10 pasan, 5 materiales, 1 warning
 
 La auditoría se calcula desde el modelo, no se escribe a mano. Se deja fallar.
 
@@ -326,9 +372,9 @@ Las cinco excepciones materiales son el DSCR de gestión, la autofinanciación d
 
 ---
 
-## 14. El modelo Excel
+## 15. El modelo Excel
 
-El libro tiene **12 pestañas** y **2.060 fórmulas vivas**:
+El libro tiene **13 pestañas** y **2.060 fórmulas vivas**:
 
 | Pestaña | Propósito | Fórmulas |
 |---|---|---:|
@@ -344,6 +390,7 @@ El libro tiene **12 pestañas** y **2.060 fórmulas vivas**:
 | `Credit Risk & Copula` | Comparativa de cola Gaussian / Student-t / Clayton y dimensionamiento de la DSRA. | 0 |
 | `Unit Economics & Runway` | RevPAR, TRevPAR, margen de contribución y stress de liquidez mensual. | 0 |
 | `Phase II Expansion` | Suites y estanque: CapEx, P&L, escenarios, phase gate e impacto consolidado. | 0 |
+| `Reform Case` | Presets R1-R6, value bridge de R2, frontera CapEx/cubiertos, stress tests y recomendación de reforma. | 0 |
 
 El `Live Model` es intencionadamente simple y transparente: los ingresos son una fórmula enlazada a `Inputs`, la deuda viene de `Debt Schedule` y los checks comparan la salida viva con Python. La pestaña de deuda reproduce el `ROUND` mensual del motor Python, de modo que el servicio del Año 2 es 27.647,64 € y el préstamo cierra a cero en el Mes 240.
 
@@ -353,17 +400,18 @@ Las pestañas de informe son snapshots de Python y no recalculan. Abre el libro 
 
 ---
 
-## 15. Arquitectura del repositorio
+## 16. Arquitectura del repositorio
 
 ```
 proyecto-dehesa-del-castrillo/
-├── main.py                       # pipeline de 14 pasos
+├── main.py                       # pipeline de 15 pasos
 ├── README.md / README_ES.md
 ├── requirements.txt
 ├── .github/workflows/tests.yml   # CI: tests + pipeline
 ├── src/
 │   ├── config/
 │   │   ├── assumptions.py        # CapEx, personal, deuda, opex, casos, financiación
+│   │   ├── reform.py             # ReformConfig y los presets R1-R6
 │   │   └── ine_weights.py        # serie mensual INE Segovia (calibrada al 21,24%)
 │   ├── core/
 │   │   ├── statements.py         # motor de 3 estados, tres casos, equity plug
@@ -375,10 +423,11 @@ proyecto-dehesa-del-castrillo/
 │   │   ├── monthly_cash.py       # stress de liquidez mensual y revólver
 │   │   ├── expansion.py          # CapEx, escenarios y gate de la Fase II
 │   │   ├── credit_committee.py   # DSRA y memo de underwriting
+│   │   ├── reform.py             # motor de reforma, value bridge, frontera, stress, JSON
 │   │   └── model_audit.py        # auditoría calculada, 16 reglas, export JSON
 │   ├── data/
 │   │   ├── extract_raw.py        # reconciliación con el Excel original
-│   │   ├── export_excel.py       # libro de 12 pestañas
+│   │   ├── export_excel.py       # libro de 13 pestañas
 │   │   └── live_excel.py         # pestañas vivas con fórmulas
 │   ├── scenarios/
 │   │   └── scenario_analysis.py  # conservador / base / optimista
@@ -386,43 +435,44 @@ proyecto-dehesa-del-castrillo/
 │   │   ├── monte_carlo.py        # Monte Carlo gaussiano naïve
 │   │   └── copula_engine.py      # Gaussian / Student-t / Clayton
 │   └── visualization/
-│       └── charts.py             # seis figuras institucionales
-├── tests/                        # 9 ficheros, 42 tests
+│       └── charts.py             # siete figuras institucionales
+├── tests/                        # 10 ficheros, 50 tests
 ├── raw_data/                     # libros fuente para la reconciliación
-├── data/                         # modelo Excel y JSON de auditoría
+├── data/                         # modelo Excel, JSON de auditoría y JSON de reforma
 └── assets/                       # figure_*.png
 ```
 
 ---
 
-## 16. Instalación y ejecución
+## 17. Instalación y ejecución
 
 ```bash
 git clone https://github.com/magnumjpg/la-dehesa-financial-due-diligence.git
 cd la-dehesa-financial-due-diligence
 pip install -r requirements.txt
 
-# Pipeline completo (14 pasos, gráficos, Excel, JSON de auditoría)
+# Pipeline completo (15 pasos, gráficos, Excel, JSON de auditoría y de reforma)
 python main.py
 
 # Sin generación de gráficos
 python main.py --no-charts
 
-# Batería de tests (42 tests)
+# Batería de tests (50 tests)
 python -m pytest tests/ -q
 ```
 
 **Salidas:**
 
-- `data/La_Dehesa_del_Castrillo_Financial_Model.xlsx`: 12 pestañas, 2.060 fórmulas.
+- `data/La_Dehesa_del_Castrillo_Financial_Model.xlsx`: 13 pestañas, 2.060 fórmulas.
 - `data/model_audit_summary.json`: auditoría calculada, schema 4.0.0.
-- `assets/figure_*.png`: seis figuras institucionales.
+- `data/reform_analysis.json`: presets R1-R6, value bridge, frontera, stress tests y recomendación.
+- `assets/figure_*.png`: siete figuras institucionales.
 
 El pipeline es determinista por defecto; las simulaciones de Monte Carlo y cópulas usan semilla fija (42).
 
 ---
 
-## 17. Limitaciones y próximos pasos
+## 18. Limitaciones y próximos pasos
 
 Esto es un modelo de portfolio, no un memorando de inversión. Las limitaciones principales son explícitas:
 
@@ -435,9 +485,12 @@ Esto es un modelo de portfolio, no un memorando de inversión. Las limitaciones 
 7. **El modelo de personal es a tiempo parcial.** Las tarifas horarias cumplen, pero el riesgo de planificación, cobertura y rotación sigue existiendo.
 8. **La subvención se asume comprometida.** No hay carta de concesión en el repositorio; el timing LEADER se modela en el Mes 14.
 9. **Los dos libros fuente de la reconciliación están en `raw_data/`.** La memoria Word original y el libro vivo de OneDrive no se redistribuyen; el caso promotor está codificado a partir de los valores auditados y se replica en `statements.py`.
-10. **La demanda del restaurante es solo de huéspedes.** El modelo asume una comida por huésped y día en el caso de gestión (unas 2.163 comidas en el Año 1), sin cubiertos externos, eventos ni ingresos de bebidas. El restaurante es una parte importante de los ingresos y no se suscribe de forma independiente.
+10. **La demanda del restaurante es solo de huéspedes en los casos as-is.** El modelo asume una comida por huésped y día en el caso de gestión (unas 2.163 comidas en el Año 1), sin cubiertos externos, eventos ni ingresos de bebidas. La capa de reforma añade cubiertos externos de forma explícita, pero esa demanda es un supuesto, no evidencia.
 11. **Sin booking curve ni competitive set.** El ADR es plano en el caso de gestión; los casos de mercado y promotor usan un crecimiento nominal del 5% desde el Año 4. Un mandato real modelaría la curva de reservas y el set competitivo local.
 12. **El motor mensual es un stress de liquidez, no un modelo mensual completo de tres estados.** Reconcilia con los estados anuales (diferencia 0,00 €) pero no los sustituye.
+13. **La demanda de la reforma no está probada de forma independiente.** Seis cubiertos externos de F&B al día es un supuesto de restaurante de destino; no hay competitive set local, ni ingeniería de menú, ni un build-up de cubiertos por franja horaria, ni evidencia de que la finca de 25 hectáreas pueda atraer ese tráfico fuera de los fines de semana.
+14. **La frontera de la reforma es un dispositivo de sensibilidad, no un presupuesto.** Escala uniformemente el presupuesto no terrenal. El rincón positivo de ~700k implica 450k € de gasto no terrenal para una reforma de ocho habitaciones, lo que exigiría un alcance materialmente menor y un cost plan de contratista.
+15. **El FTE incremental es un juicio.** Un FTE para seis cubiertos externos al día es el mínimo escalón de personal; R6 prueba 1,5 FTE y aun así muestra lo rápido que se rompe la reforma.
 
 **Próximos pasos que daría en un mandato real:**
 
@@ -447,10 +500,12 @@ Esto es un modelo de portfolio, no un memorando de inversión. Las limitaciones 
 - Encargar ofertas de construcción vinculantes y un informe de QS para el paquete de obra de 550k € y para la Fase II.
 - Testear la nómina con un escenario de personal a tiempo completo y una inflación salarial del 10%.
 - Probar un sobrecoste del 20% y un retraso de 12 meses en la subvención LEADER.
+- Ejecutar un test de demanda de Fase 0 de bajo coste (pop-up o restaurante arrendado) antes de comprometer capital de construcción.
+- Si la familia avanza, encargar un diseño lean con QS dentro del envelope de 846k € o menos y valorar la segunda fase como una opción separada.
 
 ---
 
-## 18. Referencias
+## 19. Referencias
 
 - **INE**, *Encuesta de Ocupación en Alojamientos de Turismo Rural* (EOTR), tabla 2070, Segovia, 2023-2025.
 - **Ley 37/1992**, *Impuesto sobre el Valor Añadido*, art. 91.Uno.2.2ª (tipo del 10% para hostelería) y arts. 92-114 (IVA soportado deducible).

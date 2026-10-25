@@ -3,13 +3,13 @@
 ### Hospitality Feasibility, Senior Debt Underwriting & Computed Due Diligence
 
 **A portfolio-grade financial model built from my own university feasibility study.**
-Python 3.11 · 42 automated tests · 16-rule computed audit · 12-tab Excel model · 14-step pipeline
+Python 3.11 · 50 automated tests · 16-rule computed audit · 13-tab Excel model · 15-step pipeline
 
 [![tests](https://github.com/magnumjpg/la-dehesa-financial-due-diligence/actions/workflows/tests.yml/badge.svg)](https://github.com/magnumjpg/la-dehesa-financial-due-diligence/actions/workflows/tests.yml)
 ![Python 3.11](https://img.shields.io/badge/python-3.11-blue)
 ![License: MIT](https://img.shields.io/badge/license-MIT-green)
 
-> **Read this first.** The realistic model reaches a harsher conclusion than the original university work. Once the full cost stack, construction interest, debt amortisation, OPEX, FF&E reserve and the equity plug are modelled, the management case fails the 1.25x DSCR covenant in Year 2 at **1.15x**, requires **49.6% cash equity** instead of the 30% assumed, and produces a project IRR of **-9.49%** even with an 8.5% exit. The audit is deliberately allowed to fail: **10 of 16 rules pass, 5 material exceptions and 1 warning remain open**, and the verdict is `CONDITIONAL - 5 MATERIAL EXCEPTION(S)`. The credit committee recommendation is **DECLINE AS STRUCTURED (RESIZE REQUIRED)**.
+> **Read this first.** The realistic model reaches a harsher conclusion than the original university work. Once the full cost stack, construction interest, debt amortisation, OPEX, FF&E reserve and the equity plug are modelled, the management case fails the 1.25x DSCR covenant in Year 2 at **1.15x**, requires **49.6% cash equity** instead of the 30% assumed, and produces a project IRR of **-9.49%** even with an 8.5% exit. The audit is deliberately allowed to fail: **10 of 16 rules pass, 5 material exceptions and 1 warning remain open**, and the verdict is `CONDITIONAL - 5 MATERIAL EXCEPTION(S)`. The credit committee recommendation is **DECLINE AS STRUCTURED (RESIZE REQUIRED)**. A separate reform / resize layer then asks whether the project can be made viable: six external F&B covers per day, a 5% ADR uplift and one extra FTE fix the covenant (minimum DSCR 2.13x) but still leave a **€299,550 value gap versus total investment**; only an aggressive, unproven demand corner clears 8%, and it still fails the bank test.
 
 ---
 
@@ -62,6 +62,7 @@ The three cases share the same CapEx (except the promoter's original €725k bas
 8. **The VAT bridge is a financing source, not value creation.** Input VAT on CapEx is €168,021 (21% on the €800,100 non-land base). It is drawn under a separate €175,000 bridge, repaid with the AEAT refund in Month 18, and it carries interest. Operational VAT is a pass-through.
 9. **Phase II is not self-funded.** Phase II needs €435,564 (€359,970 net CapEx + €75,593.70 VAT). Phase I cash at the end of Year 2 is €183,322.64, so the phase-gate gap is **-€252,241.06** and the gate returns `DO NOT PROCEED`. It also fails the DSCR condition (1.15x < 1.25x).
 10. **The audit is computed and it fails.** 10 of 16 rules pass. The five material exceptions are management DSCR, Phase II self-funding, returns versus WACC, market DSCR and the equity requirement. The warning is management occupancy versus INE. This is the point of the audit layer: it reports what the model actually does, not what the narrative wants.
+11. **The reform fixes the covenant, not the value gap.** A realistic revenue reform (R2: six external covers/day, +5% ADR, experiences and €5k of savings, one extra FTE) lifts mature EBITDA from €37,042 to €71,321 and the minimum DSCR from 1.15x to 2.13x. The asset is then worth €839,075 at an 8.5% cap rate, still **€211,025 below CapEx** and **€299,550 below total project investment**. Value engineering to €900k (R3) and a lean €846k scope (R5) soften the gap but remain below an 8% WACC. Only the aggressive eight-cover / +10% ADR case (R4) produces a positive NPV (+€3,722) and it still has a negative total-investment value gap. The reform conclusion is therefore also a decline, with a conditional Phase 0 demand test.
 
 ---
 
@@ -297,7 +298,52 @@ If Phase II were funded (which the gate says it is not), consolidated Year 3 rev
 
 ---
 
-## 13. Computed audit: 16 rules, 10 pass, 5 material, 1 warning
+## 13. Reform / resize: what would have to be true?
+
+This is a separate layer, not a fourth as-is case. The three original projections are untouched. The reform re-runs the same three-statement engine with `case="reform"`, a separately specified CapEx budget, an external F&B / experience revenue overlay, an explicit incremental FTE and a LEADER grant that can be delayed.
+
+The question is deliberately answerable with "no": a reform that fixes the covenant but not the value gap is still a decline.
+
+| Ref | Reform case | CapEx | Total investment | EBITDA Y5 | Min DSCR | EV @ 8.5% | Gap vs CapEx | Gap vs total inv. | Project NPV | Project IRR |
+|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| R1 | Capital-only (€900k) | €901,800 | €986,297 | €37,042 | 1.34x | €435,783 | -€466,017 | -€550,514 | -€450,359 | -7.18% |
+| R2 | Revenue reform (€1.05M) | €1,050,100 | €1,138,625 | €71,321 | 2.13x | €839,075 | -€211,025 | -€299,550 | -€220,685 | 2.53% |
+| R3 | Revenue + value engineering (€900k) | €901,800 | €986,297 | €71,321 | 2.44x | €839,075 | -€62,725 | -€147,222 | -€96,378 | 5.37% |
+| R4 | Aggressive demand (€1.05M) | €1,050,100 | €1,138,625 | €92,403 | 2.72x | €1,087,091 | +€36,991 | -€51,534 | +€3,722 | 8.08% |
+| R5 | Lean scope (€846k) | €846,300 | €929,289 | €71,321 | 2.57x | €839,075 | -€7,225 | -€90,214 | -€49,106 | 6.61% |
+| R6 | Combined downside | €965,560 | €1,051,789 | €2,671 | -1.49x | €26,710 | -€938,850 | -€1,025,080 | -€906,166 | -37.76% |
+
+**What the table says:**
+
+- **R1 proves that capital alone does not work.** Cutting the budget to €900k with no demand lever leaves EBITDA at the as-is €37,042 and destroys €550,514 of value versus total investment.
+- **R2 fixes the credit problem.** Six external covers per day at a €28 ticket (€61,320 of mature external F&B revenue), €12,000 of experiences, a 5% ADR uplift and €5,000 of savings lift EBITDA to €71,321. The minimum DSCR rises from 1.15x to 2.13x, so the covenant is no longer the binding constraint.
+- **But R2 does not fix the value problem.** At an 8.5% cap rate the asset is worth €839,075. That is €211,025 below the €1,050,100 CapEx and €299,550 below the €1,138,625 total project investment (CapEx + IDC + pre-opening + working capital + DSRA). The reform moves the project from a covenant breach to a negative-NPV asset.
+- **Value engineering helps but does not close the gap.** R3 (€900k) and R5 (€846k) reduce the total-investment gap to -€147,222 and -€90,214, with project IRRs of 5.37% and 6.61%: still below the 8% WACC.
+- **Only the aggressive demand corner clears 8%, and it is not bankable.** R4 needs eight external covers per day and a 10% ADR uplift. It produces €3,722 of NPV and a 36,991 positive gap versus CapEx, but the total-investment gap is still -€51,534 and the demand assumption is well above a defensible base case.
+- **R6 shows how quickly the reform breaks.** INE occupancy, half the external covers, a 10% price cut, 1.5 FTE, a 20% CapEx overrun, a 10% exit cap, +200 bp rates and a one-year grant delay produce €2,671 of EBITDA and a -€906,166 NPV.
+
+**R2 value bridge (mature year, 8.5% cap rate):**
+
+| Component | EBITDA impact | EV impact |
+|---|---:|---:|
+| Base management EBITDA | €37,042 | €435,783 |
+| + ADR uplift (5%) | €7,182 | €84,496 |
+| + External F&B (6 covers/day) | €13,698 | €161,148 |
+| + Experiences | €8,400 | €98,824 |
+| + Cost savings | €5,000 | €58,824 |
+| **Reform EBITDA and EV** | **€71,321** | **€839,075** |
+
+The bridge is computed with the engine itself, lever by lever, so it ties to the reform P&L with a zero residual. It is not a hand-written waterfall.
+
+Figure 7 plots the bridge and the value frontier: the heat map shows EV minus total investment across CapEx and external covers. Almost the entire current budget is value-destroying. The only positive corner is around €700k of CapEx (€450k of non-land spend) with six or more covers. That is not the eight-room refurbishment currently specified; it is a smaller project with a different scope.
+
+**Reform recommendation:** `DECLINE AS STRUCTURED - ONLY THE AGGRESSIVE, UNPROVEN DEMAND CASE CLEARS THE WACC`.
+
+The honest continuation is a low-cost **Phase 0 demand test**: prove the external F&B and experience demand with a pop-up or a leased restaurant before committing construction capital. If the family wants to proceed, the first phase should be capped at the lean scope and the second phase should sit behind a demand gate. The land must be charged at its opportunity value throughout; the project does not become viable because the site is already owned.
+
+---
+
+## 14. Computed audit: 16 rules, 10 pass, 5 material, 1 warning
 
 The audit is computed from the model, not hand-written. It is allowed to fail.
 
@@ -326,9 +372,9 @@ The five material exceptions are management DSCR, Phase II self-funding, returns
 
 ---
 
-## 14. The Excel model
+## 15. The Excel model
 
-The workbook has **12 tabs** and **2,060 live formulas**:
+The workbook has **13 tabs** and **2,060 live formulas**:
 
 | Tab | Purpose | Formulas |
 |---|---|---:|
@@ -344,6 +390,7 @@ The workbook has **12 tabs** and **2,060 live formulas**:
 | `Credit Risk & Copula` | Gaussian / Student-t / Clayton tail-risk comparison and DSRA sizing. | 0 |
 | `Unit Economics & Runway` | RevPAR, TRevPAR, contribution margin and the monthly liquidity stress. | 0 |
 | `Phase II Expansion` | Landscape suites and biological pond: CapEx, P&L, scenarios, phase gate and consolidated impact. | 0 |
+| `Reform Case` | R1-R6 presets, R2 value bridge, CapEx/cover frontier, stress tests and the reform recommendation. | 0 |
 
 The `Live Model` is intentionally simple and transparent: revenue is a formula linked to `Inputs`, debt comes from `Debt Schedule`, and the checks compare the live output with Python. The debt tab reproduces the monthly `ROUND` of the Python engine, so the Year-2 service is €27,647.64 and the loan closes at zero in Month 240.
 
@@ -353,17 +400,18 @@ The report tabs are Python snapshots and do not recalculate. Open the workbook i
 
 ---
 
-## 15. Repository architecture
+## 16. Repository architecture
 
 ```
 proyecto-dehesa-del-castrillo/
-├── main.py                       # 14-step pipeline
+├── main.py                       # 15-step pipeline
 ├── README.md / README_ES.md
 ├── requirements.txt
 ├── .github/workflows/tests.yml   # CI: test suite + pipeline
 ├── src/
 │   ├── config/
 │   │   ├── assumptions.py        # CapEx, payroll, debt, opex, cases, funding fields
+│   │   ├── reform.py             # ReformConfig and the R1-R6 presets
 │   │   └── ine_weights.py        # INE Segovia monthly series (21.24% calibrated)
 │   ├── core/
 │   │   ├── statements.py         # 3-statement engine, three cases, equity plug
@@ -375,10 +423,11 @@ proyecto-dehesa-del-castrillo/
 │   │   ├── monthly_cash.py       # Monthly liquidity stress and revolver
 │   │   ├── expansion.py          # Phase II CapEx, scenarios, phase gate
 │   │   ├── credit_committee.py   # DSRA and underwriting memo
+│   │   ├── reform.py             # Reform engine, value bridge, frontier, stress, JSON
 │   │   └── model_audit.py        # Computed audit, 16 rules, JSON export
 │   ├── data/
 │   │   ├── extract_raw.py        # Reconciliation with the original Excel
-│   │   ├── export_excel.py       # 12-tab workbook
+│   │   ├── export_excel.py       # 13-tab workbook
 │   │   └── live_excel.py         # Formula-driven live tabs
 │   ├── scenarios/
 │   │   └── scenario_analysis.py  # Conservative / base / optimistic
@@ -386,43 +435,44 @@ proyecto-dehesa-del-castrillo/
 │   │   ├── monte_carlo.py        # Naive Gaussian Monte Carlo
 │   │   └── copula_engine.py      # Gaussian / Student-t / Clayton
 │   └── visualization/
-│       └── charts.py             # Six institutional figures
-├── tests/                        # 9 files, 42 tests
+│       └── charts.py             # Seven institutional figures
+├── tests/                        # 10 files, 50 tests
 ├── raw_data/                     # Source workbooks for the reconciliation
-├── data/                         # Excel model and audit JSON
+├── data/                         # Excel model, audit JSON and reform JSON
 └── assets/                       # figure_*.png
 ```
 
 ---
 
-## 16. Installation and execution
+## 17. Installation and execution
 
 ```bash
 git clone https://github.com/magnumjpg/la-dehesa-financial-due-diligence.git
 cd la-dehesa-financial-due-diligence
 pip install -r requirements.txt
 
-# Full pipeline (14 steps, charts, Excel, audit JSON)
+# Full pipeline (15 steps, charts, Excel, audit and reform JSON)
 python main.py
 
 # Skip chart generation
 python main.py --no-charts
 
-# Test suite (42 tests)
+# Test suite (50 tests)
 python -m pytest tests/ -q
 ```
 
 **Outputs:**
 
-- `data/La_Dehesa_del_Castrillo_Financial_Model.xlsx`: 12 tabs, 2,060 formulas.
+- `data/La_Dehesa_del_Castrillo_Financial_Model.xlsx`: 13 tabs, 2,060 formulas.
 - `data/model_audit_summary.json`: computed audit, schema 4.0.0.
-- `assets/figure_*.png`: six institutional charts.
+- `data/reform_analysis.json`: R1-R6 presets, value bridge, frontier, stress cases and recommendation.
+- `assets/figure_*.png`: seven institutional charts.
 
 The pipeline is deterministic by default; the Monte Carlo and copula simulations use a fixed seed (42).
 
 ---
 
-## 17. Limitations and next steps
+## 18. Limitations and next steps
 
 This is a portfolio model, not an investment memorandum. The main limitations are explicit:
 
@@ -435,9 +485,12 @@ This is a portfolio model, not an investment memorandum. The main limitations ar
 7. **The payroll model is part-time.** The hourly rates are compliant, but scheduling, coverage and turnover risk remain.
 8. **The grant is assumed committed.** There is no award letter in the repository; the LEADER timing is modelled at Month 14.
 9. **The two source workbooks used for the reconciliation are included in `raw_data/`.** The original Word report and the live OneDrive workbook are not redistributed; the promoter case is hard-coded from the audited values and replicated in `statements.py`.
-10. **The restaurant demand is guests-only.** The model assumes one meal per guest per day in the management case (about 2,163 meals in Year 1), with no external covers, events or beverage revenue. The restaurant is a large share of revenue and is not independently underwritten.
+10. **The restaurant demand is guests-only in the as-is cases.** The management case assumes one meal per guest per day (about 2,163 meals in Year 1), with no external covers, events or beverage revenue. The reform layer adds external covers explicitly, but that demand is an assumption, not evidence.
 11. **No booking curve or competitive set.** ADR is flat in the management case; the market and promoter cases use 5% nominal growth from Year 4. A real mandate would model the booking curve and the local competitive set.
 12. **The monthly engine is a liquidity stress, not a full monthly three-statement model.** It reconciles to the annual statements (difference €0.00) but does not replace them.
+13. **The reform demand is not independently proven.** Six external F&B covers per day is a destination-restaurant assumption; there is no local competitive set, no menu engineering, no covers-by-daypart build-up and no evidence that the 25-hectare estate can attract that traffic outside weekends.
+14. **The reform frontier is a sensitivity device, not a budget.** It scales the non-land budget uniformly. The ~€700k positive corner implies €450k of non-land spend for an eight-room refurbishment, which would require a materially smaller scope and a contractor's cost plan.
+15. **The incremental FTE is a judgement.** One FTE for six external covers per day is the minimum labour step-up; R6 tests 1.5 FTE and still shows how quickly the reform breaks.
 
 **Next steps I would take in a real mandate:**
 
@@ -447,10 +500,12 @@ This is a portfolio model, not an investment memorandum. The main limitations ar
 - Commission binding construction quotes and a QS report for the €550k works package and for Phase II.
 - Stress the payroll under a full-time staffing scenario and 10% wage inflation.
 - Test a 20% cost overrun and a 12-month delay in the LEADER grant.
+- Run a low-cost Phase 0 pop-up or leased-restaurant demand test before committing construction capital.
+- If the family proceeds, commission a QS-led lean-scope design at or below the €846k envelope and price the second phase as a separate option.
 
 ---
 
-## 18. References
+## 19. References
 
 - **INE**, *Encuesta de Ocupación en Alojamientos de Turismo Rural* (EOTR), table 2070, Segovia, 2023-2025.
 - **Ley 37/1992**, *Impuesto sobre el Valor Añadido*, Art. 91.Uno.2.2ª (10% hospitality rate) and Art. 92-114 (deductible input VAT).

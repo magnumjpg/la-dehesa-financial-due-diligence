@@ -14,8 +14,9 @@ Executes:
 10. Multivariate copula tail-risk engine (50,000 draws).
 11. Bank credit committee underwriting memorandum & DSRA sizing.
 12. Phase II expansion & phase-gate test.
-13. Computed model audit & data-room integrity verification.
-14. Excel export & chart generation.
+13. Reform / resize case: value bridge, frontier, stress tests & recommendation.
+14. Computed model audit & data-room integrity verification.
+15. Excel export & chart generation.
 
 Usage:
     python main.py
@@ -51,14 +52,14 @@ def run_executive_pipeline(generate_charts: bool = True):
     print()
 
     # Step 1: Raw Data Audit & Reconciliation
-    print("[1/14] AUDIT RECONCILIATION: ORIGINAL EXCEL VS. REFINED MODEL")
+    print("[1/15] AUDIT RECONCILIATION: ORIGINAL EXCEL VS. REFINED MODEL")
     print("-" * 88)
     df_audit = generate_reconciliation_summary()
     print(df_audit.to_string(index=False))
     print()
 
     # Step 2: 5-Year Baseline 3-Statement Forecast (management case)
-    print("[2/14] MANAGEMENT-CASE 5-YEAR PROJECTION & CREDIT COVENANT COMPLIANCE (DSCR >= 1.25x)")
+    print("[2/15] MANAGEMENT-CASE 5-YEAR PROJECTION & CREDIT COVENANT COMPLIANCE (DSCR >= 1.25x)")
     print("-" * 88)
     engine = FinancialModelEngine(case="management", scenario=SCENARIOS["base"])
     df_proj = engine.run_projection(projection_years=5)
@@ -84,7 +85,7 @@ def run_executive_pipeline(generate_charts: bool = True):
     print()
 
     # Step 3: Three-case comparison
-    print("[3/14] THREE-CASE COMPARISON: MANAGEMENT (UPSIDE) vs. INE MARKET vs. PROMOTER")
+    print("[3/15] THREE-CASE COMPARISON: MANAGEMENT (UPSIDE) vs. INE MARKET vs. PROMOTER")
     print("-" * 88)
     case_rows = []
     for case in ("management", "market", "promoter"):
@@ -115,7 +116,7 @@ def run_executive_pipeline(generate_charts: bool = True):
     print()
 
     # Step 4: Unit Economics & Contribution Margin Audit
-    print("[4/14] UNIT ECONOMICS & CONTRIBUTION MARGIN AUDIT (USALI & MARGINAL COSTING)")
+    print("[4/15] UNIT ECONOMICS & CONTRIBUTION MARGIN AUDIT (USALI & MARGINAL COSTING)")
     print("-" * 88)
     from src.core.unit_economics import UnitEconomicsEngine
     ue_engine = UnitEconomicsEngine()
@@ -123,7 +124,7 @@ def run_executive_pipeline(generate_charts: bool = True):
     print()
 
     # Step 5: Monthly Cash Flow, Runway & Cash Trough Audit
-    print("[5/14] MONTHLY LIQUIDITY RECONCILIATION, SEASONAL TROUGH & REVOLVER AUDIT")
+    print("[5/15] MONTHLY LIQUIDITY RECONCILIATION, SEASONAL TROUGH & REVOLVER AUDIT")
     print("-" * 88)
     from src.core.monthly_cash import MonthlyCashEngine
     mc_engine = MonthlyCashEngine()
@@ -131,7 +132,7 @@ def run_executive_pipeline(generate_charts: bool = True):
     print()
 
     # Step 6: Scenario Stress-Testing
-    print("[6/14] SCENARIO STRESS-TESTING (CONSERVATIVE vs. BASE vs. OPTIMISTIC)")
+    print("[6/15] SCENARIO STRESS-TESTING (CONSERVATIVE vs. BASE vs. OPTIMISTIC)")
     print("-" * 88)
     sc_engine = ScenarioEngine(target_dscr=1.25, projection_years=3)
     df_scenarios = sc_engine.generate_scenario_comparison_table()
@@ -139,7 +140,7 @@ def run_executive_pipeline(generate_charts: bool = True):
     print()
 
     # Step 7: Sources & Uses / Funding Gap
-    print("[7/14] SOURCES & USES, FUNDING GAP & CREDIT-LINE CONSISTENCY")
+    print("[7/15] SOURCES & USES, FUNDING GAP & CREDIT-LINE CONSISTENCY")
     print("-" * 88)
     funding_rows = []
     for case in ("management", "market", "promoter"):
@@ -165,7 +166,7 @@ def run_executive_pipeline(generate_charts: bool = True):
     print()
 
     # Step 8: Returns
-    print("[8/14] RETURNS: PROJECT & EQUITY IRR WITH AND WITHOUT EXIT (8.5% CAP RATE)")
+    print("[8/15] RETURNS: PROJECT & EQUITY IRR WITH AND WITHOUT EXIT (8.5% CAP RATE)")
     print("-" * 88)
     returns = credit.compute_returns_summary(
         df_proj,
@@ -186,7 +187,7 @@ def run_executive_pipeline(generate_charts: bool = True):
     print()
 
     # Step 9: Monte Carlo Credit Risk Simulation
-    print("[9/14] GAUSSIAN MONTE CARLO CREDIT-RISK SIMULATION (N=1,000 ITERATIONS)")
+    print("[9/15] GAUSSIAN MONTE CARLO CREDIT-RISK SIMULATION (N=1,000 ITERATIONS)")
     print("-" * 88)
     sim = MonteCarloSimulator(iterations=1000, random_seed=42)
     _, summary = sim.run_simulation()
@@ -204,7 +205,7 @@ def run_executive_pipeline(generate_charts: bool = True):
     print()
 
     # Step 10: Multivariate Copula Tail Risk Engine
-    print("[10/14] MULTIVARIATE COPULA TAIL-RISK ENGINE (50,000 DRAWS: GAUSSIAN vs. STUDENT-T vs. CLAYTON)")
+    print("[10/15] MULTIVARIATE COPULA TAIL-RISK ENGINE (50,000 DRAWS: GAUSSIAN vs. STUDENT-T vs. CLAYTON)")
     print("        Credit test: Year-2 DSCR on CFADS, 20Y/4.0% debt with 12-month grace, full cost stack")
     print("-" * 88)
     from src.simulation.copula_engine import CopulaSimulationEngine
@@ -217,14 +218,14 @@ def run_executive_pipeline(generate_charts: bool = True):
     print()
 
     # Step 11: Bank Credit Committee Underwriting Memorandum & DSRA Sizing
-    print("[11/14] BANK CREDIT COMMITTEE UNDERWRITING MEMORANDUM & DSRA SIZING")
+    print("[11/15] BANK CREDIT COMMITTEE UNDERWRITING MEMORANDUM & DSRA SIZING")
     print("-" * 88)
     memo = CreditCommitteeMemo(copula_results=copula_results)
     memo.print_terminal_summary()
     print()
 
     # Step 12: Phase II Expansion & Phase Gate
-    print("[12/14] PHASE II EXPANSION & PHASE-GATE TEST (LANDSCAPE SUITES & BIOLOGICAL POND)")
+    print("[12/15] PHASE II EXPANSION & PHASE-GATE TEST (LANDSCAPE SUITES & BIOLOGICAL POND)")
     print("-" * 88)
     from src.core.expansion import ExpansionFinancialEngine
     exp_engine = ExpansionFinancialEngine()
@@ -254,8 +255,19 @@ def run_executive_pipeline(generate_charts: bool = True):
     print(f"  Recommendation:                  {gate['recommendation']}")
     print()
 
-    # Step 13: Programmatic Model Audit
-    print("[13/14] COMPUTED MODEL AUDIT & DATA ROOM INTEGRITY VERIFICATION")
+    # Step 13: Reform / Resize Case (separate layer, after the as-is verdict)
+    print("[13/15] REFORM / RESIZE CASE: WHAT WOULD HAVE TO BE TRUE AFTER THE DECLINE?")
+    print("-" * 88)
+    from src.core.reform import ReformAnalysisEngine
+
+    reform_engine = ReformAnalysisEngine()
+    reform_engine.print_terminal_summary()
+    reform_json_path = reform_engine.export_json()
+    print(f"-> Exported Reform Analysis JSON: {reform_json_path.name} ({reform_json_path.stat().st_size / 1024:.1f} KB)")
+    print()
+
+    # Step 14: Programmatic Model Audit
+    print("[14/15] COMPUTED MODEL AUDIT & DATA ROOM INTEGRITY VERIFICATION")
     print("-" * 88)
     from src.core.model_audit import ModelAuditEngine
     audit_engine = ModelAuditEngine()
@@ -264,11 +276,11 @@ def run_executive_pipeline(generate_charts: bool = True):
     print(f"-> Exported Model Audit Summary JSON: {audit_json_path.name} ({audit_json_path.stat().st_size / 1024:.1f} KB)")
     print()
 
-    # Step 14: Visual Assets & Excel Deliverables
-    print("[14/14] DELIVERABLES: CHARTS & EXCEL MODEL")
+    # Step 15: Visual Assets & Excel Deliverables
+    print("[15/15] DELIVERABLES: CHARTS & EXCEL MODEL")
     print("-" * 88)
     if generate_charts:
-        print("-> Generating Institutional Charts in /assets (Figures 1 to 6)...")
+        print("-> Generating Institutional Charts in /assets (Figures 1 to 7)...")
         figs = generate_all_figures()
         for f in figs:
             print(f"   [OK] {f.name} ({f.stat().st_size / 1024:.1f} KB)")
