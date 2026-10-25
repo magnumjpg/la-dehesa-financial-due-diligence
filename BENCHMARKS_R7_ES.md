@@ -406,7 +406,7 @@ Antes de comprometer 1,5 M€, R7 propone una prueba de una temporada con la cas
 
 **Interno**
 
-- `docs/memory.md`, lección de CapEx de Fase II: 3.272 €/m² all-in para suites de 55 m², 359.970 € por 110 m².
+- Lección interna de CapEx de Fase II: 3.272 €/m² all-in para suites de 55 m², 359.970 € por 110 m².
 - `src/config/reform.py`, presets R1-R6, `CABIN_PRESETS` (R7 base, stretch y downside) y supuestos de reforma.
 - `src/core/reform.py`, motor de reforma, value bridge, frontera, stress y corredor de coste R7.
 - `src/core/statements.py`, modo de calibración `cabins` (mezcla cabaña + casa, rampa de ocupación y F&B).
