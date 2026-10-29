@@ -43,6 +43,7 @@ from src.config.assumptions import (
     SCENARIOS,
 )
 from src.config.reform import ReformConfig
+from src.config.turnaround import TurnaroundConfig
 from src.config.ine_weights import SEGOVIA_INE_MONTHLY, get_annual_weighted_occupancy
 from src.core.debt import DebtAmortizationEngine
 from src.core.tax import VATEngine, CorporateTaxEngine
@@ -138,6 +139,16 @@ class AnnualStatementRecord:
     incremental_payroll: float = 0.0
     cost_savings: float = 0.0
 
+    # T8 turnaround memo lines (zero in the three as-is cases and in R1-R7).
+    revenue_cabins: float = 0.0
+    revenue_lodge: float = 0.0
+    housekeeping: float = 0.0
+    energy: float = 0.0
+    consumables: float = 0.0
+    payment_fees: float = 0.0
+    experience_cogs: float = 0.0
+    arrangement_fee: float = 0.0
+
 
 class FinancialModelEngine:
     """Integrated financial modelling engine over a multi-year horizon."""
@@ -153,11 +164,17 @@ class FinancialModelEngine:
         case: str = "management",
         cash_equity_override: Optional[float] = None,
         reform: Optional[ReformConfig] = None,
+        turnaround: Optional[TurnaroundConfig] = None,
     ):
         if reform is not None and case != "reform":
             raise ValueError("A ReformConfig requires case='reform'")
+        if turnaround is not None and case != "turnaround":
+            raise ValueError("A TurnaroundConfig requires case='turnaround'")
+        if case == "turnaround" and turnaround is None:
+            raise ValueError("case='turnaround' requires a TurnaroundConfig")
         self.case = case
         self.reform = reform if case == "reform" else None
+        self.turnaround = turnaround if case == "turnaround" else None
         self.capex = capex or CapExStructure()
         self.financing = financing or FinancingStructure()
         self.labor = labor or LaborStructure()
@@ -271,6 +288,30 @@ class FinancialModelEngine:
                 adr_multiplier=self.scenario.adr_multiplier
                 * (1.0 + self.reform.adr_uplift),
             )
+        elif case == "turnaround":
+            # T8: the cabin product has its own revenue and variable-cost
+            # calibration. CapEx, financing, labour and fixed opex are built by
+            # TurnaroundConfig and passed in by the caller, so this branch only
+            # switches the revenue engine and the cost-stack parameters.
+            t = self.turnaround
+            self.rev_cfg = replace(
+                self.rev_cfg,
+                calibration_mode="turnaround",
+                apply_full_cost_stack=True,
+                double_rooms_count=t.cabins.count,
+                double_room_adr=t.cabins.adr,
+                full_house_count=1 if t.lodge.enabled else 0,
+                full_house_adr=t.lodge.adr,
+                guests_per_double_room=t.cabins.guests_per_occupied_night,
+                guests_per_full_house=t.lodge.guests_per_occupied_night,
+                ota_share=t.opex.ota_share,
+                ota_commission_rate=t.opex.ota_commission_rate,
+                ffe_reserve_rate=t.opex.ffe_reserve_rate,
+                amenities_per_occupied_day=0.0,
+                breakfast_cost_per_guest_day=0.0,
+                restaurant_average_ticket=0.0,
+                restaurant_cogs_ratio=0.0,
+            )
         else:
             self.rev_cfg = replace(
                 self.rev_cfg,
@@ -336,6 +377,7 @@ class FinancialModelEngine:
         cash_uses = (
             self.cash_capex
             + float(self.financing.idc_amount)
+            + float(self.financing.arrangement_fee)
             + float(self.capex.total_input_vat)
             + float(self.financing.pre_opening_costs)
             + float(self.financing.initial_working_capital)
@@ -366,6 +408,7 @@ class FinancialModelEngine:
         return round(
             self.capex.total_capex
             + float(self.financing.idc_amount)
+            + float(self.financing.arrangement_fee)
             + float(self.financing.pre_opening_costs)
             + float(self.financing.initial_working_capital)
             + self.dsra_amount,
@@ -445,6 +488,7 @@ class FinancialModelEngine:
             "land_in_kind": round(self.financing.land_in_kind_value, 2),
             "cash_capex": self.cash_capex,
             "idc": float(self.financing.idc_amount),
+            "arrangement_fee": float(self.financing.arrangement_fee),
             "input_vat": float(self.capex.total_input_vat),
             "pre_opening_costs": float(self.financing.pre_opening_costs),
             "initial_working_capital": float(self.financing.initial_working_capital),
@@ -613,6 +657,45 @@ class FinancialModelEngine:
                 year,
             )
 
+        if self.rev_cfg.calibration_mode == "turnaround":
+            t = self.turnaround
+            if t is None:
+                raise ValueError(
+                    "The turnaround calibration requires a TurnaroundConfig"
+                )
+            cabin_occ = min(1.0, t.cabins.occupancy_for_year(year) * occ_mult)
+            cabin_nights = cabin_occ * 365.0 * t.cabins.count
+            lodge_occ = min(1.0, t.lodge.occupancy_for_year(year) * occ_mult)
+            lodge_nights = lodge_occ * 365.0
+            rev_cabins = cabin_nights * t.cabins.adr * adr_mult
+            rev_lodge = lodge_nights * t.lodge.adr * adr_mult
+            rev_experiences = t.opex.experiences_for_year(year)
+            return {
+                "rev_rooms": round(rev_cabins, 2),
+                "rev_house": round(rev_lodge, 2),
+                "rev_restaurant": 0.0,
+                "rev_experiences": round(rev_experiences, 2),
+                "cogs_experiences": round(
+                    rev_experiences * (1.0 - t.opex.experience_margin), 2
+                ),
+                # No external F&B: the restaurant is replaced by breakfast
+                # baskets and partnerships with local asadores.
+                "rev_external_fnb": 0.0,
+                "cogs_external_fnb": 0.0,
+                "external_covers": 0.0,
+                "total_revenue": round(
+                    rev_cabins + rev_lodge + rev_experiences, 2
+                ),
+                "cogs_restaurant": 0.0,
+                "occupied_days": cabin_nights + lodge_nights,
+                "room_nights": cabin_nights,
+                "house_nights": lodge_nights,
+                "guests": (
+                    cabin_nights * t.cabins.guests_per_occupied_night
+                    + lodge_nights * t.lodge.guests_per_occupied_night
+                ),
+            }
+
         if self.rev_cfg.calibration_mode == "cabins":
             r = self.reform
             if r is None:
@@ -686,6 +769,60 @@ class FinancialModelEngine:
 
     def _variable_costs(self, rev: Dict[str, float]) -> Dict[str, float]:
         """Full USALI-style variable-cost stack."""
+        if self.rev_cfg.calibration_mode == "turnaround":
+            t = self.turnaround
+            if t is None:
+                raise ValueError(
+                    "The turnaround calibration requires a TurnaroundConfig"
+                )
+            cabin_nights = float(rev["room_nights"])
+            lodge_nights = float(rev["house_nights"])
+            lodging_revenue = rev["rev_rooms"] + rev["rev_house"]
+
+            ota_commission = (
+                lodging_revenue
+                * t.opex.ota_share
+                * t.opex.ota_commission_rate
+            )
+            housekeeping = (
+                cabin_nights * t.cabins.housekeeping_per_night
+                + lodge_nights * t.lodge.housekeeping_per_night
+            )
+            breakfast = rev["guests"] * t.opex.breakfast_per_guest_day
+            energy = (
+                cabin_nights * t.cabins.energy_per_night
+                + lodge_nights * t.lodge.energy_per_night
+            )
+            consumables = (
+                cabin_nights * t.cabins.consumables_per_night
+                + lodge_nights * t.lodge.consumables_per_night
+            )
+            payment_fees = rev["total_revenue"] * t.opex.payment_fee_rate
+            experience_cogs = rev["rev_experiences"] * (
+                1.0 - t.opex.experience_margin
+            )
+
+            total_variable = (
+                ota_commission
+                + housekeeping
+                + breakfast
+                + energy
+                + consumables
+                + payment_fees
+                + experience_cogs
+            )
+            return {
+                "ota_commission": round(ota_commission, 2),
+                "amenities": 0.0,
+                "breakfast_cost": round(breakfast, 2),
+                "housekeeping": round(housekeeping, 2),
+                "energy": round(energy, 2),
+                "consumables": round(consumables, 2),
+                "payment_fees": round(payment_fees, 2),
+                "experience_cogs": round(experience_cogs, 2),
+                "total_variable_costs": round(total_variable, 2),
+            }
+
         if not self.rev_cfg.apply_full_cost_stack:
             return {
                 "ota_commission": 0.0,
@@ -734,6 +871,7 @@ class FinancialModelEngine:
 
         idc = float(self.financing.idc_amount)
         pre_opening = float(self.financing.pre_opening_costs)
+        arrangement_fee = float(self.financing.arrangement_fee)
         initial_wc = float(self.financing.initial_working_capital)
         dsra = self.dsra_amount
         input_vat_capex = float(self.capex.total_input_vat)
@@ -741,7 +879,7 @@ class FinancialModelEngine:
         land_in_kind = round(self.financing.land_in_kind_value, 2)
 
         gross_ppe = round(self.capex.total_capex + idc, 2)
-        gross_intangibles = pre_opening
+        gross_intangibles = round(pre_opening + arrangement_fee, 2)
         accum_depr = 0.0
         accum_amort = 0.0
         ending_cash = initial_wc
@@ -809,8 +947,12 @@ class FinancialModelEngine:
 
             ppe_depreciation = round(self.capex.annual_depreciation, 2)
             preopening_amort = (
-                round(pre_opening / PREOPENING_AMORTIZATION_YEARS, 2)
-                if pre_opening > 0 else 0.0
+                round(
+                    (pre_opening + arrangement_fee)
+                    / PREOPENING_AMORTIZATION_YEARS,
+                    2,
+                )
+                if (pre_opening + arrangement_fee) > 0 else 0.0
             )
             depreciation = round(ppe_depreciation + preopening_amort, 2)
             ebit = round(ebitda - depreciation, 2)
@@ -861,7 +1003,7 @@ class FinancialModelEngine:
             if y == 1:
                 cfi = round(
                     -(cash_capex + idc + input_vat_capex + pre_opening
-                      + initial_wc + dsra + ffe_reserve),
+                      + arrangement_fee + initial_wc + dsra + ffe_reserve),
                     2,
                 )
             elif y == 2:
@@ -1024,6 +1166,18 @@ class FinancialModelEngine:
                 external_covers=float(rev.get("external_covers", 0.0)),
                 incremental_payroll=incremental_payroll,
                 cost_savings=reform_cost_savings,
+                revenue_cabins=(
+                    float(rev["rev_rooms"]) if self.case == "turnaround" else 0.0
+                ),
+                revenue_lodge=(
+                    float(rev["rev_house"]) if self.case == "turnaround" else 0.0
+                ),
+                housekeeping=float(variable.get("housekeeping", 0.0)),
+                energy=float(variable.get("energy", 0.0)),
+                consumables=float(variable.get("consumables", 0.0)),
+                payment_fees=float(variable.get("payment_fees", 0.0)),
+                experience_cogs=float(variable.get("experience_cogs", 0.0)),
+                arrangement_fee=arrangement_fee,
             )
             records.append(record)
 

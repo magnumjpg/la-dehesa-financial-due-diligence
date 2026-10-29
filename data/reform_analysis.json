@@ -98,7 +98,7 @@
       "required_ebitda_total_investment": 96783.14,
       "project_irr_exit": 0.025297,
       "equity_irr_exit": 0.019578,
-      "project_npv": -220684.83,
+      "project_npv": -220684.84,
       "equity_npv": -160145.92,
       "project_moic": 1.111,
       "equity_moic": 1.083,
@@ -201,7 +201,7 @@
       "project_irr_exit": 0.080844,
       "equity_irr_exit": 0.101638,
       "project_npv": 3721.66,
-      "equity_npv": 65189.93,
+      "equity_npv": 65189.92,
       "project_moic": 1.3905,
       "equity_moic": 1.4958,
       "balance_sheet_discrepancy": 0.0,
@@ -355,7 +355,7 @@
       "required_ebitda_total_investment": 146372.2,
       "project_irr_exit": 0.092088,
       "equity_irr_exit": 0.115906,
-      "project_npv": 76416.23,
+      "project_npv": 76416.24,
       "equity_npv": 158552.63,
       "project_moic": 1.4734,
       "equity_moic": 1.6202,
@@ -465,7 +465,7 @@
       "required_ebitda_total_investment": 172554.27,
       "project_irr_exit": -0.092334,
       "equity_irr_exit": -0.21201,
-      "project_npv": -878138.02,
+      "project_npv": -878138.01,
       "equity_npv": -813407.12,
       "project_moic": 0.6626,
       "equity_moic": 0.3753,
@@ -489,7 +489,7 @@
       "gap_total_investment": 98318.91,
       "net_gap_total_investment": 49146.54,
       "dscr_min": 1.41,
-      "project_npv": 76416.23,
+      "project_npv": 76416.24,
       "clears_wacc": true,
       "clears_total_investment": true,
       "passes_net_test": true
@@ -549,7 +549,7 @@
       "gap_total_investment": -380545.24,
       "net_gap_total_investment": -429717.61,
       "dscr_min": 1.07,
-      "project_npv": -388487.41,
+      "project_npv": -388487.4,
       "clears_wacc": false,
       "clears_total_investment": false,
       "passes_net_test": false
@@ -614,7 +614,7 @@
       "dscr_y5": 3.15,
       "ev_cap_rate": 1639078.95,
       "net_gap_total_investment": 49146.54,
-      "project_npv": 76416.23,
+      "project_npv": 76416.24,
       "project_irr_exit": 0.092088,
       "passes_net_test": true
     },
@@ -819,7 +819,7 @@
       "value_gap_capex": -211025.06,
       "value_gap_total_investment": -299550.28,
       "net_value_gap_total_investment": -324722.53,
-      "project_npv": -220684.83,
+      "project_npv": -220684.84,
       "project_irr_exit": 0.025297,
       "equity_irr_exit": 0.019578
     },
@@ -941,7 +941,7 @@
       "rate_delta_bp": 0,
       "interest_rate": 0.04,
       "dscr_min": 2.13,
-      "project_npv": -220684.83,
+      "project_npv": -220684.84,
       "value_gap_total_investment": -299550.28,
       "net_value_gap_total_investment": -324722.53
     },
@@ -949,7 +949,7 @@
       "rate_delta_bp": 100,
       "interest_rate": 0.05,
       "dscr_min": 1.96,
-      "project_npv": -221862.57,
+      "project_npv": -221862.58,
       "value_gap_total_investment": -300728.02,
       "net_value_gap_total_investment": -325900.27
     },
@@ -957,7 +957,7 @@
       "rate_delta_bp": 200,
       "interest_rate": 0.06,
       "dscr_min": 1.65,
-      "project_npv": -223093.76,
+      "project_npv": -223093.77,
       "value_gap_total_investment": -301959.21,
       "net_value_gap_total_investment": -327131.46
     },
@@ -965,7 +965,7 @@
       "rate_delta_bp": 300,
       "interest_rate": 0.07,
       "dscr_min": 1.41,
-      "project_npv": -224375.72,
+      "project_npv": -224375.73,
       "value_gap_total_investment": -303241.17,
       "net_value_gap_total_investment": -328413.42
     }

@@ -1,20 +1,29 @@
 """
 Institutional multi-tab Excel model exporter.
 
-Generates data/La_Dehesa_del_Castrillo_Financial_Model.xlsx with 13 tabs:
-1. Read Me & Checks
-2. Inputs
-3. Live Model
-4. Funding & Audit
-5. Executive Scorecard
-6. 3-Statement Model
-7. Debt Schedule
-8. Scenario Stress-Testing
-9. Monte Carlo Risk
+Generates data/La_Dehesa_del_Castrillo_Financial_Model.xlsx with 22 tabs:
+ 1. Read Me & Checks
+ 2. Inputs
+ 3. Live Model
+ 4. Funding & Audit
+ 5. Executive Scorecard
+ 6. 3-Statement Model
+ 7. Debt Schedule
+ 8. Scenario Stress-Testing
+ 9. Monte Carlo Risk
 10. Credit Risk & Copula
 11. Unit Economics & Runway
 12. Phase II Expansion
 13. Reform Case
+14. Act 1 - Promoter
+15. Act 2 - Audit
+16. Decline Memo
+17. Act 4 - T8
+18. Executive Comparison
+19. T8 Sensitivities
+20. T8 Inputs
+21. T8 Debt Schedule
+22. T8 Live Model
 """
 
 from datetime import datetime
@@ -41,6 +50,11 @@ from src.core.unit_economics import UnitEconomicsEngine
 from src.core.monthly_cash import MonthlyCashEngine
 from src.core.expansion import ExpansionFinancialEngine
 from src.data.live_excel import add_live_model_tabs
+from src.data.act_excel import add_case_study_tabs
+from src.data.t8_excel import add_t8_model_tabs
+from src.core.turnaround import TurnaroundEngine
+from src.core.decline import DeclineMemoEngine
+from src.core.investment_case import InvestmentCase
 
 
 def get_data_dir() -> Path:
@@ -87,6 +101,37 @@ def _normalise_xlsx_timestamps(path: Path) -> None:
             info.compress_type = compress_type
             dst.writestr(info, data)
     os.replace(tmp, path)
+
+
+def _order_sheets(wb) -> None:
+    """Places the narrative tabs in reading order, leaving extras at the end."""
+    preferred = [
+        "Read Me & Checks",
+        "Inputs",
+        "Live Model",
+        "Funding & Audit",
+        "Executive Scorecard",
+        "3-Statement Model",
+        "Debt Schedule",
+        "Scenario Stress-Testing",
+        "Monte Carlo Risk",
+        "Credit Risk & Copula",
+        "Unit Economics & Runway",
+        "Phase II Expansion",
+        "Reform Case",
+        "Act 1 - Promoter",
+        "Act 2 - Audit",
+        "Decline Memo",
+        "Act 4 - T8",
+        "Executive Comparison",
+        "T8 Sensitivities",
+        "T8 Inputs",
+        "T8 Debt Schedule",
+        "T8 Live Model",
+    ]
+    existing = [name for name in preferred if name in wb.sheetnames]
+    remaining = [name for name in wb.sheetnames if name not in existing]
+    wb._sheets = [wb[name] for name in existing + remaining]
 
 
 def export_institutional_excel(filename: str = "La_Dehesa_del_Castrillo_Financial_Model.xlsx") -> Path:
@@ -1186,12 +1231,41 @@ def export_institutional_excel(filename: str = "La_Dehesa_del_Castrillo_Financia
             cell.border = thin_border
             cell.number_format = "0" if key == "year" else ("0.00x" if key == "dscr" else "#,##0")
 
+    # Five-act case study: promoter, audit, decline memo, cabin turnaround and
+    # the executive comparison. The T8 layer keeps its own live formula tabs.
+    turnaround = TurnaroundEngine()
+    decline = DeclineMemoEngine()
+    investment_case = InvestmentCase(turnaround=turnaround)
+
     # Add the live, formula-driven tabs (Inputs, Live Model, Funding & Audit, Read Me)
-    add_live_model_tabs(wb, engine, df_proj, df_kpi, debt_sched)
+    add_live_model_tabs(
+        wb, engine, df_proj, df_kpi, debt_sched, turnaround=turnaround
+    )
+
+    promoter_case = FinancialModelEngine(case="promoter", scenario=SCENARIOS["base"])
+    audited_case = FinancialModelEngine(case="management", scenario=SCENARIOS["base"])
+    market_case = FinancialModelEngine(case="market", scenario=SCENARIOS["base"])
+    add_case_study_tabs(
+        wb,
+        promoter_case,
+        audited_case,
+        market_case,
+        turnaround,
+        decline,
+        investment_case,
+    )
+    add_t8_model_tabs(wb, turnaround)
+
+    _order_sheets(wb)
 
     # Auto-adjust column widths across the report tabs. The live tabs set their
     # own widths, and formulas should not inflate the column width.
-    live_tabs = {"Read Me & Checks", "Inputs", "Live Model", "Funding & Audit", "Debt Schedule"}
+    live_tabs = {
+        "Read Me & Checks", "Inputs", "Live Model", "Funding & Audit",
+        "Debt Schedule", "Act 1 - Promoter", "Act 2 - Audit", "Decline Memo",
+        "Act 4 - T8", "Executive Comparison", "T8 Sensitivities",
+        "T8 Inputs", "T8 Debt Schedule", "T8 Live Model",
+    }
     for ws in wb.worksheets:
         if ws.title in live_tabs:
             continue

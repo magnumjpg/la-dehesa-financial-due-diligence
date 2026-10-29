@@ -6,24 +6,26 @@
 
 Este documento fija cómo se construye, controla y cambia el modelo financiero de La Dehesa del Castrillo S.L. Su ámbito es el repositorio Python + Excel, no la decisión de inversión; no sustituye una auditoría independiente, una tasación ni un term sheet.
 
-El estado es **reproducible y auditado**, sin revisión de terceros. La auditoría evalúa 16 reglas: 9 pasan, 1 no aplicable, 5 excepciones materiales y 1 warning. El veredicto es `CONDITIONAL - 5 MATERIAL EXCEPTION(S)`; la recomendación es `DECLINE AS STRUCTURED (RESIZE REQUIRED)`. R7 supera el WACC y el test neto con un gap del 3,2%, solo a 110 k€ por cabaña; procede un test de Fase 0, no construir.
+El estado es **reproducible y auditado**, sin revisión de terceros. La auditoría evalúa 16 reglas: 9 pasan, 1 no aplicable, 5 excepciones materiales y 1 warning. El veredicto es `CONDITIONAL - 5 MATERIAL EXCEPTION(S)`; la recomendación es `DECLINE AS STRUCTURED (RESIZE REQUIRED)`. R7 supera el WACC y el test neto con un gap del 3,2%, solo a 110 k€ por cabaña; procede un test de Fase 0, no construir. La capa T8 del Acto 4 va más lejos: seis cabañas más el lodge, sin restaurante, CapEx en caja de 621.600 €, DSCR mínimo 2,31x y TIR de equity de 18,95% all-in / 39,74% en caja, con el coste por cabaña como variable crítica.
 
 ## 2. Mapa del modelo
 
 | Archivo | Responsabilidad |
 |---|---|
-| `main.py` | Pipeline de 15 pasos: casos, funding, deuda, retornos, reforma, auditoría y entregables. |
-| `statements.py`, `debt.py`, `tax.py` | Tres estados, deuda francesa, IVA, Sociedades y BIN. |
+| `main.py` | Pipeline de 18 pasos: casos, funding, deuda, retornos, reforma, decline memo, T8, comparación ejecutiva, auditoría y entregables. |
+| `statements.py`, `debt.py`, `tax.py` | Tres estados, cuatro casos incluido T8, deuda francesa, IVA, Sociedades y BIN. |
 | `reform.py` (core y config) | R1-R7, presets, value bridge, frontera, stress, valoración y distress. |
+| `turnaround.py` (core y config) | T8: producto, CapEx, financiación, proyección, retornos, sensibilidades y JSON. |
+| `decline.py`, `investment_case.py` | Acto 3 (cuatro tests y veredicto) y Acto 5 (tres snapshots y value bridge). |
 | `assumptions.py` | CapEx, deuda, personal, OPEX, economía unitaria y escenarios. |
 | `model_audit.py` | 16 reglas calculadas y JSON de auditoría. |
 | `funding.py`, `metrics.py`, `expansion.py`, `monthly_cash.py` | Fuentes y usos, DSCR/TIR/VAN, gate de Fase II y liquidez mensual. |
-| `export_excel.py`, `live_excel.py` | Libro de 13 pestañas y 2.060 fórmulas. |
-| `tests/`, `data/*.json`, `data/*.xlsx` | 74 tests y salidas; el Excel y los JSON no son fuente de verdad. |
+| `export_excel.py`, `live_excel.py`, `act_excel.py`, `t8_excel.py` | Libro de 22 pestañas y 4.163 fórmulas, incluidas las pestañas del caso en cinco actos y T8. |
+| `tests/`, `data/*.json`, `data/*.xlsx` | 121 tests y salidas; el Excel y los JSON no son fuente de verdad. |
 
 ## 3. Flujo de cálculo
 
-Secuencia: as-is → funding → deuda → retornos → reforma R1-R6 → R7 → auditoría.
+Secuencia: as-is → funding → deuda → retornos → reforma R1-R6 → R7 → decline memo → T8 → comparación ejecutiva → auditoría.
 
 ### 3.1 As-is
 
@@ -63,6 +65,16 @@ Inversión total base: 1.540.760,04 €; VAN: +76.416,23 €. Escalera: 110 k€
 
 Downside: DSCR mínimo 0,79x en el Año 1; déficit de CFADS 4.577,04 €; DSRA de seis meses 20.292,72 €, que lo cubre; cure a 1,25x 17.455,75 €. Salida neta 654.606,82 € frente a deuda 457.236,43 €: recuperación del prestamista 143%; equity 197.370,39 € sobre 1.113.342,89 € invertidos (17,7%).
 
+### 3.7 T8: el turnaround de cabañas
+
+| Caso | Configuración | CapEx en caja | Inversión all-in | DSCR mín. | TIR equity all-in / caja | Gap neto |
+|---|---|---:|---:|---:|---:|---:|
+| Base | 6 cabañas + lodge, ADR 210/420 €, 50%/32%, deuda 450 k€ | 621.600 € | 952.504,82 € | 2,31x | 18,95% / 39,74% | +385.869,20 € |
+| Cabina a 85 k€ | 6 × 85 k€, resto igual | 788.100 € | 1.119.005 € | 2,36x | 11,65% / 24,12% | +138.464 € |
+| Cabaña a 110 k€ | 6 × 110 k€, resto igual | 954.600 € | 1.285.505 € | 2,40x | 6,38% / 15,13% | -28.036 € |
+
+La TIR de proyecto es 12,60% all-in / 20,70% en caja; el valor neto de salida es 1.257.469,20 €; la inversión total all-in excluye el puente de IVA de 130.536 €, que es una partida de balance que se repaga en el Mes 18. El coste cargado por cabaña es 93.600 € (CapEx en caja neto de la reforma del caserón / 6), dentro de la banda 85-110 k€ de `BENCHMARKS_R7_ES.md`; el módulo de 60.000 € no es el coste instalado completo.
+
 ## 4. Convenciones
 
 | Convención | Regla |
@@ -83,11 +95,12 @@ La subvención de capital no se imputa a resultados; entra en patrimonio.
 
 | Control | Resultado |
 |---|---|
-| Tests | 74 automatizados tras el último cambio (antes 68). |
+| Tests | 121 automatizados tras el último cambio (antes 74). |
 | Auditoría | 16 reglas: 9 pasan, 1 no aplicable, 5 fallos materiales y 1 warning. |
-| Balance | Discrepancia máxima de 0,00 € en los tres casos (tolerancia 0,01 €). |
-| Python ↔ Excel | 13 pestañas y 2.060 fórmulas; DSCR A2 1,1534x y cajas A1/A2 de 20.700,88/183.322,64 €, dentro de 1 € / 0,01x. |
+| Balance | Discrepancia máxima de 0,00 € en los tres casos as-is y en T8 (tolerancia 0,01 €). |
+| Python ↔ Excel | 22 pestañas y 4.163 fórmulas; DSCR A2 1,1534x y cajas A1/A2 de 20.700,88/183.322,64 €, dentro de 1 € / 0,01x. T8 reconcilia dentro de 1 € / 0,01x, sus cuatro TIR coinciden con Python y la deuda cierra en el Mes 240. |
 | Puente de valor R2 | Residuo cero entre palancas y EBITDA de la reforma. |
+| Puente de valor T8 | El valor neto de salida y el gap se calculan desde el EBITDA del propio motor; el puente cuadra con la tabla del Acto 5. |
 | Determinismo | Pipeline determinista; Monte Carlo y cópulas con semilla 42. |
 | Trazabilidad | JSON de auditoría (esquema 4.0.0) y de reforma con presets y stress. |
 
@@ -120,6 +133,12 @@ La auditoría se deja fallar a propósito. Las reglas de integridad —balance, 
 | LEADER | 163.000 € | Juicio | Sin carta de concesión | R3, R6 y caja |
 | Fiscalidad | IVA 10/21; IS 25%; BIN | Medido | Leyes 37/1992 y 27/2014 | RULE_02/03/12 |
 | Salida | Cap 9,5%; costes 3% (4% downside) | Juicio | Sin tasación | Gap neto y TIR |
+| Cabañas T8 | 6 × 60 k€; 93,6 k€ cargado | Triangulado | Módulo de suministro, no oferta | A 110 k€ el gap es -28.036 € |
+| ADR T8 | 210 € cabaña; 420 € lodge | Triangulado | Banda 180-210 € | Ingresos y TIR |
+| Ocupación T8 | 50/56/58% cabañas; 32/38/40% lodge | Juicio | 2,35x-2,73x la media INE | DSCR 2,31x |
+| Deuda T8 | 450 k€, 20 años, 4,25%, 12+12 | Triangulado | Facility rural 2026 | DSCR y equity |
+| Nómina T8 | 2,0 FTE × 23.000 € + 32,5% SS | Medido | Convenio y SMI 2026 | EBITDA y margen |
+| Salida T8 | Cap 8,5%; costes 3% | Juicio | Borde optimista de la banda | Gap y TIR |
 | WACC | 8,0% | Juicio | Hurdle de proyecto | VAN y RULE_12 |
 
 ## 7. Disposición de excepciones de auditoría
@@ -151,22 +170,22 @@ El DSCR aguanta porque la deuda se dimensionó sobre el CFADS mínimo; el valor 
 
 ## 9. Control de cambios y reproducibilidad
 
-Cualquier cambio en `assumptions.py`, `config/reform.py` o los motores se registra con SHA y fecha, reejecuta los 74 tests y el pipeline, compara los JSON, regenera el Excel, verifica las 2.060 fórmulas, actualiza este log y se aprueba antes de publicar.
+Cualquier cambio en `assumptions.py`, `config/reform.py`, `config/turnaround.py` o los motores se registra con SHA y fecha, reejecuta los 121 tests y el pipeline, compara los JSON, regenera el Excel, verifica las 4.163 fórmulas, actualiza este log y se aprueba antes de publicar.
 
 **Cómo ejecutarlo:**
 
 ```bash
 pip install -r requirements.txt
-python main.py                 # 15 pasos
+python main.py                 # 18 pasos
 python main.py --no-charts
-python -m pytest tests/ -q     # 74 tests
+python -m pytest tests/ -q     # 121 tests
 ```
 
-Salidas: Excel de 13 pestañas y dos JSON. Monte Carlo: 1.000 iteraciones; cópulas: 50.000; semilla 42. La reproducibilidad es numérica en el mismo entorno Python 3.11 y dependencias; no se garantiza copia idéntica entre librerías o sistemas. No se editan a mano el Excel ni los JSON.
+Salidas: Excel de 22 pestañas y cinco JSON (auditoría, reforma, decline memo, T8 y caso de inversión). Monte Carlo: 1.000 iteraciones; cópulas: 50.000; semilla 42. La reproducibilidad es numérica en el mismo entorno Python 3.11 y dependencias; no se garantiza copia idéntica entre librerías o sistemas. No se editan a mano el Excel ni los JSON.
 
 ## 10. Limitaciones y firma
 
-El modelo no sustituye una auditoría independiente. No hay ofertas de construcción vinculantes, booking curve ni competitive set; LEADER no tiene carta de concesión; la fiscalidad es simplificada; el motor mensual es un stress de liquidez; la salida por cap rate no incorpora tasación; y R7 pasa por solo 3,2%, con 110 k€ por cabaña como benchmark. El playbook de distress no es un análisis de liquidación. No hay revisión de terceros: este documento describe el control interno y no certifica resultados.
+El modelo no sustituye una auditoría independiente. No hay ofertas de construcción vinculantes, booking curve ni competitive set; LEADER no tiene carta de concesión; la fiscalidad es simplificada; el motor mensual es un stress de liquidez; la salida por cap rate no incorpora tasación; y R7 pasa por solo 3,2%, con 110 k€ por cabaña como benchmark. T8 es frágil por la misma razón: el módulo de 60.000 € es una estimación de suministro, no un concurso; a 85.000 € por cabaña la TIR de proyecto all-in cae a 8,7% y el gap a +138.464 €; a 110.000 € el gap es -28.036 €. T8 usa además el cap de salida optimista del 8,5% y una ocupación de cabañas del 50% que es 2,35x la media del INE. El playbook de distress no es un análisis de liquidación. No hay revisión de terceros: este documento describe el control interno y no certifica resultados.
 
 | Rol | Nombre | Fecha | Estado |
 |---|---|---|---|

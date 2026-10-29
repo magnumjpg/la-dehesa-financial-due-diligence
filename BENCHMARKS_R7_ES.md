@@ -378,7 +378,39 @@ Antes de comprometer 1,5 M€, R7 propone una prueba de una temporada con la cas
 
 ---
 
-## Anexo: fuentes
+## 11. Conciliación con T8: el mismo estándar de coste, otro producto
+
+T8 es la versión que se implementa en el Acto 4: seis cabañas modulares de 35-45 m² más el caserón convertido en un lodge de cuatro dormitorios, sin restaurante comercial y con 2,0 FTE. No es R7 con otro nombre. R7 mantiene el restaurante de destino y una casa principal de 8 pax; T8 elimina la cocina, reduce el alcance y baja el coste. Por eso el coste por cabaña no puede compararse sin separar las dos cifras.
+
+**Las cuatro cifras de coste de T8.**
+
+| Base | Importe | Cálculo | Comparación con la banda |
+|---|---:|---|---|
+| Módulo (suministro e instalación) | 60.000 € | línea de cabañas / 6 | por debajo de 85-110 k€, porque no es el coste instalado completo |
+| CapEx en caja por cabaña, neto del lodge | **93.600 €** | (621.600 − 60.000) / 6 | **dentro de la banda 85-110 k€** |
+| CapEx en caja por cabaña, todo incluido | 103.600 € | 621.600 / 6 | en el centro-alto de la banda |
+| Inversión all-in por cabaña, con terreno | 145.267 € | 871.600 / 6 | borde alto de la banda 110-150 k€ |
+
+**La lectura correcta.** Los 60.000 € son el contrato del módulo, no una cabaña de hospitalidad instalada. El coste que se compara con la banda de `§5` es el **total cargado**: 93.600 € por cabaña, que reparte entre las seis unidades el estanque, la infraestructura común, el FF&E, el digital, los honorarios y la contingencia, y excluye la reforma del caserón. Ese número está dentro de la banda de 85-110 k€. Si un lector insiste en leer los 60.000 € como coste instalado completo, el caso está sub-presupuestado en 25.000-50.000 € por cabaña, y el stress de abajo muestra lo que eso cuesta.
+
+**El stress que importa.** Cambiar solo la línea de cabañas, manteniendo el resto del presupuesto y la deuda de 450k €:
+
+| Módulo por cabaña (stress) | CapEx en caja | Inversión all-in | DSCR mínimo | TIR proyecto all-in / caja | TIR equity all-in / caja | Gap neto |
+|---:|---:|---:|---:|---:|---:|---:|
+| **60.000 € (base)** | 621.600 € | 952.505 € | 2,31x | **12,6% / 20,7%** | **19,0% / 39,7%** | **+304.964 €** |
+| 85.000 € (módulo al suelo de la banda) | 788.100 € | 1.119.005 € | 2,36x | 8,7% / 15,1% | 11,7% / 24,1% | +138.464 € |
+| 110.000 € (módulo al techo de la banda) | 954.600 € | 1.285.505 € | 2,40x | 5,5% / 10,7% | 6,4% / 15,1% | −28.036 € |
+
+**Lo que dice el stress.** El DSCR no es el problema en ningún punto: sube de 2,31x a 2,40x porque el EBITDA no cambia y la deuda tampoco. El problema es el retorno. A 85.000 € por cabaña el proyecto all-in ya no supera el 9% y el gap se reduce a la mitad; a 110.000 € el gap neto es negativo. La conclusión es la misma que en R7, con otro umbral: **el caso pasa por el coste, no por la demanda**. T8 tiene margen porque el producto es más barato (40 m², sin restaurante, 2 FTE), no porque el mercado pague más.
+
+**Dos diferencias de convención que hay que declarar.**
+
+1. **Cap rate.** T8 usa 8,5% de salida; R7 usa 9,5%. El 8,5% es el borde optimista de la banda y el que usan los casos as-is para que la comparación del Acto 5 sea homogénea. No es el centro del mercado. A 10,5% la TIR de equity all-in de T8 cae a 12,9% y la de caja a 33,0%, y el gap neto se estrecha; la pestaña `T8 Sensitivities` publica los tres caps.
+2. **Terreno.** T8 lleva los 250.000 € en especie en la base all-in, igual que R7. La TIR de caja los excluye y por eso es la cifra que ve el promotor; la all-in es la que se compara con una compra del terreno. Las dos se publican para no mezclar el retorno del activo con el del cheque.
+
+**La frontera de T8, en una frase.** T8 pasa el test neto en toda la banda de cap rates publicada: el gap cae de +304.964 € al 8,5% a +65.446 € al 10,5%. Lo que no aguanta en el borde es el retorno: al 10,5% la TIR de proyecto all-in es 8,81%, por debajo del 9%, aunque la TIR de equity all-in sigue en 12,94%. El coste cargado por cabaña es la palanca que manda: con el módulo a 93.600 € el caso crea valor; si el contrato sube a 85.000 €, el proyecto sigue creando +138.464 € pero ya no supera el 9% all-in; si sube a 110.000 €, el gap se vuelve -28.036 €. El test de Fase 0 y el concurso de suministro no son trámites: son las dos condiciones que separan el caso base del caso que falla.
+
+
 
 **Estadística oficial**
 

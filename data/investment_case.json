@@ -1,0 +1,302 @@
+{
+  "cases": [
+    {
+      "key": "promoter",
+      "name": "Promoter plan",
+      "product": "7 doubles + 1 house + 21-cover restaurant",
+      "keys": 8,
+      "guests": 21,
+      "mature_occupancy": 0.192,
+      "mature_occupancy_label": "19.2%",
+      "adr": 122.73,
+      "adr_label": "EUR 85 (house EUR 380)",
+      "all_in_capex": 725000.0,
+      "cash_capex": 725000.0,
+      "senior_debt": 507500.0,
+      "cash_equity": 217500.0,
+      "total_equity": 217500.0,
+      "equity_pct_allin": 0.3,
+      "equity_pct_cash": 0.3,
+      "revenue_y1": 86275.0,
+      "revenue_mature": 129412.5,
+      "ebitda_y1": 11297.0,
+      "ebitda_mature": 54434.5,
+      "ebitda_exit": 67699.28,
+      "ebitda_margin": 0.4206,
+      "gross_margin": 1.0,
+      "dscr_min": 0.33,
+      "dscr_y2": 0.97,
+      "project_irr_allin": 0.062908,
+      "project_irr_cash": 0.062908,
+      "equity_irr_allin": 0.107767,
+      "equity_irr_cash": 0.107767,
+      "terminal_value": 796462.12,
+      "net_exit": 772568.25,
+      "value_gap_capex": 47568.25,
+      "verdict": "UNFUNDABLE",
+      "caveat": "EBITDA is a re-modelling with no variable cost stack (100% gross margin) and Year-1 cash is negative. Its positive IRR is an artefact of the incomplete cost basis."
+    },
+    {
+      "key": "audited",
+      "name": "Audited case",
+      "product": "Same hotel, full cost stack, 35% LTV request",
+      "keys": 8,
+      "guests": 21,
+      "mature_occupancy": 0.3136,
+      "mature_occupancy_label": "31.36%",
+      "adr": 121.88,
+      "adr_label": "EUR 85 (house EUR 380)",
+      "all_in_capex": 1050100.0,
+      "cash_capex": 800100.0,
+      "senior_debt": 367535.0,
+      "cash_equity": 521090.22,
+      "total_equity": 771090.22,
+      "equity_pct_allin": 0.4962,
+      "equity_pct_cash": 0.6513,
+      "revenue_y1": 154548.0,
+      "revenue_mature": 171720.0,
+      "ebitda_y1": 24279.92,
+      "ebitda_mature": 37041.58,
+      "ebitda_exit": 37041.58,
+      "ebitda_margin": 0.2157,
+      "gross_margin": 0.7432,
+      "dscr_min": 1.15,
+      "dscr_y2": 1.15,
+      "project_irr_allin": -0.099046,
+      "project_irr_cash": -0.042603,
+      "equity_irr_allin": -0.244465,
+      "equity_irr_cash": -0.161741,
+      "terminal_value": 435783.29,
+      "net_exit": 422709.8,
+      "value_gap_capex": -627390.2,
+      "verdict": "DECLINE",
+      "caveat": "Upside demand: 31.36% mature occupancy is 1.48x the INE Segovia average. Even this case fails the covenant."
+    },
+    {
+      "key": "turnaround",
+      "name": "Cabin turnaround (T8)",
+      "product": "6 modular cabins + caseron lodge, no restaurant",
+      "keys": 7,
+      "guests": 32,
+      "mature_occupancy": 0.5543,
+      "mature_occupancy_label": "58% cabins / 40% lodge",
+      "adr": 231.65,
+      "adr_label": "EUR 210 cabins / EUR 420 lodge",
+      "all_in_capex": 871600.0,
+      "cash_capex": 621600.0,
+      "senior_debt": 450000.0,
+      "cash_equity": 252504.82,
+      "total_equity": 502504.82,
+      "equity_pct_allin": 0.2897,
+      "equity_pct_cash": 0.4062,
+      "revenue_y1": 304006.0,
+      "revenue_mature": 358062.0,
+      "ebitda_y1": 78943.11,
+      "ebitda_mature": 110190.6,
+      "ebitda_exit": 110190.6,
+      "ebitda_margin": 0.3077,
+      "gross_margin": 0.5813,
+      "dscr_min": 2.31,
+      "dscr_y2": 2.31,
+      "project_irr_allin": 0.126045,
+      "project_irr_cash": 0.207046,
+      "equity_irr_allin": 0.189538,
+      "equity_irr_cash": 0.397401,
+      "terminal_value": 1296360.0,
+      "net_exit": 1257469.2,
+      "value_gap_capex": 385869.2,
+      "verdict": "PROCEED",
+      "caveat": "58% cabin occupancy is 2.7x the INE average and above the 50-55% benchmark band; the 45% stress case is published."
+    }
+  ],
+  "comparison": [
+    {
+      "metric": "Keys",
+      "Promoter plan": 8.0,
+      "Audited case": 8.0,
+      "Cabin turnaround (T8)": 7.0
+    },
+    {
+      "metric": "Guests at full occupancy",
+      "Promoter plan": 21.0,
+      "Audited case": 21.0,
+      "Cabin turnaround (T8)": 32.0
+    },
+    {
+      "metric": "Mature occupancy",
+      "Promoter plan": 0.192,
+      "Audited case": 0.3136,
+      "Cabin turnaround (T8)": 0.5543
+    },
+    {
+      "metric": "Blended ADR (EUR)",
+      "Promoter plan": 122.73,
+      "Audited case": 121.88,
+      "Cabin turnaround (T8)": 231.65
+    },
+    {
+      "metric": "All-in CapEx (EUR)",
+      "Promoter plan": 725000.0,
+      "Audited case": 1050100.0,
+      "Cabin turnaround (T8)": 871600.0
+    },
+    {
+      "metric": "Cash CapEx (EUR)",
+      "Promoter plan": 725000.0,
+      "Audited case": 800100.0,
+      "Cabin turnaround (T8)": 621600.0
+    },
+    {
+      "metric": "Senior debt (EUR)",
+      "Promoter plan": 507500.0,
+      "Audited case": 367535.0,
+      "Cabin turnaround (T8)": 450000.0
+    },
+    {
+      "metric": "Cash equity (EUR)",
+      "Promoter plan": 217500.0,
+      "Audited case": 521090.22,
+      "Cabin turnaround (T8)": 252504.82
+    },
+    {
+      "metric": "Equity / all-in CapEx",
+      "Promoter plan": 0.3,
+      "Audited case": 0.4962,
+      "Cabin turnaround (T8)": 0.2897
+    },
+    {
+      "metric": "Equity / cash CapEx",
+      "Promoter plan": 0.3,
+      "Audited case": 0.6513,
+      "Cabin turnaround (T8)": 0.4062
+    },
+    {
+      "metric": "Revenue Year 1 (EUR)",
+      "Promoter plan": 86275.0,
+      "Audited case": 154548.0,
+      "Cabin turnaround (T8)": 304006.0
+    },
+    {
+      "metric": "Revenue mature (EUR)",
+      "Promoter plan": 129412.5,
+      "Audited case": 171720.0,
+      "Cabin turnaround (T8)": 358062.0
+    },
+    {
+      "metric": "EBITDA Year 1 (EUR)",
+      "Promoter plan": 11297.0,
+      "Audited case": 24279.92,
+      "Cabin turnaround (T8)": 78943.11
+    },
+    {
+      "metric": "EBITDA mature (EUR)",
+      "Promoter plan": 54434.5,
+      "Audited case": 37041.58,
+      "Cabin turnaround (T8)": 110190.6
+    },
+    {
+      "metric": "EBITDA margin mature",
+      "Promoter plan": 0.4206,
+      "Audited case": 0.2157,
+      "Cabin turnaround (T8)": 0.3077
+    },
+    {
+      "metric": "Gross margin mature",
+      "Promoter plan": 1.0,
+      "Audited case": 0.7432,
+      "Cabin turnaround (T8)": 0.5813
+    },
+    {
+      "metric": "Minimum DSCR (x)",
+      "Promoter plan": 0.33,
+      "Audited case": 1.15,
+      "Cabin turnaround (T8)": 2.31
+    },
+    {
+      "metric": "Year-2 DSCR (x)",
+      "Promoter plan": 0.97,
+      "Audited case": 1.15,
+      "Cabin turnaround (T8)": 2.31
+    },
+    {
+      "metric": "Project IRR all-in",
+      "Promoter plan": 0.062908,
+      "Audited case": -0.099046,
+      "Cabin turnaround (T8)": 0.126045
+    },
+    {
+      "metric": "Project IRR cash",
+      "Promoter plan": 0.062908,
+      "Audited case": -0.042603,
+      "Cabin turnaround (T8)": 0.207046
+    },
+    {
+      "metric": "Equity IRR all-in",
+      "Promoter plan": 0.107767,
+      "Audited case": -0.244465,
+      "Cabin turnaround (T8)": 0.189538
+    },
+    {
+      "metric": "Equity IRR cash",
+      "Promoter plan": 0.107767,
+      "Audited case": -0.161741,
+      "Cabin turnaround (T8)": 0.397401
+    },
+    {
+      "metric": "Net exit value (EUR)",
+      "Promoter plan": 772568.25,
+      "Audited case": 422709.8,
+      "Cabin turnaround (T8)": 1257469.2
+    },
+    {
+      "metric": "Value gap vs CapEx (EUR)",
+      "Promoter plan": 47568.25,
+      "Audited case": -627390.2,
+      "Cabin turnaround (T8)": 385869.2
+    }
+  ],
+  "value_bridge": [
+    {
+      "case": "Promoter plan",
+      "ebitda_exit": 67699.28,
+      "exit_cap_rate": 0.085,
+      "gross_terminal_value": 796462.12,
+      "net_terminal_value": 772568.25,
+      "all_in_capex": 725000.0,
+      "value_gap_vs_capex": 47568.25,
+      "value_gap_pct": 0.0656
+    },
+    {
+      "case": "Audited case",
+      "ebitda_exit": 37041.58,
+      "exit_cap_rate": 0.085,
+      "gross_terminal_value": 435783.29,
+      "net_terminal_value": 422709.8,
+      "all_in_capex": 1050100.0,
+      "value_gap_vs_capex": -627390.2,
+      "value_gap_pct": -0.5975
+    },
+    {
+      "case": "Cabin turnaround (T8)",
+      "ebitda_exit": 110190.6,
+      "exit_cap_rate": 0.085,
+      "gross_terminal_value": 1296360.0,
+      "net_terminal_value": 1257469.2,
+      "all_in_capex": 871600.0,
+      "value_gap_vs_capex": 385869.2,
+      "value_gap_pct": 0.4427
+    }
+  ],
+  "narrative": {
+    "act_1_pitch": "The promoter asked for EUR 725,000 to reopen the caseron as an 8-key hotel with a 21-cover restaurant, on 19.2% occupancy and an EUR 85 ADR. The model reproduces EUR 86,275 of Year-1 revenue and EUR 11,297 of EBITDA - but with no variable cost stack and negative Year-1 cash.",
+    "act_2_audit": "A full cost stack, INE Segovia seasonality, the Segovia hospitality agreement and the 21% VAT bridge raise the all-in budget to EUR 1,050,100. The best demand case (31.36% occupancy) generates EUR 171,720 of mature revenue and a 1.15x minimum DSCR.",
+    "act_3_decline": "The credit committee declines: the Year-2 DSCR is 1.15x against a 1.25x covenant, the equity plug is EUR 521k (49.6% of all-in CapEx), the restaurant does not cover its fixed cost, and Phase II opens a EUR 252k hole.",
+    "act_4_turnaround": "Six modular cabins at EUR 93,600 installed plus the caseron as a four-bedroom lodge cut the cash envelope to EUR 621,600 (-40% versus the EUR 1,050,100 audited budget). No commercial kitchen, two FTE, EUR 358,062 of mature revenue at a 30.8% EBITDA margin and a 2.31x minimum DSCR.",
+    "act_5_comparison": "On a like-for-like 3%-cost exit at an 8.5% cap rate the T8 equity IRR is 19.0% all-in and 39.7% on cash equity, against -24.4% for the audited case. The turnaround creates EUR 385,869 of value over its all-in CapEx; the audited case destroys EUR 627,390."
+  },
+  "exit_convention": {
+    "exit_cap_rate": 0.085,
+    "exit_cost_rate": 0.03,
+    "note": "All three columns are net of 3% exit costs. Act 2 quotes the audited equity IRR gross of exit costs (-23.16%)."
+  }
+}

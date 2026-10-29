@@ -338,7 +338,7 @@ def _inp_row(row: int) -> str:
 # ---------------------------------------------------------------------------
 # Read Me & Checks
 # ---------------------------------------------------------------------------
-def build_readme(wb, st: Dict[str, Any], case_facts: Dict[str, Dict[str, Any]], gate: Dict[str, Any]) -> None:
+def build_readme(wb, st: Dict[str, Any], case_facts: Dict[str, Dict[str, Any]], gate: Dict[str, Any], turnaround=None) -> None:
     ws = wb.create_sheet(title="Read Me & Checks", index=0)
     ws.views.sheetView[0].showGridLines = False
     ws["A1"] = "LA DEHESA DEL CASTRILLO S.L. - MODEL MAP, CASES & INTEGRITY CHECKS"
@@ -367,6 +367,7 @@ def build_readme(wb, st: Dict[str, Any], case_facts: Dict[str, Dict[str, Any]], 
         ("Unit Economics & Runway", "RevPAR, TRevPAR, contribution margin and the 24-month cash runway."),
         ("Phase II Expansion", "Landscape suites and biopool: CapEx, P&L, phase gate and consolidated impact."),
         ("Reform Case", "Separate post-decline layer: R1-R6 presets, value bridge, CapEx/cover frontier, stress tests, R7 premium cabins and recommendation."),
+        ("Act 1-5 & T8", "Five-act case study plus the T8 live layer: Act 1 Promoter, Act 2 Audit, Decline Memo, Act 4 T8, Executive Comparison, T8 Sensitivities, T8 Inputs, T8 Debt Schedule and T8 Live Model."),
     ]
     for r, (tab, purpose) in enumerate(model_map, start=6):
         _write_row(ws, r, [tab, purpose], st, number_format="@")
@@ -526,6 +527,71 @@ def build_readme(wb, st: Dict[str, Any], case_facts: Dict[str, Dict[str, Any]], 
     ws.column_dimensions["E"].width = 22
     ws.column_dimensions["F"].width = 46
 
+    # ------------------------------------------------------------------
+    # Section 6: the T8 turnaround. Kept below the disclaimer so the
+    # three-case block above (rows 21-24) stays anchored to C24/D24.
+    # ------------------------------------------------------------------
+    if turnaround is not None:
+        all_in = turnaround.returns("all-in")
+        cash = turnaround.returns("cash")
+        df_t8 = turnaround.projection
+        y1 = df_t8.iloc[0]
+        y3 = df_t8.iloc[2]
+
+        ws["A56"] = "6. THE T8 TURNAROUND (ACT 4 / ACT 5)"
+        ws["A56"].font = st["bold"]
+        _header_row(ws, 57, ["Metric", "T8 cabin case"], st)
+        t8_rows = [
+            (
+                "Product",
+                "6 modular cabins (40 m2, 2 bedrooms) + caseron lodge; no commercial restaurant",
+            ),
+            (
+                "Investor cheque",
+                f"EUR {turnaround.cash_equity:,.2f} cash equity "
+                f"({turnaround.cash_equity / turnaround.engine.cash_capex:.1%} of cash CapEx); "
+                f"total equity at close EUR {turnaround.all_in_equity:,.2f}",
+            ),
+            (
+                "Stabilised operating output (Year 3)",
+                f"Revenue EUR {y3['total_revenue']:,.2f}; EBITDA EUR {y3['ebitda']:,.2f} "
+                f"({y3['ebitda'] / y3['total_revenue']:.1%} margin); gross margin "
+                f"{y3['gross_margin'] / y3['total_revenue']:.1%}",
+            ),
+            (
+                "Credit test",
+                f"Minimum DSCR {turnaround.kpis['dscr'].min():.2f}x (Year 2) against the 1.25x covenant; "
+                f"Year 1 DSCR {turnaround.kpis.iloc[0]['dscr']:.2f}x",
+            ),
+            (
+                "Returns (8.5% exit cap, 3% costs)",
+                f"Project IRR {all_in['project_irr_exit']:.2%} all-in / {cash['project_irr_exit']:.2%} cash; "
+                f"equity IRR {all_in['equity_irr_exit']:.2%} all-in / {cash['equity_irr_exit']:.2%} cash",
+            ),
+            (
+                "Value creation",
+                f"Net exit value EUR {all_in['net_terminal_value']:,.2f}; "
+                f"gap vs all-in investment EUR "
+                f"{all_in['net_terminal_value'] - turnaround.all_in_project_investment:,.2f}",
+            ),
+            (
+                "Answer to the decline",
+                "Same land, one third of the cash, no kitchen brigade and a covenant "
+                "with 1.06x of headroom in the binding year.",
+            ),
+        ]
+        for r, (label, value) in enumerate(t8_rows, start=58):
+            c = ws.cell(row=r, column=1, value=label)
+            c.font = st["bold"]
+            c.border = st["border"]
+            c.alignment = Alignment(vertical="top")
+            c = ws.cell(row=r, column=2, value=value)
+            c.font = st["regular"]
+            c.border = st["border"]
+            c.alignment = Alignment(wrap_text=True, vertical="top")
+            ws.merge_cells(start_row=r, start_column=2, end_row=r, end_column=6)
+            ws.row_dimensions[r].height = 34
+
 
 # ---------------------------------------------------------------------------
 # Inputs
@@ -536,10 +602,12 @@ def build_inputs(wb, engine: FinancialModelEngine, df_proj, st: Dict[str, Any]) 
     ws["A1"] = "MODEL INPUTS - MANAGEMENT CASE (ALL HARD-CODED ASSUMPTIONS IN ONE PLACE)"
     ws["A1"].font = st["title"]
     ws["A2"] = (
-        "Change any blue input and the Live Model recalculates. Ten tabs are generated artefacts: "
+        "Change any blue input and the Live Model recalculates. Seventeen tabs are generated artefacts: "
         "Read Me & Checks, Executive Scorecard, 3-Statement Model, Debt Schedule (formula-driven), "
         "Scenario Stress-Testing, Monte Carlo Risk, Credit Risk & Copula, Unit Economics & Runway, "
-        "Phase II Expansion and Reform Case. Inputs, Live Model and Funding & Audit are the live tabs."
+        "Phase II Expansion, Reform Case, Act 1 - Promoter, Act 2 - Audit, Decline Memo, Act 4 - T8, "
+        "Executive Comparison, T8 Sensitivities and T8 Debt Schedule. Inputs, Live Model, Funding & Audit, "
+        "T8 Inputs and T8 Live Model are the live tabs."
     )
     ws["A2"].font = st["note"]
 
@@ -1186,7 +1254,14 @@ def build_funding_audit(wb, st: Dict[str, Any], case_facts: Dict[str, Dict[str, 
 # ---------------------------------------------------------------------------
 # Orchestration
 # ---------------------------------------------------------------------------
-def add_live_model_tabs(wb, engine: FinancialModelEngine, df_proj, df_kpi, debt_sched) -> None:
+def add_live_model_tabs(
+    wb,
+    engine: FinancialModelEngine,
+    df_proj,
+    df_kpi,
+    debt_sched,
+    turnaround=None,
+) -> None:
     """Adds the live tabs (and the formula-driven debt schedule) to the workbook."""
     st = _styles()
 
@@ -1210,7 +1285,7 @@ def add_live_model_tabs(wb, engine: FinancialModelEngine, df_proj, df_kpi, debt_
         phase1_dscr_y3=mgmt.dscr_by_year[2],
     )
 
-    build_readme(wb, st, case_facts, gate)
+    build_readme(wb, st, case_facts, gate, turnaround=turnaround)
     build_inputs(wb, engine, df_proj, st)
     build_debt_schedule(wb, st)
     build_live_model(wb, engine, df_kpi, st)

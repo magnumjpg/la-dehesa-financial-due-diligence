@@ -8,3 +8,5 @@ openpyxl>=3.1,<4.0
 
 # Test suite
 pytest>=7.4,<9.0
+# Formula recalculation used by the Excel integrity tests (T8 live model)
+formulas>=1.2,<2.0

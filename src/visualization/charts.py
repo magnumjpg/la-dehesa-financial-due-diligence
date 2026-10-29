@@ -22,6 +22,14 @@ Generates:
    external-cover value frontier for the separate reform / resize case.
 8. figure_8_occupancy_bridge.png: management vs INE occupancy by segment and the
    decomposition of the 10.1 pp gap.
+9. figure_9_five_act_timeline.png: the five-act narrative arc, from the promoter's
+   pitch to the cabin turnaround, with the verdict at each act.
+10. figure_10_three_case_comparison.png: promoter vs audited vs T8 on capital,
+    cash equity, minimum DSCR and equity IRR.
+11. figure_11_t8_dscr_cash.png: T8 DSCR against the 1.25x covenant and the cash
+    build over the five-year horizon.
+12. figure_12_t8_irr_tornado.png: equity IRR sensitivity to exit cap, ADR,
+    occupancy, leverage and scope (lodge included or not).
 """
 
 from pathlib import Path
@@ -883,8 +891,308 @@ def generate_occupancy_bridge_chart(save_path: Optional[Path] = None) -> Path:
     return save_path
 
 
+def generate_five_act_timeline(save_path: Optional[Path] = None) -> Path:
+    """Figure 9: the five-act narrative arc and the verdict at each act."""
+    set_institutional_style()
+    save_path = save_path or (get_assets_dir() / "figure_9_five_act_timeline.png")
+
+    acts = [
+        (
+            "ACT 1",
+            "The promoter's pitch",
+            "8 keys + 21-cover restaurant\nEUR 725k all-in, 30% equity",
+            "PITCH",
+            PALETTE["slate_benchmark"],
+        ),
+        (
+            "ACT 2",
+            "Institutional audit",
+            "Full cost stack: EUR 1.05M all-in\nCash equity plug EUR 521k (49.6%)",
+            "AUDIT",
+            PALETTE["navy_light"],
+        ),
+        (
+            "ACT 3",
+            "Credit committee",
+            "Y2 DSCR 1.15x vs 1.25x\nPhase II gap EUR 252k; fixed-cost trap",
+            "DECLINE",
+            PALETTE["rose_negative"],
+        ),
+        (
+            "ACT 4",
+            "Cabin turnaround",
+            "6 cabins + caseron lodge\nEUR 621.6k cash, no restaurant",
+            "RESET",
+            PALETTE["teal_positive"],
+        ),
+        (
+            "ACT 5",
+            "Executive comparison",
+            "Min DSCR 2.31x, equity IRR 39.7% cash\nNet exit EUR 1.26M",
+            "PROCEED",
+            PALETTE["navy_primary"],
+        ),
+    ]
+
+    fig, ax = plt.subplots(figsize=(15.5, 6.6), dpi=300)
+    ax.set_xlim(-0.6, len(acts) - 0.4)
+    ax.set_ylim(-1.55, 1.55)
+    ax.axis("off")
+
+    ax.annotate(
+        "",
+        xy=(len(acts) - 0.55, 0),
+        xytext=(-0.45, 0),
+        arrowprops=dict(
+            arrowstyle="-|>", color=PALETTE["slate_border"], lw=3.0,
+            shrinkA=0, shrinkB=0, mutation_scale=22,
+        ),
+    )
+
+    for i, (act, title, detail, verdict, color) in enumerate(acts):
+        above = i % 2 == 0
+        y_box = 0.62 if above else -0.62
+        y_text = 1.12 if above else -1.12
+
+        ax.plot([i, i], [0, y_box - 0.22 if above else y_box + 0.22],
+                color=color, lw=1.2, linestyle=":", zorder=1)
+        ax.scatter([i], [0], s=640, color=color, edgecolor="white",
+                   linewidth=2.4, zorder=3)
+        ax.text(i, 0, str(i + 1), ha="center", va="center", color="white",
+                fontsize=13, fontweight="bold", zorder=4)
+
+        box = Rectangle(
+            (i - 0.44, y_box - 0.30), 0.88, 0.60,
+            facecolor=PALETTE["background_card"], edgecolor=color,
+            linewidth=1.4, zorder=2,
+        )
+        ax.add_patch(box)
+        ax.text(i, y_box + 0.18, act, ha="center", va="center",
+                color=color, fontsize=8.5, fontweight="bold", zorder=5)
+        ax.text(i, y_box + 0.02, title, ha="center", va="center",
+                color=PALETTE["slate_dark"], fontsize=9.5, fontweight="bold", zorder=5)
+        ax.text(i, y_box - 0.17, detail, ha="center", va="center",
+                color=PALETTE["slate_dark"], fontsize=7.6, zorder=5)
+
+        badge_color = PALETTE["teal_positive"] if verdict == "PROCEED" else (
+            PALETTE["rose_negative"] if verdict in ("DECLINE", "UNFUNDABLE") else color
+        )
+        ax.text(i, y_text, verdict, ha="center", va="center", color="white",
+                fontsize=8.5, fontweight="bold", zorder=5,
+                bbox=dict(boxstyle="round,pad=0.32", facecolor=badge_color,
+                          edgecolor="none"))
+
+    ax.text(
+        -0.55, 1.43,
+        "Figure 9: Five-Act Narrative - From Credit Committee Decline to a High-Margin Nature Retreat",
+        ha="left", va="center", fontsize=13, fontweight="bold",
+        color=PALETTE["slate_dark"],
+    )
+    ax.text(
+        -0.55, -1.44,
+        "Same land, same promoter, same bank. The decline is not the end of the story: it is the "
+        "constraint that forces the product to change.",
+        ha="left", va="center", fontsize=8.6, style="italic",
+        color=PALETTE["slate_dark"],
+    )
+
+    fig.savefig(save_path, bbox_inches="tight")
+    plt.close(fig)
+    return save_path
+
+
+def generate_three_case_comparison(save_path: Optional[Path] = None) -> Path:
+    """Figure 10: promoter vs audited vs T8 on the four decisive metrics."""
+    from src.core.investment_case import InvestmentCase
+
+    set_institutional_style()
+    save_path = save_path or (get_assets_dir() / "figure_10_three_case_comparison.png")
+
+    snapshots = InvestmentCase().snapshots()
+    labels = ["Promoter\npitch", "Audited\ncase", "Cabin\nturnaround"]
+    colors = [
+        PALETTE["slate_benchmark"],
+        PALETTE["rose_negative"],
+        PALETTE["teal_positive"],
+    ]
+
+    panels = [
+        ("(A) All-in capital (EURk)", [s.all_in_capex / 1000 for s in snapshots], "{:,.0f}k"),
+        ("(B) Cash equity required (EURk)", [s.cash_equity / 1000 for s in snapshots], "{:,.0f}k"),
+        ("(C) Minimum DSCR (x)", [s.dscr_min for s in snapshots], "{:.2f}x"),
+        ("(D) Equity IRR, all-in (%)", [s.equity_irr_allin * 100 for s in snapshots], "{:.1f}%"),
+    ]
+
+    fig, axes = plt.subplots(2, 2, figsize=(13.6, 8.4), dpi=300)
+    for ax, (title, values, fmt) in zip(axes.flat, panels):
+        bars = ax.bar(np.arange(3), values, color=colors, width=0.58,
+                      edgecolor="white", linewidth=0.9)
+        ax.set_xticks(np.arange(3))
+        ax.set_xticklabels(labels, fontsize=9)
+        ax.set_title(title, pad=10, fontweight="bold", color=PALETTE["slate_dark"])
+        ax.axhline(0, color=PALETTE["slate_dark"], linewidth=0.9)
+        for bar, value in zip(bars, values):
+            offset = 3 if value >= 0 else -12
+            ax.annotate(
+                fmt.format(value),
+                xy=(bar.get_x() + bar.get_width() / 2, value),
+                xytext=(0, offset), textcoords="offset points",
+                ha="center", fontsize=9.5, fontweight="bold",
+                color=PALETTE["slate_dark"],
+            )
+        if title.startswith("(C)"):
+            ax.axhline(1.25, color=PALETTE["amber_warning"], linewidth=1.3,
+                       linestyle="--", label="1.25x covenant")
+            ax.set_ylim(0, 2.7)
+            ax.legend(frameon=False, fontsize=8, loc="upper right")
+        pad = 0.20 * max(abs(v) for v in values) if values else 1.0
+        if title.startswith("(D)"):
+            ax.set_ylim(min(0, min(values) - 6), max(values) + 8)
+        else:
+            ax.set_ylim(0, max(values) * 1.22 + pad * 0.1)
+
+    fig.suptitle(
+        "Figure 10: Promoter vs Audited vs Cabin Turnaround - The Same Asset, Three Answers",
+        fontsize=13.5, fontweight="bold", color=PALETTE["slate_dark"], y=1.02,
+    )
+    fig.text(
+        0.5, -0.01,
+        "All three columns exit at an 8.5% cap rate and deduct 3% selling costs. "
+        "The audited equity IRR is shown net of those costs (-24.4%); gross it is -23.16%.",
+        ha="center", fontsize=8.4, color=PALETTE["slate_dark"],
+    )
+    plt.tight_layout()
+    fig.savefig(save_path, bbox_inches="tight")
+    plt.close(fig)
+    return save_path
+
+
+def generate_t8_dscr_cash(save_path: Optional[Path] = None) -> Path:
+    """Figure 11: T8 DSCR against the covenant and the cash build."""
+    from src.core.turnaround import TurnaroundEngine
+
+    set_institutional_style()
+    save_path = save_path or (get_assets_dir() / "figure_11_t8_dscr_cash.png")
+
+    engine = TurnaroundEngine()
+    kpis = engine.kpis
+    proj = engine.projection
+    years = [f"Y{int(y)}" for y in kpis["year"]]
+    dscr = kpis["dscr"].astype(float).tolist()
+    cash = (proj["ending_cash"].astype(float) / 1000).tolist()
+    x = np.arange(len(years))
+
+    fig, ax = plt.subplots(figsize=(11.2, 5.6), dpi=300)
+    bars = ax.bar(x, dscr, width=0.52, color=PALETTE["navy_primary"],
+                  edgecolor="white", linewidth=0.9, label="DSCR (x)")
+    ax.axhline(1.25, color=PALETTE["amber_warning"], linewidth=1.5,
+               linestyle="--", label="1.25x covenant")
+    ax.axhline(1.00, color=PALETTE["rose_negative"], linewidth=1.1,
+               linestyle=":", label="1.00x debt-service floor")
+    ax.set_xticks(x)
+    ax.set_xticklabels(years)
+    ax.set_ylabel("DSCR (x)", color=PALETTE["slate_dark"])
+    ax.set_ylim(0, max(dscr) * 1.28)
+    for bar, value in zip(bars, dscr):
+        ax.annotate(
+            f"{value:.2f}x",
+            xy=(bar.get_x() + bar.get_width() / 2, value),
+            xytext=(0, 5), textcoords="offset points",
+            ha="center", fontsize=9.5, fontweight="bold",
+            color=PALETTE["slate_dark"],
+        )
+
+    ax2 = ax.twinx()
+    ax2.plot(x, cash, color=PALETTE["teal_positive"], marker="o", linewidth=2.2,
+             label="Ending cash (EURk)")
+    ax2.set_ylabel("Ending cash (EURk)", color=PALETTE["teal_positive"])
+    ax2.set_ylim(0, max(cash) * 1.30)
+    for xi, value in zip(x, cash):
+        ax2.annotate(
+            f"{value:,.0f}k", xy=(xi, value), xytext=(0, 9),
+            textcoords="offset points", ha="center", fontsize=8.5,
+            color=PALETTE["teal_positive"], fontweight="bold",
+        )
+
+    handles_1, labels_1 = ax.get_legend_handles_labels()
+    handles_2, labels_2 = ax2.get_legend_handles_labels()
+    ax.legend(handles_1 + handles_2, labels_1 + labels_2, loc="upper left",
+              frameon=True, facecolor=PALETTE["background_card"],
+              edgecolor=PALETTE["slate_border"], fontsize=8.5)
+
+    ax.set_title(
+        "Figure 11: T8 Credit Profile - 2.31x Minimum DSCR and a Cash Build to EUR 241k",
+        pad=12, fontweight="bold", color=PALETTE["slate_dark"],
+    )
+    fig.text(
+        0.5, -0.02,
+        "The binding year is Year 2 (2.31x). Year 1 carries interest only (3.35x). "
+        "Cash is after debt service, FF&E reserve, DSRA and the VAT bridge repayment.",
+        ha="center", fontsize=8.5, color=PALETTE["slate_dark"],
+    )
+    plt.tight_layout()
+    fig.savefig(save_path, bbox_inches="tight")
+    plt.close(fig)
+    return save_path
+
+
+def generate_t8_irr_tornado(save_path: Optional[Path] = None) -> Path:
+    """Figure 12: T8 equity IRR sensitivity tornado (all-in basis)."""
+    from src.core.turnaround import TurnaroundEngine
+
+    set_institutional_style()
+    save_path = save_path or (get_assets_dir() / "figure_12_t8_irr_tornado.png")
+
+    engine = TurnaroundEngine()
+    sens = engine.sensitivities()
+    base_row = sens[sens["scenario"] == "Base"].iloc[0]
+    base = float(base_row["equity_irr_allin"]) * 100
+
+    rows = sens[sens["scenario"] != "Base"].copy()
+    rows["delta"] = rows["equity_irr_allin"].astype(float) * 100 - base
+    rows = rows.sort_values("delta")
+
+    fig, ax = plt.subplots(figsize=(11.6, 6.6), dpi=300)
+    y = np.arange(len(rows))
+    colors = [
+        PALETTE["teal_positive"] if d >= 0 else PALETTE["rose_negative"]
+        for d in rows["delta"]
+    ]
+    bars = ax.barh(y, rows["delta"], color=colors, edgecolor="white", linewidth=0.8)
+    ax.axvline(0, color=PALETTE["slate_dark"], linewidth=1.0)
+    ax.set_yticks(y)
+    ax.set_yticklabels(rows["scenario"], fontsize=9)
+    ax.set_xlabel("Change in all-in equity IRR vs base (percentage points)",
+                  color=PALETTE["slate_dark"])
+    ax.set_title(
+        f"Figure 12: T8 Equity IRR Tornado - Base {base:.1f}% (All-In, 8.5% Exit Cap)",
+        pad=12, fontweight="bold", color=PALETTE["slate_dark"],
+    )
+    ax.set_xlim(min(rows["delta"]) * 1.35 - 1.0, max(rows["delta"]) * 1.35 + 1.0)
+    for bar, delta, irr in zip(bars, rows["delta"], rows["equity_irr_allin"]):
+        x_text = delta + (0.35 if delta >= 0 else -0.35)
+        ax.annotate(
+            f"{irr*100:.1f}%  ({delta:+.1f} pp)",
+            xy=(x_text, bar.get_y() + bar.get_height() / 2),
+            xytext=(0, 0), textcoords="offset points",
+            ha="left" if delta >= 0 else "right", va="center",
+            fontsize=8.6, fontweight="bold", color=PALETTE["slate_dark"],
+        )
+
+    ax.text(
+        0.01, -0.16,
+        "Downside is real: a 45% cabin occupancy still passes the 1.25x covenant but cuts the "
+        "all-in equity IRR to 5.5%. The lodge adds about 11 pp of IRR.",
+        transform=ax.transAxes, fontsize=8.4, color=PALETTE["slate_dark"],
+    )
+    plt.tight_layout()
+    fig.savefig(save_path, bbox_inches="tight")
+    plt.close(fig)
+    return save_path
+
+
 def generate_all_figures():
-    """Generates all 8 institutional figures using the unified palette."""
+    """Generates all 12 institutional figures using the unified palette."""
     p1 = generate_seasonality_chart()
     p2 = generate_dscr_sensitivity_heatmap()
     p3 = generate_monte_carlo_distribution()
@@ -893,7 +1201,11 @@ def generate_all_figures():
     p6 = generate_monthly_cash_runway_chart()
     p7 = generate_reform_value_bridge()
     p8 = generate_occupancy_bridge_chart()
-    return [p1, p2, p3, p4, p5, p6, p7, p8]
+    p9 = generate_five_act_timeline()
+    p10 = generate_three_case_comparison()
+    p11 = generate_t8_dscr_cash()
+    p12 = generate_t8_irr_tornado()
+    return [p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12]
 
 
 if __name__ == "__main__":

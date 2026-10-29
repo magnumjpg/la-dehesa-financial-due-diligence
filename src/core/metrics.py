@@ -143,6 +143,7 @@ class CreditMetricsEngine:
         initial_equity: float,
         initial_capex: float,
         exit_cap_rate: float = 0.085,
+        exit_cost_rate: float = 0.0,
     ) -> Dict[str, Any]:
         """
         Computes Project IRR (unlevered) and Equity IRR (levered).
@@ -170,12 +171,13 @@ class CreditMetricsEngine:
         terminal_value = (
             max(0.0, terminal_ebitda / exit_cap_rate) if exit_cap_rate > 0 else 0.0
         )
+        net_terminal_value = round(terminal_value * (1.0 - exit_cost_rate), 2)
         ending_debt = float(df_projection.iloc[-1]["total_debt"])
 
         project_cfs_exit = list(project_cfs)
         equity_cfs_exit = list(equity_cfs)
-        project_cfs_exit[-1] += terminal_value
-        equity_cfs_exit[-1] += max(0.0, terminal_value - ending_debt)
+        project_cfs_exit[-1] += net_terminal_value
+        equity_cfs_exit[-1] += max(0.0, net_terminal_value - ending_debt)
 
         project_irr = calculate_irr(project_cfs)
         equity_irr = calculate_irr(equity_cfs)
@@ -184,9 +186,12 @@ class CreditMetricsEngine:
         project_npv = calculate_npv(self.discount_wacc, project_cfs_exit)
         equity_npv = calculate_npv(self.discount_wacc, equity_cfs_exit)
 
-        project_moic = (sum(fcff_ops) + terminal_value) / initial_capex if initial_capex else None
+        project_moic = (
+            (sum(fcff_ops) + net_terminal_value) / initial_capex
+            if initial_capex else None
+        )
         equity_moic = (
-            (sum(fcfe_ops) + max(0.0, terminal_value - ending_debt)) / initial_equity
+            (sum(fcfe_ops) + max(0.0, net_terminal_value - ending_debt)) / initial_equity
             if initial_equity else None
         )
 
@@ -198,7 +203,9 @@ class CreditMetricsEngine:
             "equity_irr_exit": equity_irr_exit,
             "equity_npv": equity_npv,
             "terminal_value": round(terminal_value, 2),
+            "net_terminal_value": net_terminal_value,
             "terminal_cap_rate": exit_cap_rate,
+            "exit_cost_rate": exit_cost_rate,
             "project_moic": round(project_moic, 4) if project_moic is not None else None,
             "equity_moic": round(equity_moic, 4) if equity_moic is not None else None,
             "discount_wacc": self.discount_wacc,

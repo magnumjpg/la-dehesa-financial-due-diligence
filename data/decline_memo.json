@@ -1,0 +1,57 @@
+{
+  "decision": "DECLINE",
+  "reasons_tested": 4,
+  "reasons_failed": 4,
+  "reasons": [
+    {
+      "key": "dscr",
+      "number": 1,
+      "title": "Year-2 DSCR below covenant",
+      "metric": 1.15,
+      "threshold": 1.25,
+      "unit": "x",
+      "failed": true,
+      "detail": "CFADS of EUR 31,890 against EUR 27,648 of debt service gives 1.15x. To reach the 1.25x covenant the project needs EUR 2,670 more CFADS, or a smaller facility: the DSCR-capped principal is EUR 339,145 versus the EUR 367,535 requested."
+    },
+    {
+      "key": "equity",
+      "number": 2,
+      "title": "Equity requirement is 1.65x the plan",
+      "metric": 49.62,
+      "threshold": 30.0,
+      "unit": "% of all-in CapEx",
+      "failed": true,
+      "detail": "The funding plug requires EUR 521,090.22 of cash equity: 65.1% of the EUR 800,100 cash works and 49.62% of the EUR 1,050,100 all-in CapEx. The promoter planned 30% (EUR 240,030); the gap is EUR 281,060. The 35% LTV facility is not the constraint - the DSCR cap is."
+    },
+    {
+      "key": "restaurant",
+      "number": 3,
+      "title": "The restaurant is a fixed-cost trap",
+      "metric": -18678.51,
+      "threshold": 0.0,
+      "unit": "EUR at the EUR 20 ticket",
+      "failed": true,
+      "detail": "At the promoter's own design capacity (16 covers/day x 360 days = 5,760 covers), the fully loaded cost centre loses EUR 18,679 at a EUR 20 ticket and earns only EUR 1,481 at EUR 25, on EUR 99,319 of fixed cost. In the audited engine the restaurant produces EUR 42,071 of gross margin against EUR 36,450 of kitchen payroll - EUR 5,621 before rent, utilities or depreciation. It consumes EUR 55,000 of kitchen CapEx and two of the three FTE to serve a 21-cover room that is never full."
+    },
+    {
+      "key": "phase2",
+      "number": 4,
+      "title": "Phase II is not self-funding",
+      "metric": -252241.06,
+      "threshold": 0.0,
+      "unit": "EUR funding gap",
+      "failed": true,
+      "detail": "The landscape suites and biological pond need EUR 435,564 including input VAT. Phase I ends Year 2 with EUR 183,323 of cash and a Year-3 DSCR of 1.15x, so the expansion opens a EUR 252,241 hole. The grant and the VAT refund are already committed in Phase I and cannot be counted twice."
+    }
+  ],
+  "headline": "DECLINE. The project fails the DSCR covenant in Year 2, needs EUR 521k of equity instead of the EUR 240k planned, operates a restaurant that does not cover its fixed cost, and cannot fund its own Phase II.",
+  "memo": "The independent INE market case is worse, not better: at 21.24% occupancy the property produces negative EBITDA in Year 1 and a DSCR of -1.46x. The management case is the upside; the decline holds a fortiori.",
+  "context": {
+    "case": "management",
+    "cash_equity": 521090.22,
+    "all_in_capex": 1050100.0,
+    "senior_debt": 367535.0,
+    "min_dscr": 1.15,
+    "terminal_value": 435783.29
+  }
+}

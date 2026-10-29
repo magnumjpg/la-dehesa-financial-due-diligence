@@ -4,28 +4,32 @@
 
 This document records the model's purpose, structure, conventions, controls, exceptions and accountability. It supports a credit and investment decision on a 25-hectare rural estate in Segovia. It is not an investment memorandum or a substitute for an independent model audit; no third-party review has been performed.
 
-Status at 25 October 2026: `CONDITIONAL - 5 MATERIAL EXCEPTION(S)`. All six exceptions are deal findings, not formula errors. The suite has 74 tests (up from 68); the workbook has 13 tabs and 2,060 formulas. The deterministic path is reproducible; simulations use seed 42.
+Status at 25 October 2026: `CONDITIONAL - 5 MATERIAL EXCEPTION(S)`. All six exceptions are deal findings, not formula errors. The suite has 121 tests (up from 74); the workbook has 22 tabs and 4,163 formulas. The deterministic path is reproducible; simulations use seed 42.
 
 ## 2. Model map
 
 | File | Responsibility |
 |---|---|
-| `main.py` | 15-step pipeline: reconciliation, projections, funding, returns, simulations, reform, audit. |
+| `main.py` | 18-step pipeline: reconciliation, projections, funding, returns, simulations, reform, decline memo, T8 turnaround, executive comparison, audit. |
 | `src/config/assumptions.py` | CapEx, payroll, debt, OPEX, scenarios, case calibration. |
 | `src/config/reform.py` | `ReformConfig`, R1-R6 and R7 presets. |
+| `src/config/turnaround.py` | T8 product, CapEx, financing and OPEX assumptions. |
 | `src/config/ine_weights.py` | INE Segovia monthly occupancy, calibrated to 21.24%. |
-| `src/core/statements.py` | Three-statement engine, three cases, equity plug, reform overlay. |
+| `src/core/statements.py` | Three-statement engine, four cases including T8, equity plug, reform overlay. |
 | `src/core/debt.py`, `tax.py` | French amortisation; VAT, 25% CIT, BIN. |
 | `src/core/funding.py` | Sources and uses, DSCR/LTV sizing, Phase II gate. |
 | `src/core/reform.py` | R1-R7 runs, value bridge, frontier, valuation cross-check, distress playbook. |
+| `src/core/turnaround.py` | T8 projection, cash and all-in returns, sensitivities, JSON. |
+| `src/core/decline.py` | Act 3: four tests, restaurant cost centre, verdict. |
+| `src/core/investment_case.py` | Act 5: three snapshots, comparison table, value bridge. |
 | `src/core/model_audit.py` | 16-rule audit and JSON export (schema 4.0.0). |
-| `src/data/export_excel.py`, `live_excel.py` | 13-tab workbook and live formulas. |
+| `src/data/export_excel.py`, `live_excel.py`, `act_excel.py`, `t8_excel.py` | 22-tab workbook, live formulas and the five-act / T8 tabs. |
 | `src/simulation/` | Monte Carlo and Gaussian/Student-t/Clayton copula. |
-| `tests/` | 12 files, 74 tests. |
+| `tests/` | 17 files, 121 tests. |
 
 ## 3. Calculation flow
 
-The chain is fixed: **as-is three cases → funding → debt → returns → reform R1-R6 → R7**.
+The chain is fixed: **as-is three cases → funding → debt → returns → reform R1-R6 → R7 → decline memo → T8 → executive comparison**.
 
 1. **As-is.** Management revenue €154,548.00, EBITDA €24,279.92, minimum DSCR 1.15x; market €95,555.00, -€18,565.58, -1.46x; promoter (re-modelled; €86,275 is a model construct, not the deck's €96,628) €86,275.00, €11,297.00, 0.33x. CapEx €1,050,100 in the first two.
 2. **Funding.** Sources equal uses. Cash equity is a plug: €521,090.22 (49.62% of CapEx) plus €250,000 land in kind.
@@ -33,6 +37,7 @@ The chain is fixed: **as-is three cases → funding → debt → returns → ref
 4. **Returns.** Year-5 EBITDA over cap rate, floored at zero, less exit costs. Management project IRR at 8.5% exit: -9.49% vs 8% WACC.
 5. **R1-R6.** Same statements, separate budget and revenue overlay. R2: €71,321 mature EBITDA, 2.13x DSCR, but -€324,723 net gap vs total investment.
 6. **R7.** Six cabins plus house, €200 ADR, 50% occupancy, €110,000 per cabin. CapEx €1,441,600; total investment €1,540,760.04; Year-5 EBITDA €155,712.50; 1.41x DSCR; net gap +€49,146.54 (3.2%); NPV +€76,416.23; IRR 9.21%. Stretch: €150,000 per cabin, €230 ADR, 55%, CapEx €1,708,000, +€506,865 gap, 3.30x, 14.33% IRR. Downside: five cabins, €190 ADR, 45%, €150,000 per cabin, CapEx €1,541,500, €71,597.62 EBITDA, 0.79x, -€988,767 gap, -9.23% IRR.
+7. **T8 and Act 5.** Six modular cabins plus the caserón lodge, no commercial restaurant, 2.0 FTE. Cash CapEx €621,600; all-in €871,600; €450,000 senior at 4.25%; cash equity €252,504.82; minimum DSCR 2.31x. Project IRR 12.60% all-in / 20.70% cash; equity IRR 18.95% / 39.74%; net exit €1,257,469.20; value gap vs all-in CapEx +€385,869.20. Act 5 restates all three cases on an 8.5% cap and 3% exit costs. The T8 investment base excludes the €130,536 VAT bridge, which is a balance-sheet wash repaid in Month 18.
 
 ## 4. Conventions
 
@@ -49,10 +54,10 @@ The chain is fixed: **as-is three cases → funding → debt → returns → ref
 
 ## 5. Controls and reconciliation
 
-- **Tests.** 74 tests in 12 files cover debt, VAT, tax and BIN, three-statement equality, funding, returns, scenarios, unit economics, liquidity, copulas, the audit and R1-R7. Changes require passing tests.
+- **Tests.** 121 tests in 17 files cover debt, VAT, tax and BIN, three-statement equality, funding, returns, scenarios, unit economics, liquidity, copulas, the audit, R1-R7, the decline memo, T8, Act 5 and the formula-recalculated workbook. Changes require passing tests.
 - **Computed audit.** 16 rules; 9 pass, 1 not applicable, five material failures and one warning failure.
 - **Promoter case.** A re-modelling, not a replication. Its €86,275 revenue is a model construct (491 × 85 + 72 × 380 + 859 × 20) and the €11,297 EBITDA is the deck literal. Both workbooks contain different Year-1 revenues (€74,851 net in `Conclusiones!B5`, €99,487.50 gross from the `Plan de Negocio!B41` formulas, €96,628 hard-coded in `Tablas para PPT!B11`), and the €11,297 EBITDA has no build-up in the source. `RULE_13` reads those source cells and is marked **NOT APPLICABLE** to source verification; README §2 carries the full reconciliation.
-- **Python-to-Excel.** Revenue €154,548, EBITDA €24,280, Year-2 DSCR 1.1534x, Year-1 cash €20,700.88, Year-2 cash €183,322.64 and balance-sheet discrepancy €0.00 all reconcile.
+- **Python-to-Excel.** Revenue €154,548, EBITDA €24,280, Year-2 DSCR 1.1534x, Year-1 cash €20,700.88, Year-2 cash €183,322.64 and balance-sheet discrepancy €0.00 all reconcile. The T8 live tab reconciles within €1 / 0.01x, its four IRRs match the Python engine, and the T8 debt schedule closes at zero in Month 240.
 - **Balance-sheet equality.** Assets equal liabilities plus equity in all three cases; maximum discrepancy €0.00.
 - **Value bridge.** R2 is computed lever by lever and ties to reform EBITDA with a zero residual.
 - **Determinism.** No random draws in the deterministic path; Monte Carlo and copula runs use seed 42.
@@ -127,14 +132,14 @@ Changes are made in source control. A change is complete only when the suite pas
 
 ```bash
 python -m pip install -r requirements.txt
-python -m pytest tests/ -q          # 74 tests
+python -m pytest tests/ -q          # 121 tests
 python main.py                      # full pipeline
 python main.py --no-charts          # skip figures
 ```
 
 ## 10. Limitations and sign-off
 
-This model does not replace an independent audit; none has been commissioned. Limitations: no binding construction quotes; unproven F&B and experience demand; a naive Gaussian Monte Carlo benchmark; a contractual rather than tail-tested DSRA; simplified tax with BIN limited to the horizon; no LEADER award letter; a liquidity stress, not a full monthly model; and planning-assumption exit costs. R7 is fragile: 3.2% margin; €110,000 per cabin is a benchmark, not a contract. Cost ladder: -€19,263 at €120,000, -€87,672 at €130,000, -€224,490 at €150,000 and -€429,718 at €180,000.
+This model does not replace an independent audit; none has been commissioned. Limitations: no binding construction quotes; unproven F&B and experience demand; a naive Gaussian Monte Carlo benchmark; a contractual rather than tail-tested DSRA; simplified tax with BIN limited to the horizon; no LEADER award letter; a liquidity stress, not a full monthly model; and planning-assumption exit costs. R7 is fragile: 3.2% margin; €110,000 per cabin is a benchmark, not a contract. Cost ladder: -€19,263 at €120,000, -€87,672 at €130,000, -€224,490 at €150,000 and -€429,718 at €180,000. T8 is fragile for the same reason: the €60,000 module is a supply estimate, not a tender; at €85,000 per cabin the all-in project IRR falls to 8.7% and the net gap to +€138,464; at €110,000 the gap is -€28,036. T8 also uses the optimistic 8.5% exit cap and a 50% cabin occupancy that is 2.35x the INE average.
 
 Downside: minimum DSCR 0.79x in Year 1; CFADS shortfall €4,577.04, covered by the €20,292.72 six-month DSRA. An equity cure to 1.25x costs €17,455.75. Net exit value €654,606.82 against €457,236.43 debt gives 143% lender recovery; equity receives €197,370.39 against €1,113,342.89 invested, a 17.7% recovery. The lender is repaid; the equity is wiped out.
 

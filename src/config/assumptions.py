@@ -73,6 +73,10 @@ class CapExStructure:
         depreciation_rate=0.03,  # 3% annual (edificaciones hoteleras)
         is_depreciable=True,
     )
+    # T8-only slots. They default to zero so the promoter, management and
+    # market cases keep their exact EUR 1,050,100 / 725,000 totals.
+    cabins: CapExAsset = ZERO_ASSET
+    infrastructure: CapExAsset = ZERO_ASSET
     kitchen_equipment: CapExAsset = CapExAsset(
         name="Equipamiento de cocina y lavanderia",
         amount=55_000.0,
@@ -118,8 +122,14 @@ class CapExStructure:
 
     @property
     def total_base_capex(self) -> float:
-        """Land + hard construction + biopool (EUR 840,000 in the realistic budget)."""
-        return self.land.amount + self.renovation.amount + self.biopool_landscaping.amount
+        """Land + hard construction + cabins + infrastructure (EUR 840,000 in the realistic budget)."""
+        return (
+            self.land.amount
+            + self.renovation.amount
+            + self.cabins.amount
+            + self.infrastructure.amount
+            + self.biopool_landscaping.amount
+        )
 
     @property
     def total_capex(self) -> float:
@@ -127,6 +137,8 @@ class CapExStructure:
         return (
             self.land.amount
             + self.renovation.amount
+            + self.cabins.amount
+            + self.infrastructure.amount
             + self.kitchen_equipment.amount
             + self.ffe.amount
             + self.biopool_landscaping.amount
@@ -162,6 +174,8 @@ class CapExStructure:
                 asset.amount * asset.depreciation_rate
                 for asset in (
                     self.renovation,
+                    self.cabins,
+                    self.infrastructure,
                     self.kitchen_equipment,
                     self.ffe,
                     self.biopool_landscaping,
@@ -240,6 +254,7 @@ class FinancingStructure:
     dsra_months: int = 6
     vat_bridge_limit: float = 175_000.0
     vat_refund_month: int = 18
+    arrangement_fee_rate: float = 0.0     # 1% in the T8 structure
 
     # Construction and senior debt.
     construction_months: int = 12          # interest during construction (IDC)
@@ -276,6 +291,11 @@ class FinancingStructure:
             / 12.0,
             2,
         )
+
+    @property
+    def arrangement_fee(self) -> float:
+        """Up-front arrangement fee, capitalised and amortised over 5 years."""
+        return round(self.senior_debt_principal * self.arrangement_fee_rate, 2)
 
     @property
     def total_equity_at_close(self) -> float:
