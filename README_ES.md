@@ -12,6 +12,18 @@
 
 ---
 
+## Contenido
+
+- [1. Resumen ejecutivo y veredicto de crédito](#1-resumen-ejecutivo-y-veredicto-de-crédito)
+- [2. Comparativa de los tres escenarios](#2-comparativa-de-los-tres-escenarios)
+- [3. Estructura de capital y fuentes y usos](#3-estructura-de-capital-y-fuentes-y-usos)
+- [4. Conclusiones principales del underwriting](#4-conclusiones-principales-del-underwriting)
+- [5. Análisis de reestructuración y opciones de turnaround](#5-análisis-de-reestructuración-y-opciones-de-turnaround)
+- [6. Arquitectura del repositorio y entregables](#6-arquitectura-del-repositorio-y-entregables)
+- [7. Ejecución y verificación rápida](#7-ejecución-y-verificación-rápida)
+- [8. Autoría y perfil](#8-autoría-y-perfil)
+- [Licencia](#licencia)
+
 ## 1. Resumen ejecutivo y veredicto de crédito
 
 | Métrica | Plan del Promotor (Deck) | Auditoría Institucional (Caso Gestión) | Impacto Crediticio / Variación |
